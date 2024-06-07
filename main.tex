@@ -15,7 +15,6 @@
 \input{includes}
 \input{defines}
 
-
 % \addbibresource{bib/journals_first_author.bib}
 % \addbibresource{bib/proceedings_first_author.bib}
 % \addbibresource{bib/proceedings_co_author.bib}
@@ -48,10 +47,11 @@
     \enlargethispage{1\baselineskip}
     \setcounter{page}{1}
 
-    \chapter*{Abstract}
+    \chapter*{Abstract} % 1p
         This is an abstract.
+    \cleardoublepage
 
-    \chapter*{Zusammenfassung}
+    \chapter*{Zusammenfassung} % 1p
         Dies ist die Zusammenfassung.
     \cleardoublepage
 
@@ -60,20 +60,25 @@
     \pagenumbering{arabic}
 
     %%% Chapters
-    \input{sections/1_introduction}
-    \input{sections/2_background}
+    \chapter{Introduction} % 8p
+        \input{sections/1_introduction}
+
+    \chapter{Background} % 11p
+        \input{sections/2_background}
 
     \chapter[DeepSTAPLE]{DeepSTAPLE: Learning to predict multimodal registration quality for unsupervised domain adaptation}
         \input{sections/03_deepstaple/text}
+
     \chapter[XEdgeConv]{XEdgeConv: Leveraging graph convolutions for efficient, permutation- and rotation-invariant dense 3D medical image segmentation}
         \input{sections/04_xedgeconv/text}
+
     \chapter[AcquisitionFocus]{AcquisitionFocus: Joint Optimization of Acquisition Orientation and Cardiac Volume Reconstruction using Deep Learning}
         \input{sections/05_acquisitionfocus/text}
 
     \chapter[DG-TTA]{DG-TTA: Out-of-domain medical image segmentation through Domain Generalization and Test-Time Adaptation}
         \input{sections/06_dgtta/text}
-
-    \input{sections/7_conclusion}
-
+    \chapter{Summary}
+        \input{sections/7_summary} % 10p
+    % p++31
     \printbibliography[heading=bibintoc]
 \end{document}
