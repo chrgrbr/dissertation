@@ -4,21 +4,25 @@
 	twoside,
 	headsepline,
 	titlepage,
-	parskip=off
 	DIV=11,
 	BCOR=12mm,
 	captions=tableheading,
 	chapterprefix=on,
-	numbers=noenddot
+	numbers=noenddot,
 ]{scrbook}
 
 \input{includes}
 \input{defines}
 
-\addbibresource{bib/references.bib}
+\newcommand*{\acFocusPath}{sections/05_acquisitionfocus}
+\input{sections/05_acquisitionfocus/includes}
+\input{sections/05_acquisitionfocus/defines}
+
 % \addbibresource{bib/journals_first_author.bib}
 % \addbibresource{bib/proceedings_first_author.bib}
 % \addbibresource{bib/proceedings_co_author.bib}
+
+% \addbibresource{sections/05_acquisitionfocus/refs.bib}
 
 \begin{document}
     \thispagestyle{headings}
@@ -45,10 +49,10 @@
     \input{sections/2_background}
     % \input{sections/03_deepstaple}
     % \input{sections/04_xedgeconv}
-    \input{sections/05_acquisitionfocus/text}
+    \chapter{AcquisitionFocus: Joint Optimization of Acquisition Orientation and Cardiac Volume Reconstruction using Deep Learning}
+        \input{sections/05_acquisitionfocus/text}
     % \input{sections/06_dgtta}
     \input{sections/7_conclusion}
 
     \printbibliography[heading=bibintoc]
-
 \end{document}

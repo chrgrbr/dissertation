@@ -4,8 +4,8 @@
      Cardiac magnetic resonance (CMR) imaging typically follows a specific routine. Firstly, a low-resolution scout scan is acquired to localize the heart coarsely.
     Secondly, the scout scan is examined for manual imaging view-plane placement following dedicated protocol guidelines \cite{ismail2022cardiac}. The scanner is then adjusted to capture the imaging planes of interest. Lastly, the acquired images are examined by clinical experts or automated post-processing software.
 
-    \subsection{MR Physics Constraints and Timing}
-   Examining images relies on sufficient image contrast, i.e., the signal-to-noise ratio (SNR). The SNR of an acquired image slice is constrained by the physical principle of MR as derived by \hl{Macovsci} \cite{macovski1996noise}: %MDPI: It is not recommended to include reference mentions in formulas, so please move reference mentions out of formulas and into paragraphs. Please check all formulas. %CW: I moved the reference mentions out of the formulas for all cases.
+   \subsection{MR Physics Constraints and Timing}
+   Examining images relies on sufficient image contrast, i.e., the signal-to-noise ratio (SNR). The SNR of an acquired image slice is constrained by the physical principle of MR as derived by Macovsci \cite{macovski1996noise}: %MDPI: It is not recommended to include reference mentions in formulas, so please move reference mentions out of formulas and into paragraphs. Please check all formulas. %CW: I moved the reference mentions out of the formulas for all cases.
         \begin{equation}
         \text{SNR} \propto f\left(\text{Obj}\right) \omega_o V_h \sqrt{T}
         \label{eq:mri_snr}
@@ -24,8 +24,7 @@
         \label{eq:mri_t_prop_volume}
     \end{equation}
 
-\hl{Equation} %MDPI: Please confirm whether you want to keep the paragraphs below the formulas unindented. %CW: The paragraphs can be indented as in the rest of the manuscript. I removed the unindentation below the formulas (see further comments).
- \,\eqref{eq:mri_t_prop_volume} states that acquiring more slices at a higher resolution (more K-space lines) takes longer. This has been addressed with compressed sensing where only a fraction of K-space lines are captured, accelerating the acquisition by a constant factor at the cost of introducing artifacts \cite{lustig2007sparse}.
+    Equation\,\eqref{eq:mri_t_prop_volume} states that acquiring more slices at a higher resolution (more K-space lines) takes longer. This has been addressed with compressed sensing where only a fraction of K-space lines are captured, accelerating the acquisition by a constant factor at the cost of introducing artifacts \cite{lustig2007sparse}.
     Nevertheless, applying these techniques for high temporal resolution cine imaging may be insufficient and remains a challenge \cite{raman202230}.
 
     In this study, we will investigate a reduced number of imaging slices $N_z$ for faster acquisition without necessarily affecting the in-plane resolution or SNR that could additionally be combined with parallel imaging and/or compressed sensing.
@@ -37,17 +36,11 @@
     The definition and selection of optimal imaging planes \cite{watkins2013cardiovascular,american2002standardized,ismail2022cardiac} for this task may be different from human intuition, especially when deep learning methods are involved. Despite our study being linked to MRI acquisition and (shape) reconstruction, our method is unrelated to image reconstruction from K-space signals. It operates in the image domain after applying the inverse Fourier transform.
 
 
-        \begin{figure}[H]
-        \includegraphics[width=0.95\linewidth]{figures/problem_setup.pdf}
-        \caption{\textls[+5]{Current practice and research question (top): The performance of deep learning-based post-processing methods is restricted by the input data quality, and standardized clinical} protocols may be sub-optimal for automated downstream tasks. \textls[+15]{Our approach and problem setup (bottom): }}
+    \begin{figure}
+        \includegraphics[width=0.95\linewidth]{\acFocusPath/figures/problem_setup.pdf}
+        \caption{Current practice and research question (top): The performance of deep learning-based post-processing methods is restricted by the input data quality, and standardized clinical protocols may be sub-optimal for automated downstream tasks. Our approach and problem setup (bottom): Examining cardiac function in high spatial and temporal resolution is desirable, but MR physics constrains the quality of volumetric MR cine acquisitions. We aim to determine optimal descriptive imaging planes for volumetric shape reconstruction from only two view planes.}
     \label{fig:problem_setup}
     \end{figure}
-
-
-    {\captionof*{figure}{Examining cardiac function in high spatial and temporal resolution is desirable, but MR physics constrains the quality of volumetric MR cine acquisitions. We aim to determine optimal descriptive imaging planes for volumetric shape reconstruction from only two view planes.}}
-
-
-
 
     \subsection{Shape Reconstruction and Imaging Plane Optimization}
     \label{sec:shape_recon_plane_optimization}
@@ -57,28 +50,26 @@
     In a similar work, bone structures were reconstructed from sparse view segmentations using neural shape representations \cite{amiranashvili2022learning}.
     In the cardiac domain, left ventricle shapes were successfully reconstructed from sparse short-axis and long-axis image stacks using deformable mesh priors \cite{beetz2022reconstructing}.
     Stojanovsi et al. \cite{stojanovski2022efficient} performed reconstruction of the full cardiac shape from multiple slices.
-    To overcome the lack of paired slice and 3D target data, the authors simulated US intensity images for slices that were extracted from a 3D ground-truth mesh. Their approach uses an efficient variant of the \hl{Pix2Vox} %MDPI: Please confirm if the italics is unnecessary and can be removed. The following highlights are the same. %CW: I confirm, that the italics can be removed. I removed the italics accordingly.
+    To overcome the lack of paired slice and 3D target data, the authors simulated US intensity images for slices that were extracted from a 3D ground-truth mesh. Their approach uses an efficient variant of the Pix2Vox
     model presented in \cite{xie2019pix2vox} and will be considered for performance comparison in Section\,\ref{sec:experiments}.
 
-    \textls[-25]{Optimal imaging planes have been considered in \cite{lee2022usg}, where
+    Optimal imaging planes have been considered in \cite{lee2022usg}, where
     an orthopedic scanning guide for diseases in 3D ultrasound applications was developed. The method relies on a two-stream classification pipeline to predict the probe movement direction and the presence of the desired target view.
     In the context of MRI, a target view classification network was proposed to determine the optimal MR image slice for detecting lumbar spinal stenosis~\cite{natalia2022automated}.
     The authors selected the optimal image slice from multiple given slices and evaluated the classification outcome for several network architectures and hyperparameters.
     Cardiac segmentation of the left ventricle and atrium with joint prediction of standard clinical view planes has been previously explored by Chen et al. \cite{chen2021automated}, who aimed to translate findings from automated segmentations into clinical routine protocols.
     For optimal valvular heart disease assessment, 14 slice orientations were defined using a cardiac MRI reference scan~\cite{nitta2014automatic}.
     Odille et al. \cite{odille2018isotropic} reconstructed the left ventricular shape by fitting a b-spline model to slice segmentations obtained from motion-corrected high-resolution intensity data. They compared pre-defined configurations of 3--6 sparse slices to evaluate the impact of view plane choices on the shape reconstruction quality.
-    To the best of our knowledge, none of the previously proposed methods studied the joint optimization of view planes and volumetric reconstruction.}
+    To the best of our knowledge, none of the previously proposed methods studied the joint optimization of view planes and volumetric reconstruction.
 
     \subsection{Contribution}
     \label{sec:contribution}
-\textls[-15]{     While previous studies focused on detecting clinical standard imaging planes \cite{beetz2022reconstructing,natalia2022automated,nitta2014automatic}, we hypothesize that the slice view orientation should be optimized in a task-driven manner and propose the following contributions:}
+    While previous studies focused on detecting clinical standard imaging planes \cite{beetz2022reconstructing,natalia2022automated,nitta2014automatic}, we hypothesize that the slice view orientation should be optimized in a task-driven manner and propose the following contributions:
 
     \begin{enumerate}
-        \item In a challenging target scenario, we reconstruct the \hl{full} %CW: Removed italics
- cardiac shape of five structures from only two slices.
+        \item In a challenging target scenario, we reconstruct the full cardiac shape of five structures from only two slices.
         \item We study the joint optimization of shape reconstruction and view-plane orientation to derive optimal sparse slice configurations.
-        \item
-        The optimized slice configurations lead to superior reconstruction quality compared to standard clinical imaging planes, which we demonstrate for synthetic and clinically acquired cardiac MRI data.
+        \item The optimized slice configurations lead to superior reconstruction quality compared to standard clinical imaging planes, which we demonstrate for synthetic and clinically acquired cardiac MRI data.
     \end{enumerate}
 
 \section{Materials and Methods}
@@ -87,9 +78,9 @@
     We analyze this coarse segmentation to identify standard clinical view planes and optimize the image plane slicing for cardiac shape reconstruction.
     \subsection{Extraction of Clinical Views}
     \label{sec:view_extraction}
-     Experts follow a semi-automated routine to determine cardiac view planes \cite{herzog2017cardiovascular}: Firstly, the left ventricle is localized in the scout scan, then pseudo-two-chamber (2CH) and four-chamber (4CH) views are extracted. Based on these views, a stack of short-axis (SA) images is retrieved, which is a prerequisite to acquiring accurate 2CH and 4CH views.
-    We extract the mentioned views from the coarse image segmentation by analyzing the inertial moments \hl{$\mathbf{J}$} %MDPI: For all Constant, Variable: italicized, Not italicized, bold, Not bold, The format in the main text must be consistent with that in the equations. Please modify them.. %CW: I rechecked the math symbols in the text for consistency. Vector variables are bold font, whereas scalar values are normal math font as in the equations.
- of the cardiac chamber shapes to construct orthonormal bases for an affine reorientation matrix $\mathbf{P}$,
+    Experts follow a semi-automated routine to determine cardiac view planes \cite{herzog2017cardiovascular}: Firstly, the left ventricle is localized in the scout scan, then pseudo-two-chamber (2CH) and four-chamber (4CH) views are extracted. Based on these views, a stack of short-axis (SA) images is retrieved, which is a prerequisite to acquiring accurate 2CH and 4CH views.
+   We extract the mentioned views from the coarse image segmentation by analyzing the inertial moments $\mathbf{J}$
+   of the cardiac chamber shapes to construct orthonormal bases for an affine reorientation matrix $\mathbf{P}$,
     \begin{align}
         % \mathbf{I_{ij}} = \sum_{k=1}^{N_m} \lVert \mathbf{r_k} \rVert^2 \delta_{ij} - x_i^{(k)}x_j^{(k)}
         \mathbf{J} = \begin{bmatrix}
@@ -99,19 +90,18 @@
             \end{bmatrix} \quad  J_{ii}= \int_{m} \left(x_j^2 + x_k^2\right) \text{d}m \quad J_{ij} = -\int_{m} x_i x_j \text{d}m \enspace i,j \in \left[1,2,3\right]
         \label{eq:inertia}
     \end{align}
-    where $m$ is the shape's (voxel) mass, $ijk$ are the spatial indices, and $x$ is the distance vector from the point mass to a reference point \cite{czichos2012huette}. The resulting imaging planes are visualized in \highlighting{Figure~\,\ref{fig:prealign}.} %MDPI: The mentions of the pictures need to be in numerical order. The first mention in Figure 3 should be placed after Figure 2, please correct it. %CW: We moved the figure to the paragraph above to get proper numerical order.
+    where $m$ is the shape's (voxel) mass, $ijk$ are the spatial indices, and $x$ is the distance vector from the point mass to a reference point \cite{czichos2012huette}. The resulting imaging planes are visualized in Figure~\,\ref{fig:prealign}.
 
-    \begin{figure}[H]
-            \includegraphics[width=\linewidth]{figures/prealign.pdf}
-            \caption{Clinical cardiac views are automatically extracted from the segmentation maps of a coarse scout scan. Axial (AX), coronal (COR), and sagittal (SAG) views are obtained directly from the volume. According to \cite{herzog2017cardiovascular}, pseudo-two-chamber (p2CH) and four-chamber (p4CH) are then used to plan short-axis (SA) views from which, in turn, accurate 2CH and 4CH views can be retrieved. We mimic this process by analyzing the inertial moments of segmented cardiac chambers.}
+    \begin{figure}
+        \includegraphics[width=\linewidth]{\thisPath/figures/prealign.pdf}
+        \caption{Clinical cardiac views are automatically extracted from the segmentation maps of a coarse scout scan. Axial (AX), coronal (COR), and sagittal (SAG) views are obtained directly from the volume. According to \cite{herzog2017cardiovascular}, pseudo-two-chamber (p2CH) and four-chamber (p4CH) are then used to plan short-axis (SA) views from which, in turn, accurate 2CH and 4CH views can be retrieved. We mimic this process by analyzing the inertial moments of segmented cardiac chambers.}
         \label{fig:prealign}
     \end{figure}
 
 
 
     \subsection{Slicing View Optimization}
-     As described in \highlighting{Figure~\,\ref{fig:method_overview},}
- we optimize for affine matrices $\mathbf{M}$ that maximize the reconstruction accuracy.
+    As described in Figure~\,\ref{fig:method_overview}, we optimize for affine matrices $\mathbf{M}$ that maximize the reconstruction accuracy.
     We first generate $N$ affine matrices $\mathbf{M}$ to define the slicing orientation. This work explores the extreme scenario of studying only $N=2$ slice locations. Subsequently, we apply a reconstruction model to process the extracted slices.
     The deep learning architecture is laid out more specifically in Figure\,\ref{fig:architecture}.
     To obtain optimizable slice orientations, we feed the segmentation of a (low-resolution) scout image scan $V_{in}$ into an acquisition model $A_i$. The model comprises two operators: $O_i$ aligns the input optimally to yield the oriented volume $V_{or}$.  From this volume, the operator $C$ extracts a 2D slice $S$ per matrix $\mathbf{M}$:
@@ -121,27 +111,26 @@
     \end{align}
 
     \begin{figure}
-         \includegraphics[width=.45\linewidth]{figures/experimental_setup.pdf}
-      \caption{
-        \hl{Method overview:} %CW: We reduced the figure size as it was way to large when scaled to 1.0\linewidth. The figure was moved to this section to result in a proper numbering order.
-        From a coarsely segmented scout scan (1), we analyze the cardiac shape, construct affine matrices $\mathbf{P}$ representing the standard clinical views, and optimize a neural network to predict a rigid transformation matrix $\mathbf{M}$. This matrix is returned to the scanner to yield optimal slicing parameters for the volumetric shape reconstruction. }
-      \label{fig:method_overview}
+        \includegraphics[width=.45\linewidth]{\thisPath/figures/experimental_setup.pdf}
+        \caption{
+        Method overview: From a coarsely segmented scout scan (1), we analyze the cardiac shape, construct affine matrices $\mathbf{P}$ representing the standard clinical views, and optimize a neural network to predict a rigid transformation matrix $\mathbf{M}$. This matrix is returned to the scanner to yield optimal slicing parameters for the volumetric shape reconstruction. }
+        \label{fig:method_overview}
     \end{figure}
 
-    \begin{figure}[H]
-        \includegraphics[width=0.98\linewidth]{figures/architecture.pdf}
+    \begin{figure}
+        \includegraphics[width=0.98\linewidth]{\thisPath/figures/architecture.pdf}
         \caption{Architecture of the proposed pipeline: The acquisition models (left) optimize the two slicing views (center). The final shape is reconstructed from the stacked slices with a non-symmetric 2D-3D encoder-decoder (right) that contains grouped convolutions in the 2D layers. The 2D-3D skip connections and bottleneck in the reconstruction model are realized using a grid-sample operation that embeds the 2D features in the 3D feature space using the inverse of two affine matrices $\mathbf{M_{1,2}}$. (best viewed digitally).}
     \label{fig:architecture}
     \end{figure}
 
-     The formulation of $O_i$ is inspired by Jaderberg et al. \cite{jaderberg2015spatial} and uses a spatial transformer network to sample an oriented 2D plane from a 3D volume.
+    The formulation of $O_i$ is inspired by Jaderberg et al. \cite{jaderberg2015spatial} and uses a spatial transformer network to sample an oriented 2D plane from a 3D volume.
     The network consists of a CNN localization network with learnable parameters $\theta_{O_i}$ that maps the input volume $V_{in}$ to six rotational parameters $\mathbf{ap_i}=\left(ap_{i1}, \dots, ap_{i6}\right)^T$ and three translational parameters  $\mathbf{tp_i}$ with $3 \times N_{tp}$ parameters, where $N_{tp}$ is chosen relative to the target offset space (see Section\,\ref{sec:implementation}). From $\mathbf{ap_i}$, the rotational components of a 3D affine matrix $\mathbf{M_i}$ are generated using the continual representation from \cite{zhou2019continuity}. The translational vector $\mathbf{t_i}=\left(t_{i1}, t_{i2}, t_{i3}\right)^T$ is formulated~as:
     \begin{equation}
         \mathbf{t_{ij}} = \frac{2.0}{N_{tp}}\langle softmax\left(\mathbf{tp_{ij}}\right), \left(0,1,\dots,N_{tp}\right)\rangle -1.0, \quad \mathbf{tp_{ij}} \in \mathbb{R}^{N_{tp}}\label{eq:translation}, j \in \left[1,2,3\right]
     \end{equation}
 
     % Here, $\mathbf{tp_{ij}}$ denotes a vector of $N_{tp}$ parameters.
- \hl{The 3D} affine matrix $\mathbf{M_i}$ is then used to create a grid for the differentiable spatial transformer sampling layer. A slicing operator, $C$, extracts the center slice of the aligned volume. We want to stress that for every 3D input shape volume, a separate set of $\mathbf{ap_i}$ is predicted. This enables us to take any segmented input volume and find the correct slicing orientation for the subsequent scans using the same pre-trained model.  %CW: Unindent was removed after the formula.
+    The 3D affine matrix $\mathbf{M_i}$ is then used to create a grid for the differentiable spatial transformer sampling layer. A slicing operator, $C$, extracts the center slice of the aligned volume. We want to stress that for every 3D input shape volume, a separate set of $\mathbf{ap_i}$ is predicted. This enables us to take any segmented input volume and find the correct slicing orientation for the subsequent scans using the same pre-trained model.  %CW: Unindent was removed after the formula.
 
     \subsection{Reconstruction Model}
     \label{sec:method_reconstruction_model}
@@ -150,8 +139,7 @@
         R: \{ S:\Omega_{2D} \rightarrow \mathbb{R}\}^N \rightarrow \{V_{re}:\Omega_{3D} \rightarrow \mathbb{R}\} \label{eq:reconstruction}
     \end{equation}
 
-    \hl{Aiming for} % CW: Unindent was removed
- a mapping $\Omega_{2D} \mapsto \Omega_{3D}$, we configure the model to contain a 2D encoder and a 3D branch, where the inverse of $\mathbf{M_i}$ is used at the skip connections and the bottleneck to re-embed the 2D slices in 3D space (see Figure\,\ref{fig:architecture} and Section\,\ref{sec:implementation}).
+    Aiming for a mapping $\Omega_{2D} \mapsto \Omega_{3D}$, we configure the model to contain a 2D encoder and a 3D branch, where the inverse of $\mathbf{M_i}$ is used at the skip connections and the bottleneck to re-embed the 2D slices in 3D space (see Figure\,\ref{fig:architecture} and Section\,\ref{sec:implementation}).
 
     \subsection{Joint Optimization}
      Given the above models, we obtain $N$ optimized slices, by jointly training the parameters of $N$ acquisition models $\theta_{O_1,\dots,N}$ and one reconstruction model $\psi_R$:
@@ -161,16 +149,14 @@
         V_{re} &= R\left(S_{1},\dots,S_{N},\psi_{R_i}\right)\label{eq:joint_recon}
     \end{align}
 
-   \hl{In a simplified} %CW: Unindent was removed
- setup, where $V_{re}$ and $V_{in}$ have the same spatial resolution, we would require $ V_{re} \equiv V_{in}$ for an optimal reconstruction.
+   In a simplified setup, where $V_{re}$ and $V_{in}$ have the same spatial resolution, we would require $ V_{re} \equiv V_{in}$ for an optimal reconstruction.
     % Imagine a simplified case where $V_{re}$ and $V_{in}$ have the same spatial resolution. Then, we require $ V_{re} \equiv V_{in}$ for an optimal reconstruction.
     This mapping could be fulfilled by learning an identity function but is restricted since we feed the data through two bottlenecks that are reducing information by extracting a sparse slice and compressing the shape representation:
     \begin{equation}
          \mathcal{L}\left(\theta_{O_{1,\dots,N}}, \psi_R\right) = \ell\left(R_{\psi} \circ C \circ O_{\theta,1}\left(V_{in}\right),\dots, R_{\psi} \circ C \circ O_{\theta,N}\left(V_{in}\right), V_{re} \equiv V_{in}\right)\label{eq:loss}
     \end{equation}
 
-    \hl{In our pipeline,} %CW: Unindent was removed
- the slice bottleneck is particularly interesting, as the reoriented slices $S_{1,~\dots,~N}$ reveal information about the importance of individual structures for the reconstruction.
+    In our pipeline, the slice bottleneck is particularly interesting, as the reoriented slices $S_{1,~\dots,~N}$ reveal information about the importance of individual structures for the reconstruction.
     In an application-oriented setting, the scout scan $V_{in}$ has a lower spatial resolution than the output $V_{re}$.
     When passing the predicted affine matrix $\mathbf{M_i}$ to the MRI control panel, the optimized view can be captured in higher resolution to provide more detailed information for the reconstruction (see Figure\,\ref{fig:method_overview}).
 
@@ -180,14 +166,12 @@
     The XCAT software provided ground-truth anatomical label maps, whereas texturized MRI simulations were derived from these maps using MRXCAT 2.0.
     The data were split into 24 training (male phantom) and 16 testing samples (female phantom). To show the effectiveness of our method,
     a percentage of $\left[25\% ... 75\%\right]$ of cardiac phase frames was excluded from the training set to reserve frames of the systolic phase for testing.
-    In subsequent experiments, we used the MMWHS dataset \cite{zhuang2016multi} containing 20 labeled, static, nearly isotropic MRI volumes with the following structures: myocardium (MYO), left ventricle (LV), right ventricle (RV), left atrium (LA), and right atrium (RA). The dataset contains significant shape variations, including patients with cardiovascular diseases such as ``cardiac function insufficiency, cardiac edema, hypertension [...] arrhythmia, atrial flutter, atrial fibrillation, artery plaque, coronary atherosclerosis, aortic aneurysm, right ventricle hypertrophy \hl{[, and]} %MDPI: PLease check the format if it's right. %CW: In this direct citation we added the word [,and] to have a proper item list. The format is thus correct.
- dilated cardiomyopathy'' \cite{zhuang2016multi}.
+    In subsequent experiments, we used the MMWHS dataset \cite{zhuang2016multi} containing 20 labeled, static, nearly isotropic MRI volumes with the following structures: myocardium (MYO), left ventricle (LV), right ventricle (RV), left atrium (LA), and right atrium (RA). The dataset contains significant shape variations, including patients with cardiovascular diseases such as ``cardiac function insufficiency, cardiac edema, hypertension [...] arrhythmia, atrial flutter, atrial fibrillation, artery plaque, coronary atherosclerosis, aortic aneurysm, right ventricle hypertrophy [, and] dilated cardiomyopathy'' \cite{zhuang2016multi}.
     The data were split into training and test data using 3-fold cross-validation.
 
     \subsection{Experimental Setup and Evaluation}
     \label{sec:experiments}
-     Firstly, in Experiment I, we performed full cardiac shape reconstruction and compared the performance of our model to \hl{Pix2Vox} (P2V, \cite{xie2019pix2vox}) and a leaner variant \hl{Efficient Pix2Vox} %CW: Italics were removed
- (EP2V, \cite{stojanovski2022efficient}), specifically designed for cardiac-slice-to-volume reconstruction (see Section\,\ref{sec:shape_recon_plane_optimization}).
+    Firstly, in Experiment I, we performed full cardiac shape reconstruction and compared the performance of our model to Pix2Vox (P2V, \cite{xie2019pix2vox}) and a leaner variant Efficient Pix2Vox (EP2V, \cite{stojanovski2022efficient}), specifically designed for cardiac-slice-to-volume reconstruction (see Section\,\ref{sec:shape_recon_plane_optimization}).
     In this experiment, we simplified the multi-chamber reconstruction task to a binary shape reconstruction task to match the experimental setup of \cite{stojanovski2022efficient}.
 
     Secondly, in Experiment II, we extended the reconstruction task to multiple chambers and investigated the impact of simultaneous view-plane optimization on the reconstruction performance. We conducted an extensive ablation study transitioning from elementary to more elaborate scenarios. This transition involved replacing ground-truth annotations with automated segmentations as well as replacing high-resolution scout scans (\simmpervoxtuple{1.5}{1.5}{1.5})
@@ -212,7 +196,7 @@
     The reconstruction model is a U-Net based on \cite{isensee2021nnu}, which we configure to consist of a 2D encoder and a 3D decoder by replacing the convolution and normalization layers while keeping the exact kernel sizes.
     To prevent the U-Net model from sharing information across slices in the encoder, we used grouped convolutions with independent groups per input slice.
 
-    The 2D features were re-embedded to the 3D space using the a grid-sampling operator with the inverse affine matrices \hl{$\mathbf{M_i}^{-1}$} for every slice to enable the concatenation of 2D and 3D features at the skip connections. %CW: This should be superscript -1, I changed it from $\mathbf{M_i}^-1$ to $\mathbf{M_i}^{-1}$
+    The 2D features were re-embedded to the 3D space using the a grid-sampling operator with the inverse affine matrices $\mathbf{M_i}^{-1}$ for every slice to enable the concatenation of 2D and 3D features at the skip connections.
     Every block of the reconstruction model (see Figure\,\ref{fig:architecture}) comprises two (transpose) convolutional operations, followed by instance normalization and LeakyReLU nonlinearities.
     During joint training, we used the AdamW optimizer \cite{loshchilov2017decoupled} $(\eta=0.001, \beta_1=0.9, \beta_2=0.999, decay=0.01)$ for the reconstruction model and a batch size of $B=4$.
     The acquisition models were optimized using AdamW $(\eta=0.002, decay=0.1)$ and cosine annealing scheduling with warm restarts \cite{loshchilov2016sgdr}.
@@ -230,16 +214,16 @@
     The P2V model \cite{xie2019pix2vox} reached the best Dice score when reconstructing MRXCAT data from 2CH and SA views, whereas its efficient variant, EP2V \cite{stojanovski2022efficient}, reached the best Dice value on 2CH and 4CH views (see Table\,\ref{tab:mrxcat_binary}).
     When applied to the MMWHS data, our model reached the highest performance in five of six scores,
     and was only outperformed by EP2V, which presented a lower HD95 error in the case of 2CH and SA view inputs (see Table\,\ref{tab:mmwhs_binary}).
-\begin{table}[H]
-            \caption{\hl{Binary shape reconstruction} %MDPI: Please confirm if the color in the table can be removed. if no, Please add an explanation. %CW: The color in the table can be removed. With smaller table width it was hard to see the bold values which is why we added color.
- performance of P2V, EP2V, and our method (see Section\,\ref{sec:method_reconstruction_model}) on the synthetic cardiac data of the MRXCAT dataset.}
-            \label{tab:mrxcat_binary}
-            \setlength{\tabcolsep}{6mm}{
-          \newcolumntype{C}{>{\centering\arraybackslash}X}
-\begin{tabularx}{\textwidth}{cccS[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]S[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]}
+
+    \begin{table}
+        \caption{Binary shape reconstruction performance of P2V, EP2V, and our method (see Section\,\ref{sec:method_reconstruction_model}) on the synthetic cardiac data of the MRXCAT dataset.}
+        \label{tab:mrxcat_binary}
+        \setlength{\tabcolsep}{6mm}{
+        \newcolumntype{C}{>{\centering\arraybackslash}X}
+        \begin{tabularx}{\textwidth}{cccS[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]S[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]}
                 \toprule
                 \multicolumn{3}{l}{\textbf{Synthetic Cine MRXCAT Data}} & \multicolumn{1}{c}{\textbf{HD95 in mm $\downarrow$}}  & \multicolumn{1}{c}{\textbf{Dice in \% $\uparrow$}}  \\
-                 \bf{1st View} &  \bf{2nd View} &  \bf{Model} & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$  }} & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$} } \\
+                 \B{1st View} &  \B{2nd View} &  \B{Model} & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$  }} & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$} } \\
                 \midrule
                 \multirow{3}{*}{p2CH} & \multirow{3}{*}{p4CH} & P2V \cite{xie2019pix2vox} & \mbox{6.7~$\pm$~2.9} & \mbox{95.4~$\pm$~3.2} \\
                  &  & EP2V \cite{stojanovski2022efficient} & \mbox{7.2~$\pm$~4.6} & \mbox{94.3~$\pm$~4.5} \\
@@ -250,21 +234,20 @@
                 \multirow{3}{*}{2CH} & \multirow{3}{*}{SA} & P2V \cite{xie2019pix2vox} & \mbox{4.6~$\pm$~1.1} & \B \mbox{97.1~$\pm$~0.8 }\\
                  &  & EP2V \cite{stojanovski2022efficient} & \mbox{6.2~$\pm$~4.5} & \mbox{95.1~$\pm$~4.8} \\
                  &  & Ours & \B \mbox{4.3~$\pm$~ 2.4} & \mbox{96.4~$\pm$~2.4} \\
- \bottomrule
-\end{tabularx}}
+    \bottomrule
+    \end{tabularx}}
 
 \end{table}
 \unskip
-\begin{table}[H]
-            \caption{\hl{Binary shape reconstruction} %MDPI: Please confirm if the color in the table can be removed. if no, Please add an explanation. %CW: The color in the table can be removed. With smaller table width it was hard to see the bold values which is why we added color.
- performance of P2V, EP2V, and our method (see Section\,\ref{sec:method_reconstruction_model}) on the clinically acquired cardiac data of the MMWHS dataset.}
+\begin{table}
+            \caption{Binary shape reconstruction performance of P2V, EP2V, and our method (see Section\,\ref{sec:method_reconstruction_model}) on the clinically acquired cardiac data of the MMWHS dataset.}
             \label{tab:mmwhs_binary}
             \setlength{\tabcolsep}{6mm}{
             \newcolumntype{C}{>{\centering\arraybackslash}X}
 \begin{tabularx}{\textwidth}{cccS[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]S[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]}
                 \toprule
                 \multicolumn{3}{l}{\textbf{Clinically acq. MMWHS Data}} & \multicolumn{1}{c}{\textbf{HD95 in mm $\downarrow$}}  & \multicolumn{1}{c}{\textbf{Dice in \% $\uparrow$}}  \\
-                \bf{1st View} &  \bf{2nd View} &  \bf{Model} & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$ } } & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$} } \\
+                \B{1st View} &  \B{2nd View} &  \B{Model} & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$ } } & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$} } \\
                 \midrule
                 \multirow{3}{*}{p2CH} & \multirow{3}{*}{p4CH} & P2V \cite{xie2019pix2vox} & \mbox{20.1~$\pm$~6.2} & \mbox{83.0~$\pm$~5.0} \\
                  &  & EP2V \cite{stojanovski2022efficient} & \mbox{22.1~$\pm$~7.2} &\mbox{ 80.0~$\pm$~7.8} \\
@@ -286,19 +269,15 @@
     The top group of values represents the first and most elementary scenario in which high-resolution scouts and ground-truth annotations were considered.
     The highest HD95 errors were observed for reconstructions based on the p2CH and the p4CH views typically extracted at the start of cardiac routine acquisitions (\sinum{8.5} and \simm{22.5}).
 
+    \begin{table}
+        \caption{
+        Multi-chamber shape reconstruction performances for the synthetic cardiac data of the MRXCAT dataset. The scenario's difficulty increases from the top to the bottom. Bold, colored values indicate the best values obtained within a scenario group of comparable scout resolution and label map settings (ground-truth (GT) or automated segmentation (SG)). Views are indicated by their names, with RND and OPT indicating random selection (mean out of six runs) and the proposed optimization, respectively.}      \label{tab:mrxcat}
 
-        \begin{table}[H]
-      \tablesize{\fontsize{6.5}{6.5}\selectfont}
-            \caption{
-            \hl{Multi-chamber} % CW: It is great that the table width can be wider than the text width. Could the caption width also be extended? This would make the caption and table for a visible unit.
-            shape reconstruction performances for the synthetic cardiac data of the MRXCAT dataset. The scenario's difficulty increases from the top to the bottom. Bold, colored values indicate the best values obtained within a scenario group of comparable scout resolution and label map settings (ground-truth (GT) or automated segmentation (SG)). Views are indicated by their names, with RND and OPT indicating random selection (mean out of six runs) and the proposed optimization, respectively.}      \label{tab:mrxcat}
-            \setlength{\tabcolsep}{1.8mm}{
-       \begin{adjustwidth}{-\extralength}{0cm}
-		\newcolumntype{C}{>{\centering\arraybackslash}X}
-		\begin{tabularx}{\fulllength}{lccccccccS[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]ccccccS[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]}
+       \newcolumntype{C}{>{\centering\arraybackslash}X}
+	   \begin{tabularx}{\textwidth}{lccccccccS[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]ccccccS[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]}
             \toprule
             \multicolumn{3}{l}{\textbf{Synthetic Cine MRXCAT Data}}   & \hspace{1pt} & \multicolumn{6}{c}{\textbf{HD95 in mm $\downarrow$}}      & \hspace{1pt} & \multicolumn{6}{c}{\textbf{Dice in \% $\uparrow$}}      \\
-            {\bf Type of: Scout --- Slices} & {\bf 1st View} & {\bf 2nd View} &   & {\bf MYO} &{\bf  LV} & {\bf RV} & {\bf LA} & {\bf RA} & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$}  } &    & {\bf MYO} &{\bf  LV} & {\bf RV} & {\bf LA} & {\bf RA }& \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$} } \\
+            {\B Type of: Scout --- Slices} & {\B 1st View} & {\B 2nd View} &   & {\B MYO} &{\B  LV} & {\B RV} & {\B LA} & {\B RA} & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$}  } &    & {\B MYO} &{\B  LV} & {\B RV} & {\B LA} & {\B RA }& \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$} } \\
             \midrule
             1.5 mm$^3$ GT --- 1.5 mm$^2$ GT & p2CH & p4CH & \hspace{1pt} & \B 6.2 & \B 5.3 & 11.9 & 5.3 & 13.9 & \mbox{8.5 $\pm$ 14.7 }& \hspace{1pt} & \B 82.4 & \B 90.0 & 84.2 & 90.6 & 83.4 &\mbox{ 86.1 $\pm$ 8.5} \\
             1.5 mm$^3$ GT ---1.5 mm$^2$ GT & 2CH & 4CH & \hspace{1pt} & 6.5 & 7.1 & 8.0 & 5.1 & 7.7 &\mbox{ 6.9 $\pm$ 2.0} & \hspace{1pt} & 79.9 & 86.8 & 83.5 & 90.7 & 85.2 & \mbox{85.2 $\pm$ 5.9 }\\
@@ -312,23 +291,17 @@
            6.0 mm$^3$ SG --- 1.5 mm$^2$ SG & >OPT< & >OPT< & \hspace{1pt} & \B 9.4 & \B 9.8 & \B 10.0 & 11.7 & \B 7.7 & \B \mbox{9.7 $\pm$ 3.0} & \hspace{1pt} & \B 69.9 & 81.8 & \B 84.0 & 76.4 & \B 87.4 & \mbox{79.9 $\pm$ 8.7} \\
  			\bottomrule
 		\end{tabularx}
-	\end{adjustwidth}}
-\end{table}
-\unskip
+    \end{table}
 
 
-     \begin{table}[H]
-     \tablesize{\fontsize{6.5}{6.5}\selectfont}
+     \begin{table}
         \caption{
-        \hl{Multi-chamber} % CW: It is great that the table width can be wider than the text width. Could the caption width also be extended? This would make the caption and table for a visible unit.
-        shape reconstruction performances for the MRI-acquired cardiac data of the MMWHS dataset. The scenario's difficulty increases from the top to the bottom. Bold, colored values indicate the best values obtained within a scenario group of comparable scout resolution and label map settings (ground-truth (GT) or automated segmentation (SG)). Views are indicated by their names, with RND and OPT indicating random selection (mean out of six runs) and proposed optimization.     \label{tab:mmwhs}}
-          \setlength{\tabcolsep}{1.7mm}{
-       	\begin{adjustwidth}{-\extralength}{0cm}
+        Multi-chamber shape reconstruction performances for the MRI-acquired cardiac data of the MMWHS dataset. The scenario's difficulty increases from the top to the bottom. Bold, colored values indicate the best values obtained within a scenario group of comparable scout resolution and label map settings (ground-truth (GT) or automated segmentation (SG)). Views are indicated by their names, with RND and OPT indicating random selection (mean out of six runs) and proposed optimization.     \label{tab:mmwhs}}
 		\newcolumntype{C}{>{\centering\arraybackslash}X}
-		\begin{tabularx}{\fulllength}{lccccccccS[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]ccccccS[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]}
+		\begin{tabularx}{\textwidth}{lccccccccS[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]ccccccS[table-figures-decimal=1,separate-uncertainty=true,table-format=3.1(3)]}
             \toprule
             \multicolumn{3}{l}{\textbf{Clinically acquired MMWHS data}}   & \hspace{1pt} & \multicolumn{6}{c}{\textbf{HD95 in mm $\downarrow$}}      & \hspace{1pt} & \multicolumn{6}{c}{\textbf{Dice in \% $\uparrow$}}      \\
-            {\bf Type of: Scout --- Slices} & {\bf 1st View} & {\bf 2nd View} &   &{\bf  MYO} & {\bf LV} & {\bf RV} & {\bf LA} & {\bf RA} & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$}  } &    & {\bf MYO} & {\bf LV} & {\bf RV} & {\bf LA }& {\bf RA} & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$} } \\
+            {\B Type of: Scout --- Slices} & {\B 1st View} & {\B 2nd View} &   &{\B  MYO} & {\B LV} & {\B RV} & {\B LA} & {\B RA} & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$}  } &    & {\B MYO} & {\B LV} & {\B RV} & {\B LA }& {\B RA} & \multicolumn{1}{c}{\boldmath{$\mu\pm\sigma$} } \\
             \midrule
             1.5 mm$^3$ GT --- 1.5 mm$^2$ GT & p2CH & p4CH & \hspace{1pt} & 7.7 & \B 8.2 & 30.3 & 27.6 & 38.7 & \mbox{22.5~$\pm$~25.4} & \hspace{1pt} & 78.7 & 88.3 & 69.4 & 75.7 & 65.4 & \mbox{75.5~$\pm$~16.2} \\
            1.5 mm$^3$ GT --- 1.5 mm$^2$ GT & 2CH & 4CH & \hspace{1pt} & \B 6.8 & 8.2 & 19.5 & \B 8.9 & 27.1 & \mbox{14.1~$\pm$~10.2} & \hspace{1pt} & \B 81.8 & \B 88.7 & 77.2 & \B 86.5 & 74.9 & \mbox{81.8~$\pm$~9.5} \\
@@ -342,7 +315,6 @@
             6.0 mm$^3$ SG --- 1.5 mm$^2$ SG & >OPT< & >OPT< & \hspace{1pt} & 35.0 & 32.7 & \B 39.9 & \B 53.9 & \B 51.6 & \B \mbox{42.6 $\pm$ 23.4} & \hspace{1pt} & 43.8 & 69.0 & \B 56.5 & \B 39.6 & \B 61.3 & \B \mbox{54.0 $\pm$ 19.6} \\
 		\bottomrule
 		\end{tabularx}
-	\end{adjustwidth}}
 \end{table}
 
 
@@ -366,12 +338,11 @@
     We additionally report volumetric segmentation results for the coarse scout scans. Note that for acquiring the scout scans, 32 captured slices instead of one slice are needed at a lower in-plane resolution (\nicefrac{1}{4} per x-, y-axis), increasing acquisition time and making it unsuitable for a direct comparison; hence, the values are enclosed in brackets.
 
 
-        \begin{figure}[H]
+        \begin{figure}
 
-     \includegraphics[width=.4\linewidth]{figures/mmwhs_stage_dices.pdf}
+     \includegraphics[width=.4\linewidth]{\thisPath/figures/mmwhs_stage_dices.pdf}
         \caption{
-        \hl{MMWHS Dice} %CW: We reduced the figure size as it was way to large when scaled to 1.0\linewidth.
-        scores throughout two-stage training, considering the views 2CH+4CH as reference. After optimizing the first view, the reconstruction quality is on par with the reference. Optimizing the second view outperforms the reference.}
+        MMWHS Dice scores throughout two-stage training, considering the views 2CH+4CH as reference. After optimizing the first view, the reconstruction quality is on par with the reference. Optimizing the second view outperforms the reference.}
         \label{fig:mmwhs_stage_dices}
     \end{figure}
 
@@ -379,9 +350,9 @@
 
     Training and inference were performed on a single NVIDIA TITAN RTX \sigb{24} graphics card. Each stage of optimization took $\sim$\simin{29}.
     Inference took \sims{677} for the entire pipeline to reconstruct volumes of \sivoxtuple{128}{128}{128} from two \sipixtuple{128}{128} slices. Each acquisition model contained \simillion{2.8} parameters, the segmentation model contained \simillion{20.7} parameters, and the reconstruction model contained \simillion{15.5} parameters.
-    \begin{figure}[H]
+    \begin{figure}
 
-            \includegraphics[width=\linewidth]{figures/epoch_orientation_change.pdf}
+            \includegraphics[width=\linewidth]{\thisPath/figures/epoch_orientation_change.pdf}
             \caption{View reorientation during joint training. A heatmap overlay visualizes the orientation across the training batch (left, first column per epoch). Two individual batch samples are displayed in the second and third columns. The first view (top) is optimized during the first optimization stage and then fixed in the second optimization stage, in which the second view (bottom) is optimized. Notably, the first view was reoriented from the coronal view to an equivalent of the clinical 4CH view in the first 20 epochs. Views are also depicted in 3D, where view planes of epoch 0 were reoriented to view planes of epoch 80, as indicated by the arrows.}
         \label{fig:resulting_views}
     \end{figure}

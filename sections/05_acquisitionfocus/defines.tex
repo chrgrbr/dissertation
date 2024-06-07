@@ -1,0 +1,27 @@
+\DeclareSIUnit\vox{vox}
+\DeclareSIUnit\pix{pix}
+\DeclareSIUnit\million{M}
+\newcommand{\sipct}[1]{\SI[mode=text, retain-explicit-plus]{#1}{\percent}}
+\DeclareSIUnit{\nothing}{\relax}
+\newcommand{\sinum}[1]{\SI[mode=text, retain-explicit-plus]{#1}{\nothing}}
+\newcommand{\simm}[1]{\SI[mode=text]{#1}{\milli\meter}}
+\newcommand{\simmtuple}[3]{\sinum{#1}$\times$\sinum{#2}$\times$\SI[mode=text]{#3}{\cubic\milli\meter}}
+\newcommand{\sivoxtuple}[3]{\sinum{#1}$\times$\sinum{#2}$\times$\SI[mode=text]{#3}{\vox}}
+\newcommand{\sipixtuple}[2]{\sinum{#1}$\times$\SI[mode=text]{#2}{\pix}}
+\newcommand{\simmpervoxtuple}[3]{\sinum{#1}$\times$\sinum{#2}$\times$\SI[mode=text, per-mode=symbol]{#3}{\cubic\milli\meter\per\vox}}
+\newcommand{\simmpervoxtwotuple}[2]{\sinum{#1}$\times$\SI[mode=text, per-mode=symbol]{#2}{\square\milli\meter\per\vox}}
+\newcommand{\simin}[1]{\SI[mode=text]{#1}{\minute}}
+\newcommand{\sims}[1]{\SI[mode=text]{#1}{\milli\second}}
+\newcommand{\sigb}[1]{\SI[mode=text]{#1}{\giga\byte}}
+\newcommand{\simillion}[1]{\SI[mode=text]{#1}{\million}}
+
+\sisetup{detect-weight=true,mode=text,tight-spacing=true} % CUSTOM ADDED
+
+\definecolor{magma_purple}{rgb}{0.550287 0.161158 0.505719}% CUSTOM ADDED
+\newrobustcmd\BR[1]{($#1$)} % CUSTOM ADDED
+\newrobustcmd\B{\DeclareFontSeriesDefault[rm]{bf}{b}\bfseries\color{magma_purple}} % CUSTOM ADDED
+% \newrobustcmd\B[1]{\textbf{\textcolor{magma_purple}{#1}}}% CUSTOM ADDED
+
+
+
+\newcommand*{\thisPath}{sections/05_acquisitionfocus}%
