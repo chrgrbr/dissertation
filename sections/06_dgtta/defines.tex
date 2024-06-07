@@ -1,0 +1,78 @@
+\sisetup{detect-weight=true,mode=text,tight-spacing=true}
+% \newrobustcmd\B{\DeclareFontSeriesDefault[rm]{bf}{b}\bfseries}
+
+% \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+%     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\newcommand{\legendbox}[1]{%
+    \textcolor{#1}{\rule{\fontcharht\font`X}{\fontcharht\font`X}}%
+}
+
+% \DeclareSIUnit\vox{vox}
+% \newcommand{\sipct}[1]{\SI[mode=text, retain-explicit-plus]{#1}{\percent}}
+% \DeclareSIUnit{\nothing}{\relax}
+% \newcommand{\sinum}[1]{\SI[mode=text, retain-explicit-plus]{#1}{\nothing}}
+% \newcommand{\simm}[1]{\SI[mode=text]{#1}{\milli\meter}}
+% \newcommand{\simmtuple}[3]{\sinum{#1}$\times$\sinum{#2}$\times$\SI[mode=text]{#3}{\cubic\milli\meter}}
+% \newcommand{\sivoxtuple}[3]{\sinum{#1}$\times$\sinum{#2}$\times$\SI[mode=text]{#3}{\vox}}
+% \newcommand{\simmpervoxtuple}[3]{\sinum{#1}$\times$\sinum{#2}$\times$\SI[mode=text, per-mode=symbol]{#3}{\cubic\milli\meter\per\vox}}
+
+\newcommand{\veryshortarrow}[1][3pt]{\mathrel{%
+   \hbox{\rule[\dimexpr\fontdimen22\textfont2-.2pt\relax]{#1}{.4pt}}%
+   \mkern-4mu\hbox{\usefont{U}{lasy}{m}{n}\symbol{41}}}}
+
+\newcommand{\fromto}[2]{\mbox{#1\,$\veryshortarrow$\,#2}}
+\newcommand{\bplotdescription}{%
+    Ordinate shows Dice scores in \%. Median (-),  mean (+) and the change in mean scores ($\rightarrow$) is depicted for boxes. Significance of improvement is shown above boxes (\textsuperscript{*}\mbox{p\textless0.05}; \textsuperscript{**}\mbox{p\textless0.01}; \textsuperscript{***}\mbox{p\textless0.001}).
+}
+
+\definecolor{hi_1}{rgb}{0.9058823529411765, 0.2784313725490196, 0.3686274509803922}
+\definecolor{hi_2}{rgb}{0.9411764705882353, 0.8470588235294118, 0.4745098039215686}
+\definecolor{hi_3}{rgb}{0.4745098039215686, 0.8627450980392157, 0.9411764705882353}
+\definecolor{hi_4}{rgb}{0.1411764705882353, 0.5333333333333333, 0.5333333333333333}
+
+\definecolor{map10_1}{rgb}{0.90588, 0.27843, 0.36862}
+\definecolor{map10_2}{rgb}{0.91750, 0.46574, 0.40350}
+\definecolor{map10_3}{rgb}{0.92913, 0.65305, 0.43838}
+\definecolor{map10_4}{rgb}{0.94117, 0.84705, 0.47450}
+\definecolor{map10_5}{rgb}{0.78745, 0.85222, 0.62823}
+\definecolor{map10_6}{rgb}{0.62823, 0.85757, 0.78745}
+\definecolor{map10_7}{rgb}{0.47450, 0.86274, 0.94117}
+\definecolor{map10_8}{rgb}{0.36078, 0.75035, 0.80202}
+\definecolor{map10_9}{rgb}{0.25098, 0.64184, 0.66768}
+\definecolor{map10_10}{rgb}{0.14117, 0.53333, 0.53333}
+
+\definecolor{map5_1}{rgb}{0.90588, 0.27843, 0.36862}
+\definecolor{map5_2}{rgb}{0.93245, 0.70657, 0.44835}
+\definecolor{map5_3}{rgb}{0.70509, 0.85499, 0.71058}
+\definecolor{map5_4}{rgb}{0.38823, 0.77748, 0.83561}
+\definecolor{map5_5}{rgb}{0.14117, 0.53333, 0.53333}
+
+\setlength{\intextsep}{6pt}%
+\makeatletter
+\if@twocolumn
+\newcommand{\columnfigure}[5][]{
+    \begin{figure}[#1]
+        \centering
+        \includegraphics[width=#3\columnwidth]{#2}
+        \caption{#4}
+        \label{#5}
+    \end{figure}
+}
+\else
+\newcommand{\columnfigure}[5][]{
+    % \begin{wrapfigure}{r}{.5\columnwidth}
+    %     \centering
+    %     \includegraphics[width=#3\linewidth]{#2}
+    %     \caption{#4}
+    %     \label{#5}
+    % \end{wrapfigure}
+    \begin{figure}{#1}
+        \centering
+        \includegraphics[width=\linewidth*\real{.5}*\real{#3}]{#2}
+        \caption{#4}
+        \label{#5}
+    \end{figure}
+}
+\fi
+\makeatother
