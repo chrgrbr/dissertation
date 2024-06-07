@@ -11,18 +11,19 @@
 	numbers=noenddot,
 ]{scrbook}
 
+% Add resources
 \input{includes}
 \input{defines}
 
-\newcommand*{\acFocusPath}{sections/05_acquisitionfocus}
-\input{sections/05_acquisitionfocus/includes}
-\input{sections/05_acquisitionfocus/defines}
 
 % \addbibresource{bib/journals_first_author.bib}
 % \addbibresource{bib/proceedings_first_author.bib}
 % \addbibresource{bib/proceedings_co_author.bib}
 
-% \addbibresource{sections/05_acquisitionfocus/refs.bib}
+\newcommand*{\acFocusPath}{sections/05_acquisitionfocus}
+\input{\acFocusPath/includes}
+\input{\acFocusPath/defines}
+\addbibresource{\acFocusPath/refs.bib}
 
 \begin{document}
     \thispagestyle{headings}
