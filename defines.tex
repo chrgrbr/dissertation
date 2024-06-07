@@ -1,0 +1,333 @@
+\addtokomafont{disposition}{\rmfamily}
+
+\let\abbrev\nomenclature
+\renewcommand{\nomname}{Abkürzungsverzeichnis}
+\setlength{\nomlabelwidth}{.15\hsize}
+\renewcommand{\nomlabel}[1]{#1 }%\dotfill}
+\setlength{\nomitemsep}{-\parsep}
+\makenomenclature
+
+\newcommand{\markup}[1]{\uline{#1}}
+\counterwithout{footnote}{chapter}
+
+\usetikzlibrary{positioning,arrows.meta}
+\tikzdeclarecoordinatesystem{timeline}{% #1 is the date in years
+    \pgfmathsetmacro\myx{(#1-2018)*3}
+    \pgfpointxy{\myx}{0}
+}
+\usetikzlibrary{calc}
+
+\makeatletter
+\newsavebox{\measure@tikzpicture}
+\NewEnviron{scaletikzpicturetowidth}[1]{%
+    \def\tikz@width{#1}%
+    \def\tikzscale{1}\begin{lrbox}{\measure@tikzpicture}%
+    \BODY
+    \end{lrbox}%
+    \pgfmathparse{#1/\wd\measure@tikzpicture}%
+    \edef\tikzscale{\pgfmathresult}%
+    \BODY
+}
+\makeatother
+\def\centerarc[#1](#2)(#3:#4:#5)% Syntax: [draw options] (center) (initial angle:final angle:radius)
+{ \draw[#1] ($(#2)+({#5*cos(#3)},{#5*sin(#3)})$) arc (#3:#4:#5); }
+
+
+\setlist[itemize]{leftmargin=*}
+\setlist[enumerate]{leftmargin=*}
+
+\linespread{1.05}
+\typearea[current]{last}
+
+\hypersetup{pdfprintscaling=None}
+
+\defbibheading{subbibliography}[List of Publications]{%
+    \addsec*{#1}%
+    \markboth{List of Publications}{#1}% DELETED
+}% NEW
+
+
+\setlength{\bibitemsep}{0.25em}     % Abstand zwischen den Literaturangaben
+\setlength{\bibhang}{3em}        % Einzug nach jeweils erster Zeile
+
+\preto\fullcite{\AtNextCite{\defcounter{maxnames}{99}}}
+
+\AtEveryBibitem{\clearname{editor}}
+\AtEveryBibitem{\clearlist{organization}}
+\AtEveryBibitem{\clearlist{location}}
+\AtEveryBibitem{\clearfield{month}}
+\AtEveryCitekey{\clearname{editor}}
+\AtEveryCitekey{\clearlist{organization}}
+\AtEveryCitekey{\clearlist{location}}
+\AtEveryCitekey{\clearfield{series}}
+\AtEveryCitekey{\clearfield{month}}
+\newif\ifPubList
+\AtEveryBibitem{\renewcommand*{\mkbibnamegiven}[1]{\ifPubList\ifitemannotation{bold}{\textbf{#1}}{#1}\else{#1}\fi\ifitemannotation{equal}{\textsuperscript{\textbf{*}}}}}
+\AtEveryBibitem{\ifPubList\renewcommand*{\mkbibnamefamily}[1]{\ifitemannotation{bold}{\textbf{#1}}{#1}}\fi}
+\AtEveryCite{\renewcommand*{\mkbibnamegiven}[1]{\ifitemannotation{equal}{{#1}\textsuperscript{\textbf{*}}}{#1}}}
+\DeclareNameAlias{author}{family-given}
+\renewbibmacro{in:}{\ifentrytype{article}{}{\printtext{\bibstring{in}\intitlepunct}}}
+
+\renewbibmacro*{volume+number+eid}{%
+  \printfield{volume}%
+  \setunit*{\addnbthinspace}%
+  \printfield{number}%
+  \setunit{\addcomma\space}%
+  \printfield{eid}}
+\DeclareFieldFormat[article]{number}{\mkbibparens{#1}}
+
+\DeclareSortingTemplate{ymdnt}{
+  \sort{
+    \field{presort}
+  }
+  \sort[final]{
+    \field{sortkey}
+  }
+  \sort[direction=descending]{
+    \field[strside=left,strwidth=4]{sortyear}
+    \field[strside=left,strwidth=4]{year}
+    \literal{9999}
+  }
+  \sort[direction=descending]{
+    \field{month}
+    \literal{9999}
+  }
+  \sort{
+    \field{sortname}
+    \field{author}
+    \field{editor}
+    \field{translator}
+    \field{sorttitle}
+    \field{title}
+  }
+  \sort{
+    \field{sorttitle}
+    \field{title}
+  }
+}
+
+\makeatletter
+
+\newrobustcmd*{\parentexttrack}[1]{%
+  \begingroup
+  \blx@blxinit
+  \blx@setsfcodes
+  \blx@bibopenparen#1\blx@bibcloseparen
+  \endgroup}
+
+\AtEveryCite{%
+  \let\parentext=\parentexttrack%
+  \let\bibopenparen=\bibopenbracket%
+  \let\bibcloseparen=\bibclosebracket}
+
+\makeatother
+
+\newcounter{mymaxcitenames}
+\AtBeginDocument{%
+  \setcounter{mymaxcitenames}{\value{maxnames}}%
+}
+
+\renewbibmacro*{begentry}{%
+  \printtext[brackets]{%
+    \begingroup
+    \defcounter{maxnames}{\value{mymaxcitenames}}%
+    \printnames{labelname}%
+    \setunit{\nameyeardelim}%
+    \usebibmacro{cite:labeldate+extradate}%
+    \endgroup
+    }
+\enspace
+}
+
+\renewbibmacro*{issue+date}{%
+  \setunit{\addcomma\space}% NEW
+%  \printtext[parens]{% DELETED
+    \iffieldundef{issue}
+      {\usebibmacro{date}}
+      {\printfield{issue}%
+       \setunit*{\addspace}%
+%       \usebibmacro{date}}}% DELETED
+       \usebibmacro{date}}% NEW
+  \newunit}
+
+\DeclareNameAlias{sortname}{first-last}
+
+\defbibenvironment{mypubs2}
+  {\enumerate[widest=50]
+     {}
+     {\setlength{\labelwidth}{\labelnumberwidth}%
+      \setlength{\leftmargin}{\labelwidth}%
+      \setlength{\labelsep}{\biblabelsep}%
+      \addtolength{\leftmargin}{\labelsep}%
+      \setlength{\itemsep}{\bibitemsep}%
+      \setlength{\parsep}{\bibparsep}}%
+      \renewcommand*{\makelabel}[1]{\hss##1}}
+  {\endenumerate}
+  {\item}
+
+\defbibenvironment{mypubs1}
+  {\itemize
+     {}
+     {\setlength{\labelwidth}{\labelnumberwidth}%
+      \setlength{\leftmargin}{\labelwidth}%
+      \setlength{\labelsep}{\biblabelsep}%
+      \addtolength{\leftmargin}{\labelsep}%
+      \setlength{\itemsep}{\bibitemsep}%
+      \setlength{\parsep}{\bibparsep}}%
+      \renewcommand*{\makelabel}[1]{\hss##1}}
+  {\enditemize}
+  {\item[--]}
+
+
+\defbibcheck{mynocitejourn}{%
+  \ifboolexpr{test {\ifkeyword{ownjourn}}}
+    {}
+    {\skipentry}
+}
+
+\defbibcheck{mynociteconf}{%
+  \ifboolexpr{test {\ifkeyword{ownconf}}}
+    {}
+    {\skipentry}
+}
+
+\usepackage{xcolor}
+
+
+
+% Layoutmodifikationen
+\renewcommand{\arraystretch}{1.1}
+\setkomafont{captionlabel}{\bfseries\textsf\sffamily}
+\setkomafont{caption}{\textsf\sffamily}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+\renewcaptionname{english}{\figurename}{Fig.}
+
+%% FARBEN:
+\newcommand\crule[3][black]{\textcolor{#1}{\rule{#2}{#3}}}
+\definecolor{uzl_ocean}{cmyk}{1,.0,.20,.78} % RGB 0 75 90
+\definecolor{uzl_gray1}{RGB}{80,105,121} % 34 13 0 53
+\definecolor{uzl_gray2}{RGB}{101,101,101} % 0 0 0 60
+\definecolor{uzl_gray3}{RGB}{117,115,105} % 0 2 10 54
+\definecolor{gst_orange}{RGB}{245,154,0} % 0 37 100 4
+% blue rgb: 60 169 213, cmyk: 72 21 0 16
+% red  rgb: 181 22 33,  cmyk: 0 88 82 29
+\definecolor{Ocean}{cmyk}{1,0,0.2,0.78}
+\definecolor{Grey}{cmyk}{0,0,0,0.6}
+\definecolor{ULGray}{cmyk}{0,0,0.03,0.1}
+\definecolor{mygreen}{RGB}{0,127,0}
+\definecolor{myred}{RGB}{255,0,0}
+\definecolor{myblue}{RGB}{0,0,255}
+\definecolor{rightkidney}{RGB}{255,232,0}
+\definecolor{liver}{RGB}{110,15,202}
+\definecolor{stomach}{RGB}{251,14,255}
+\definecolor{leftkidney}{RGB}{63,182,73}
+\definecolor{esophagus}{RGB}{0,114,255}
+\definecolor{spleen}{RGB}{210,2,0}
+\definecolor{pancreas}{RGB}{46,175,181}
+\definecolor{aorta}{RGB}{170,107,0}
+\definecolor{venacava}{RGB}{254,161,68}
+\definecolor{gall}{RGB}{0,252,124}
+\definecolor{lag}{RGB}{107,0,208}
+\definecolor{rag}{RGB}{62,27,203}
+\definecolor{portal_vein}{RGB}{0,132,32}
+\definecolor{legend_pcdd}{RGB}{0,176,240}
+\definecolor{legend_pcdmed}{RGB}{112,48,160}
+\definecolor{legend_single}{RGB}{169,209,142}
+\definecolor{legend_sequence}{RGB}{56,87,35}
+\definecolor{legend_ind}{RGB}{255,192,0}
+\definecolor{legend_da}{RGB}{191,144,0}
+\newcommand{\tikzcircle}[2][red,fill=red]{\tikz[baseline=-0.5ex]\draw[#1,radius=#2] (0,0) circle ;}
+\DeclareRobustCommand{\legendsquare}[1]{%
+  \textcolor{#1}{\rule{1.5ex}{1.5ex}}%
+}
+%schusterjungen und hurenkinder vermeiden
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+
+\DeclareMathAlphabet{\mb}{OT1}{cmr}{bx}{it}
+
+%% my definitions
+\newcommand{\mB}[1]{\mathbf{#1}}
+\newcommand{\mspan}[1]{\mathrm{span}(#1)}
+\newcommand{\todo}[1]{\textbf{\textcolor{red}{#1}}} %creates a red markup
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\zB}{\mbox{z.\,B.}\xspace}
+\newcommand{\ua}{\mbox{u.\,a.}\xspace}
+\newcommand{\uU}{\mbox{u.\,U.}\xspace}
+\newcommand{\printpublication}[1]{\AtNextCite{\defcounter{maxnames}{99}}\fullcite[][]{#1}}
+
+\recalctypearea
+
+\newlength{\displacement}
+\setlength{\displacement}{3mm}
+\addtolength{\oddsidemargin}{\displacement}
+\addtolength{\evensidemargin}{-\displacement}
+\addtolength{\marginparwidth}{-\displacement}
+
+\def\makenamesetup{%
+\def\bibnamedelima{~}%
+\def\bibnamedelimb{ }%
+\def\bibnamedelimc{ }%
+\def\bibnamedelimd{ }%
+\def\bibnamedelimi{ }%
+\def\bibinitperiod{.}%
+\def\bibinitdelim{~}%
+\def\bibinithyphendelim{.-}}
+\newcommand*{\makename}[2]{\begingroup\makenamesetup\xdef#1{#2}\endgroup}
+
+\newcommand*{\boldname}[3]{%
+  \def\lastname{#1}%
+  \def\firstname{#2}%
+  \def\firstinit{#3}}
+\boldname{}{}{}
+
+\boldname{Author}{Some}{S.}
+
+\usepackage[normalem]{ulem}
+
+\makeatletter
+\newcommand{\namehighighter}[1]{%
+  \ifboolexpr{(test {\ifdefequal{\firstname}{\namepartgiven}}
+               or test {\ifdefequal{\firstinit}{\namepartgiven}})
+              and test {\ifdefequal{\lastname}{\namepartfamily}}}
+    {\uline{#1}}
+    {#1}}
+
+\renewbibmacro*{name:family-given}[4]{%
+  \usebibmacro{name:delim}{#1#2#3}%
+  \usebibmacro{name:hook}{#1#2#3}%
+  \namehighighter{%
+  \mkbibnamefamily{#1}\isdot\addcomma
+  \ifdefvoid{#4}{}{\bibnamedelimd\mkbibnamesuffix{#4}\isdot}
+  \ifdefvoid{#2}{}{\mkbibnamegiven{#2}\isdot}%
+  }}
+\makeatother
+
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\renewcommand{\thealgocf}{}
+
+\makeatletter
+\renewcommand*{\@algocf@pre@ruled}{\hrule height 1.5pt depth0pt \kern\belowrulesep}
+\renewcommand*{\algocf@caption@ruled}{\box\algocf@capbox\kern\aboverulesep\hrule height\lightrulewidth\kern\belowrulesep}
+\renewcommand*{\@algocf@post@ruled}{\kern\aboverulesep\hrule height 1.5pt}
+\makeatother
+
+\makeatletter
+% Remove right hand margin in algorithm
+\patchcmd{\@algocf@start}% <cmd>
+  {-1.5em}% <search>
+  {0pt}% <replace>
+  {}{}% <success><failure>
+\makeatother
+
+\DeclareMathOperator*{\avg}{avg}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\newcommand{\shared}[1]{\uline{Hermes*, N.}}
+
+\pdfsuppresswarningpagegroup=1
+
+\renewcommand\bibname{References}
