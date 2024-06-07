@@ -54,7 +54,7 @@
 
     \paragraph{Abdomen-CT}
     % The public ``beyond the cranial vault''
-    \begin{figure}[t]
+    \begin{figure}
         \vspace{-20pt}\caption{Left: Overview of model resource usage and accuracy on abdomen CT experiments. XEdgeConv excels with the smallest number of parameters and FLOPS and second best accuracy. Right: The validation accuracy and standard deviation w.r.t. to the number of training epochs.}
         \label{fig:results}
         \includegraphics[width=\linewidth]{\xedgeconvPath/figures/geomed2022_figure_xedge_bubble.pdf}
@@ -86,7 +86,7 @@
         Heavy-baseline  & 30.5 M & normal&95.2&93.7&93.2&73.3&76.9&96.8&91.1&91.6&76.3& 84.4 $\pm$ 3.2\%\\
         \end{tabular}}
     \end{table}
-    \begin{figure}[ht]
+    \begin{figure}
         \caption{Prediction on a normally orientated scan (left) and a permuted input (right).
         Our XEdgeConv method maintains performance.
         }
@@ -120,7 +120,7 @@
 
     Test case predictions are more convincing for some classes (e.g. the left atrium and pulmonary artery in Fig.\,\ref{fig:visual_mmwhs}).
 
-    \begin{figure}[h]
+    \begin{figure}
         \vspace{-20pt}\caption{Heavy-baseline and XEdgeConv predictions given a RIA oriented test case. Networks were trained on AIL oriented data. With our method more reasonable predictions are achieved (see left atrium and right ventricle prediction, arrow). Class labels see Tab.\,\ref{tab:results_mmwhs}.}
         \label{fig:visual_mmwhs}
         \includegraphics[width=\linewidth]{\xedgeconvPath/figures/mmwhs_overview.pdf}
