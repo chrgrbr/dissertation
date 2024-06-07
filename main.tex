@@ -25,6 +25,11 @@
 \input{\acFocusPath/defines}
 \addbibresource{\acFocusPath/refs.bib}
 
+\newcommand*{\dgttaPath}{sections/06_dgtta}
+\input{\dgttaPath/includes}
+\input{\dgttaPath/defines}
+\addbibresource{\dgttaPath/refs.bib}
+
 \begin{document}
     \thispagestyle{headings}
     \pagenumbering{roman}
@@ -51,7 +56,10 @@
     % \input{sections/04_xedgeconv}
     \chapter[AcquisitionFocus]{AcquisitionFocus: Joint Optimization of Acquisition Orientation and Cardiac Volume Reconstruction using Deep Learning}
         \input{sections/05_acquisitionfocus/text}
-    % \input{sections/06_dgtta}
+
+    \chapter[DG-TTA]{DG-TTA: Out-of-domain medical image segmentation through Domain Generalization and Test-Time Adaptation}
+        \input{sections/06_dgtta/text}
+
     \input{sections/7_conclusion}
 
     \printbibliography[heading=bibintoc]
