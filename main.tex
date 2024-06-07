@@ -20,6 +20,11 @@
 % \addbibresource{bib/proceedings_first_author.bib}
 % \addbibresource{bib/proceedings_co_author.bib}
 
+\newcommand*{\deepstaplePath}{sections/03_deepstaple}
+\input{\deepstaplePath/includes}
+\input{\deepstaplePath/defines}
+\addbibresource{\deepstaplePath/refs.bib}
+
 \newcommand*{\xedgeconvPath}{sections/04_xedgeconv}
 \input{\xedgeconvPath/includes}
 \input{\xedgeconvPath/defines}
@@ -57,7 +62,9 @@
     %%% Chapters
     \input{sections/1_introduction}
     \input{sections/2_background}
-    % \input{sections/03_deepstaple}
+
+    \chapter[DeepSTAPLE]{DeepSTAPLE: Learning to predict multimodal registration quality for unsupervised domain adaptation}
+        \input{sections/03_deepstaple/text}
     \chapter[XEdgeConv]{XEdgeConv: Leveraging graph convolutions for efficient, permutation- and rotation-invariant dense 3D medical image segmentation}
         \input{sections/04_xedgeconv/text}
     \chapter[AcquisitionFocus]{AcquisitionFocus: Joint Optimization of Acquisition Orientation and Cardiac Volume Reconstruction using Deep Learning}

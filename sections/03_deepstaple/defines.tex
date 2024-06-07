@@ -1,0 +1,23 @@
+% \newcommand{\legendbox}[1]{%
+%     \textcolor{#1}{\rule{\fontcharht\font`X}{\fontcharht\font`X}}%
+% } % https://tex.stackexchange.com/questions/224377/color-filled-box-in-text-area-with-size-corresponding-to-font-size
+
+\newcommand\legendboxoutline[1]{\begingroup
+    \fboxsep=0pt\raisebox{\fboxrule}{%
+        \fbox{\textcolor{#1}{\rule{\fontcharht\font`X}{\fontcharht\font`X}}%
+}}\endgroup}
+
+\DeclareRobustCommand\sampleline[1]{%
+  \tikz\draw[#1] (0,0) (0,\the\dimexpr\fontdimen22\textfont2\relax)
+  -- (1em,\the\dimexpr\fontdimen22\textfont2\relax);%
+}
+
+\definecolor{purple}{rgb}{0.48,0.33,0.69}
+\definecolor{red}{rgb}{0.85,0.30,0.30}
+\definecolor{yellow}{rgb}{0.93,0.71,0.20}
+\definecolor{green}{rgb}{0.53,0.80,0.75}
+
+\definecolor{regred}{rgb}{0.80,0.22,0.59}
+\definecolor{regblue}{rgb}{0.50,0.54,1.00}
+
+\renewcommand{\textpipe}{|}
