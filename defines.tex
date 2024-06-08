@@ -327,3 +327,49 @@
 \pdfsuppresswarningpagegroup=1
 
 \renewcommand\bibname{References}
+
+% Create different bibliography groups which can be accessed independently later.
+\DeclareSourcemap{
+  \maps[datatype=bibtex, overwrite]{
+    \map{
+      \perdatasource{bib/journals_first_author.bib}
+      \step[fieldset=keywords, fieldvalue={, }, appendstrict]
+      \step[fieldset=keywords, fieldvalue=journals_first_author, append]
+    }
+    \map{
+      \perdatasource{bib/journals_co_author.bib}
+      \step[fieldset=keywords, fieldvalue={, }, appendstrict]
+      \step[fieldset=keywords, fieldvalue=journals_co_author, append]
+    }
+    \map{
+      \perdatasource{bib/proceedings_first_author.bib}
+      \step[fieldset=keywords, fieldvalue={, }, appendstrict]
+      \step[fieldset=keywords, fieldvalue=proceedings_first_author, append]
+    }
+    \map{
+      \perdatasource{bib/proceedings_co_author.bib}
+      \step[fieldset=keywords, fieldvalue={, }, appendstrict]
+      \step[fieldset=keywords, fieldvalue=proceedings_co_author, append]
+    }
+    \map{
+      \perdatasource{bib/abstracts_first_author.bib}
+      \step[fieldset=keywords, fieldvalue={, }, appendstrict]
+      \step[fieldset=keywords, fieldvalue=abstracts_first_author, append]
+    }
+    \map{
+      \perdatasource{bib/abstracts_co_author.bib}
+      \step[fieldset=keywords, fieldvalue={, }, appendstrict]
+      \step[fieldset=keywords, fieldvalue=abstracts_co_author, append]
+    }
+    \map{
+      \perdatasource{bib/preprints_first_author.bib}
+      \step[fieldset=keywords, fieldvalue={, }, appendstrict]
+      \step[fieldset=keywords, fieldvalue=preprints_first_author, append]
+    }
+    \map{
+      \perdatasource{bib/preprints_co_author.bib}
+      \step[fieldset=keywords, fieldvalue={, }, appendstrict]
+      \step[fieldset=keywords, fieldvalue=preprints_co_author, append]
+    }
+  }
+}

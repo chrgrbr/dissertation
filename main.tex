@@ -4,9 +4,14 @@
 \input{includes}
 \input{defines}
 
-% \addbibresource{bib/journals_first_author.bib}
-% \addbibresource{bib/proceedings_first_author.bib}
-% \addbibresource{bib/proceedings_co_author.bib}
+\addbibresource{bib/journals_first_author.bib}
+\addbibresource{bib/journals_co_author.bib}
+\addbibresource{bib/proceedings_first_author.bib}
+\addbibresource{bib/proceedings_co_author.bib}
+\addbibresource{bib/abstracts_first_author.bib}
+\addbibresource{bib/abstracts_co_author.bib}
+\addbibresource{bib/preprints_first_author.bib}
+\addbibresource{bib/preprints_co_author.bib}
 
 \newcommand*{\deepstaplePath}{sections/03_deepstaple}
 \input{\deepstaplePath/includes}
@@ -69,40 +74,49 @@
     \chapter{Summary}
         \input{sections/7_summary} % 10p
     % p++31
+
     \printbibliography[heading=bibintoc]
 
     \addchap{List of publications}
 
-    \section*{Journal articles as first author}
-        \begin{itemize}
-            \item s
-        \end{itemize}
+        \begin{refsection}[bib/journals_first_author]
+            \nocite{*}
+            \printbibliography[title={Journal articles as first author}, heading=subbibliography, keyword=journals_first_author]
+        \end{refsection}
 
-    \section*{Conference papers as first author}
-        \begin{itemize}
-            \item s
-        \end{itemize}
+        \begin{refsection}[bib/proceedings_first_author]
+            \nocite{*}
+            \printbibliography[title={Conference papers as first author}, heading=subbibliography, keyword=proceedings_first_author]
+        \end{refsection}
 
-    \section*{Abstracts as first author}
-        \begin{itemize}
-            \item s
-        \end{itemize}
+        \begin{refsection}[bib/abstracts_first_author]
+            \nocite{*}
+            \printbibliography[title={Abstracts as first author}, heading=subbibliography, keyword=abstracts_first_author]
+        \end{refsection}
 
-    \section*{Journal articles as co-author}
-        \begin{itemize}
-            \item s
-        \end{itemize}
+        % \begin{refsection}[bib/journals_co_author]
+        %     \nocite{*}
+        %     \printbibliography[title={Journal articles as co-author}, heading=subbibliography, keyword=journals_co_author]
+        % \end{refsection}
 
-    \section*{Conference papers as co-author}
-        \begin{itemize}
-            \item s
-        \end{itemize}
+        \begin{refsection}[bib/proceedings_co_author]
+            \nocite{*}
+            \printbibliography[title={Conference papers as co-author}, heading=subbibliography, keyword=proceedings_co_author]
+        \end{refsection}
 
-    \section*{Abstracts as co-author}
-        \begin{itemize}
-            \item s
-        \end{itemize}
+        % \begin{refsection}[bib/abstracts_co_author]
+        %     \nocite{*}
+        %     \printbibliography[title={Abstracts as co-author}, heading=subbibliography, keyword=abstracts_co_author]
+        % \end{refsection}
 
+        \begin{refsection}[bib/preprints_first_author]
+            \nocite{*}
+            \printbibliography[title={Preprints as first author}, heading=subbibliography, keyword=preprints_first_author]
+        \end{refsection}
 
+        % \begin{refsection}[bib/preprints_co_author]
+        %     \nocite{*}
+        %     \printbibliography[title={Preprints as co-author}, heading=subbibliography, keyword=preprints_co_author]
+        % \end{refsection}
 
 \end{document}
