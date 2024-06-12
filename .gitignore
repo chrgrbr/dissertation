@@ -304,3 +304,5 @@ TSWLatexianTemp*
 *.mtc
 
 build/*
+
+.DS_Store
