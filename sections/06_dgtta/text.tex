@@ -69,106 +69,106 @@
     % {https://www.overleaf.com/blog/278-how-to-use-overleaf-with-}\discretionary{}{}{}\underline
     % {ieee-collabratec-your-quick-guide-to-getting-started\#.}\discretionary{}{}{}\underline{xsVp6tpPkrKM9}
 
-\section{Related work}
-    % Selection based on \url{https://github.com/zhaoxin94/awesome-domain-adaptation}
-    \label{sec:related_work}
-    \subsection{Unsupervised- and source-free domain adaptation} % Access to source, access to unlabeled targets
-    Unsupervised domain adaptation provides the benefit that no labels of the target domain must be available to adapt a model. Methods have been developed to translate input images for optimal fit for the trained model, such as generative adversarial approaches: In \emph{CycleGAN}  \cite{zhu2017unpaired}, unpaired image-to-image translation is performed using two mapping functions to map an image to another domain and vice-versa supervised by discriminator-based- and cycle- consistency losses. Later, \emph{CUT} and \emph{FastCUT} \cite{park2020contrastive}  were developed, optimizing an encoder-decoder structure to extract domain-invariant features and add domain-specific information in the decoding step.  % TODO add \cite{choi2021using}. % encoder decoder structure where the encoder learns domain-invariant features utilizing mutual information of patches and a decoder learns adding domain specific features to the encoded input again.
-    % later than cycleGAN CUT / FASTCUT
-    % This approach was e.g. applied to the CrossMoDa challenge task \cite{dorent2023crossmoda}, where contrast-enhanced T1 weighted images were translated to high-resolution T2 weighted MRI
-    % and similarly in \cite{chen2020unsupervised} where CT and MRI domains were bridged. %TODO readd again
-     % Artificially styled and real images of the target domain were processed by an synergistic encoder. To this encoder an image decoder regenerating a source-styled image and a segmentation head was attached. The features of the resulting output branches were then trained with two additional discriminator-based losses aiming to align the segmentation and image space features.
-    %SFDA:  No access to source, access to the "complete" unlabeled targets distribution
-    Adversely, in \cite{varsavsky2020test}, %TODO add: orbes2019multi, orbes2022augmentation
-    the segmentation network is forced to produce domain-invariant features by reversing the gradients of a domain classifier. At the same time, the decision boundary of class predictions is optimized using a consistency soft Dice loss of augmented input samples. The authors present UDA approaches that work with multiple and even on a single target sample. % Test-time Unsupervised Domain Adaptation: Adversarial training (inverted grads for domain classification) and consistency training (also soft-dice loss) combined.
-    % \cite{orbes2022augmentation} % Augmentation based unsupervised domain adaptation: Same as ours, but domain discriminator, brain task only,
-    % To perform the domain translation source and target image data needs to be available at the same time.
+    \subsection{Related work}
+        % Selection based on \url{https://github.com/zhaoxin94/awesome-domain-adaptation}
+        \label{sec:related_work}
+        \subsubsection{Unsupervised- and source-free domain adaptation} % Access to source, access to unlabeled targets
+        Unsupervised domain adaptation provides the benefit that no labels of the target domain must be available to adapt a model. Methods have been developed to translate input images for optimal fit for the trained model, such as generative adversarial approaches: In \emph{CycleGAN}  \cite{zhu2017unpaired}, unpaired image-to-image translation is performed using two mapping functions to map an image to another domain and vice-versa supervised by discriminator-based- and cycle- consistency losses. Later, \emph{CUT} and \emph{FastCUT} \cite{park2020contrastive}  were developed, optimizing an encoder-decoder structure to extract domain-invariant features and add domain-specific information in the decoding step.  % TODO add \cite{choi2021using}. % encoder decoder structure where the encoder learns domain-invariant features utilizing mutual information of patches and a decoder learns adding domain specific features to the encoded input again.
+        % later than cycleGAN CUT / FASTCUT
+        % This approach was e.g. applied to the CrossMoDa challenge task \cite{dorent2023crossmoda}, where contrast-enhanced T1 weighted images were translated to high-resolution T2 weighted MRI
+        % and similarly in \cite{chen2020unsupervised} where CT and MRI domains were bridged. %TODO readd again
+        % Artificially styled and real images of the target domain were processed by an synergistic encoder. To this encoder an image decoder regenerating a source-styled image and a segmentation head was attached. The features of the resulting output branches were then trained with two additional discriminator-based losses aiming to align the segmentation and image space features.
+        %SFDA:  No access to source, access to the "complete" unlabeled targets distribution
+        Adversely, in \cite{varsavsky2020test}, %TODO add: orbes2019multi, orbes2022augmentation
+        the segmentation network is forced to produce domain-invariant features by reversing the gradients of a domain classifier. At the same time, the decision boundary of class predictions is optimized using a consistency soft Dice loss of augmented input samples. The authors present UDA approaches that work with multiple and even on a single target sample. % Test-time Unsupervised Domain Adaptation: Adversarial training (inverted grads for domain classification) and consistency training (also soft-dice loss) combined.
+        % \cite{orbes2022augmentation} % Augmentation based unsupervised domain adaptation: Same as ours, but domain discriminator, brain task only,
+        % To perform the domain translation source and target image data needs to be available at the same time.
 
-    To further reduce the need to share source data, UDA was sought to be replaced by SFDA methods \cite{yang2022source,wen2023source,chen2021source}.
-    Here, a common approach is to leverage pseudo-labels generated by the non-adapted base model and refine them to supervise the model adaptation. In \cite{chen2021source}, estimated class centroids were used as a proxy, and pixel-level uncertainties were used to discard inaccuracies of pseudo labels.
-    % % \cite{chen2021source} SFDA. Use class centroids and the distances of individually classified pixels to discard fg pixels if the background centroid is nearer to the pixel than the fg centroid -> this gives pseudo labels with which a target model is supervised.
-    More complex proxy pseudo-supervision schemes exist, such as in \cite{yang2022source}, where three cascaded base model variants with differing fixed weights were combined.
-    % I.e. three segmentation networks are used in a cascaded manner in \cite{yang2022source} and generate pseudo labels for each other.
-    % A first network only shares deeper layers with the source model whereas the first layers are adapted during training.
-    % A second network shares all parameters of the source model, is freezed and receives stylized images from a stylization network.
-    % The third model's parameters are all learnable and shall output the final segmentation for the target domain.
-    % The authors introduce a scheduled iterative and cyclic learning procedure to train the networks.
-    % Their method is validated with an abdominal segmentation task where the domain gap of CT to MR images is bridged.
-    % \cite{xie2022learn}: Learn Complementary Pseudo-label for Source-free Domain Adaptive Medical Segmentation
-    %TODO add number of references to figure
-    Another versatile approach for SFDA is the mean teacher paradigm \cite{tarvainen2017mean}, initially developed for classification scenarios where a moving average of the student model’s weights is used to update a teacher model. In \cite{wen2023source}, a consistency loss between a teacher and student network is used for target data to which flipping and random-noise perturbations were applied. To explicitly update weights related to the domain shift, the distance of the updated weights to the original weights is measured, and a predetermined percentage of the lowest weights, which might not correspond to the domain shift, is not updated. Not constrained to SFDA, mean teacher schemes can also be found in UDA scenarios \cite{perone2019unsupervised}.
-    The mentioned approaches in this section have in common that they set strong assumptions on data availability at the time of application --- source data in the case of UDA and a broad spectrum of the target data distribution.
-    % (Channel-wise Weight Restoration, CWR). The mean-teacher update is performed in an iterative manner, where first the encoder is updated with CWR, followed by a normal mean-teacher update, followed by a CWR update of the decoder, followed by another normal MT update.
-    % WEAKLY-SUPEVERISED DA! The authors of \cite{wang2022metateacher} adopted this paradigm and use multiple teacher models --- each pre-trained on one source domain.
-    % This is done in two steps: First, a coordinating weight for the teacher models is learnt with a small portion of labeled data. This weight determines the contribution of each teacher to the target prediction.
-    % Then in a subsequent bilevel optimization stage the student's and teachers' weights are updated in a meta-learning manner using labeled pairs as well as unlabeled images.
-    % This paper is UDA, not TTA
-    % The idea of \cite{hu2021fully} is to align features of the test image % Fully Test-Time Adaptation for Image Segmentation: nuclear-norm maximization and contour regularization: Batch norms only, expensive local nuclear-norm needs maxpooling -> lowered resolution
+        To further reduce the need to share source data, UDA was sought to be replaced by SFDA methods \cite{yang2022source,wen2023source,chen2021source}.
+        Here, a common approach is to leverage pseudo-labels generated by the non-adapted base model and refine them to supervise the model adaptation. In \cite{chen2021source}, estimated class centroids were used as a proxy, and pixel-level uncertainties were used to discard inaccuracies of pseudo labels.
+        % % \cite{chen2021source} SFDA. Use class centroids and the distances of individually classified pixels to discard fg pixels if the background centroid is nearer to the pixel than the fg centroid -> this gives pseudo labels with which a target model is supervised.
+        More complex proxy pseudo-supervision schemes exist, such as in \cite{yang2022source}, where three cascaded base model variants with differing fixed weights were combined.
+        % I.e. three segmentation networks are used in a cascaded manner in \cite{yang2022source} and generate pseudo labels for each other.
+        % A first network only shares deeper layers with the source model whereas the first layers are adapted during training.
+        % A second network shares all parameters of the source model, is freezed and receives stylized images from a stylization network.
+        % The third model's parameters are all learnable and shall output the final segmentation for the target domain.
+        % The authors introduce a scheduled iterative and cyclic learning procedure to train the networks.
+        % Their method is validated with an abdominal segmentation task where the domain gap of CT to MR images is bridged.
+        % \cite{xie2022learn}: Learn Complementary Pseudo-label for Source-free Domain Adaptive Medical Segmentation
+        %TODO add number of references to figure
+        Another versatile approach for SFDA is the mean teacher paradigm \cite{tarvainen2017mean}, initially developed for classification scenarios where a moving average of the student model’s weights is used to update a teacher model. In \cite{wen2023source}, a consistency loss between a teacher and student network is used for target data to which flipping and random-noise perturbations were applied. To explicitly update weights related to the domain shift, the distance of the updated weights to the original weights is measured, and a predetermined percentage of the lowest weights, which might not correspond to the domain shift, is not updated. Not constrained to SFDA, mean teacher schemes can also be found in UDA scenarios \cite{perone2019unsupervised}.
+        The mentioned approaches in this section have in common that they set strong assumptions on data availability at the time of application --- source data in the case of UDA and a broad spectrum of the target data distribution.
+        % (Channel-wise Weight Restoration, CWR). The mean-teacher update is performed in an iterative manner, where first the encoder is updated with CWR, followed by a normal mean-teacher update, followed by a CWR update of the decoder, followed by another normal MT update.
+        % WEAKLY-SUPEVERISED DA! The authors of \cite{wang2022metateacher} adopted this paradigm and use multiple teacher models --- each pre-trained on one source domain.
+        % This is done in two steps: First, a coordinating weight for the teacher models is learnt with a small portion of labeled data. This weight determines the contribution of each teacher to the target prediction.
+        % Then in a subsequent bilevel optimization stage the student's and teachers' weights are updated in a meta-learning manner using labeled pairs as well as unlabeled images.
+        % This paper is UDA, not TTA
+        % The idea of \cite{hu2021fully} is to align features of the test image % Fully Test-Time Adaptation for Image Segmentation: nuclear-norm maximization and contour regularization: Batch norms only, expensive local nuclear-norm needs maxpooling -> lowered resolution
 
-    \subsection{Domain generalization} % access to source training
-    DG techniques are applied during training on the source data and enhance the model’s out-of-domain performance. One way to improve generalization is to increase the data manifold, such as in \cite{liu2023clip}, where 14 publicly available CT datasets were combined in training. Also, the explicit declaration of domains is possible: Multiple labeled source domains are used during training, incorporating a domain classifier that differentiates between the domains in  \cite{hu2022domain}.
-    % The domain classification is then used to condition the weights of the segmentation head. At test-time the domain of an input images is then first classified as a mixture of domains and the conditioned segmentation head is adapted accordingly.
-    The training of generalizing models has also been studied with limited, single-source data. This removes the burden of extensive data acquisition. However, model generalization then needs to be enforced otherwise, e.g., through artificially increasing the data by augmentation:
-    % In case of image segmentation, intensity-based or spatial augmentations can be applied.
-    Augmentations can comprise simple intensity-based modifications such as the application of random noise \cite{zhou2022domain}, partial corruption of image areas such as in \cite{devries2017improved,he2022masked,hoyer2023mic},
-    % where rectangular areas of the input image where randomly removed.
-    or more sophisticated methods such as convolution-operations with randomly initialized weights  \cite{xu2020robust,ouyang2022causality}.
-    Unlike handcrafted or random augmentations, differentiable augmentation schemes were used in adversarial settings, where the applied augmentation was optimized so that the trained network was encouraged to perform well under optimally difficult conditions \cite{zhou2020deep, hu2022domain}.
-    Domain randomization \cite{tobin2017domain} leverages a complete virtual simulation of input data to provide broadly varying data, removing the constraints on augmenting captured data samples, and was also successfully applied for medical image segmentation in \cite{billot2023synthseg}.
-    % a domain randomization approach was introduced to generate artificial images samples from input segmentations during training.
-    DG can not only be achieved by increasing the data manifold but also by adapting training strategies: In \cite{bucci2021self, zhou2021models}, multiple tasks comprising image restoration, classification, and segmentation were used to form a more general understanding of the model’s underlying data correlations.
-    % Multiple samples in memory bank..
-    % \emph{DLTTA} \cite{yang2022dltta} first trains a segmentation network. At test-time a fixed-size feature memory bank is used which store the last K features of previous samples. The memory bank is used to measure the divergence to the current batch predicted features. Based on the divergence the learning rate for each sample is adapted dynamically when training it against a self-supervised loss function.
+        \subsubsection{Domain generalization} % access to source training
+        DG techniques are applied during training on the source data and enhance the model’s out-of-domain performance. One way to improve generalization is to increase the data manifold, such as in \cite{liu2023clip}, where 14 publicly available CT datasets were combined in training. Also, the explicit declaration of domains is possible: Multiple labeled source domains are used during training, incorporating a domain classifier that differentiates between the domains in  \cite{hu2022domain}.
+        % The domain classification is then used to condition the weights of the segmentation head. At test-time the domain of an input images is then first classified as a mixture of domains and the conditioned segmentation head is adapted accordingly.
+        The training of generalizing models has also been studied with limited, single-source data. This removes the burden of extensive data acquisition. However, model generalization then needs to be enforced otherwise, e.g., through artificially increasing the data by augmentation:
+        % In case of image segmentation, intensity-based or spatial augmentations can be applied.
+        Augmentations can comprise simple intensity-based modifications such as the application of random noise \cite{zhou2022domain}, partial corruption of image areas such as in \cite{devries2017improved,he2022masked,hoyer2023mic},
+        % where rectangular areas of the input image where randomly removed.
+        or more sophisticated methods such as convolution-operations with randomly initialized weights  \cite{xu2020robust,ouyang2022causality}.
+        Unlike handcrafted or random augmentations, differentiable augmentation schemes were used in adversarial settings, where the applied augmentation was optimized so that the trained network was encouraged to perform well under optimally difficult conditions \cite{zhou2020deep, hu2022domain}.
+        Domain randomization \cite{tobin2017domain} leverages a complete virtual simulation of input data to provide broadly varying data, removing the constraints on augmenting captured data samples, and was also successfully applied for medical image segmentation in \cite{billot2023synthseg}.
+        % a domain randomization approach was introduced to generate artificial images samples from input segmentations during training.
+        DG can not only be achieved by increasing the data manifold but also by adapting training strategies: In \cite{bucci2021self, zhou2021models}, multiple tasks comprising image restoration, classification, and segmentation were used to form a more general understanding of the model’s underlying data correlations.
+        % Multiple samples in memory bank..
+        % \emph{DLTTA} \cite{yang2022dltta} first trains a segmentation network. At test-time a fixed-size feature memory bank is used which store the last K features of previous samples. The memory bank is used to measure the divergence to the current batch predicted features. Based on the divergence the learning rate for each sample is adapted dynamically when training it against a self-supervised loss function.
 
-    \subsection{Test-time adaptation} % access to only one sample
-    \columnfigure[!t]{\dgttaPath/figures/related_work.pdf}{1.}{Core ideas of related work for TTA in medical image segmentation. \legendbox{hi_2}-colored components are optimized at training-time, belong to the training-routine or knowledge of the training data. \legendbox{hi_4}-colored components are optimized in a consecutive step on the training data. \legendbox{hi_1}-colored components are optimized at test-time through $\mathcal{L}_{TTA}$ loss terms. Shaded \legendbox{hi_2}\/\legendbox{hi_1}-components are optimized during training and test-time adaptation. For a complete overview, please refer to the related works described in the text.}{fig:related_work}
+        \subsubsection{Test-time adaptation} % access to only one sample
+        \columnfigure[!t]{\dgttaPath/figures/related_work.pdf}{1.}{Core ideas of related work for TTA in medical image segmentation. \legendbox{hi_2}-colored components are optimized at training-time, belong to the training-routine or knowledge of the training data. \legendbox{hi_4}-colored components are optimized in a consecutive step on the training data. \legendbox{hi_1}-colored components are optimized at test-time through $\mathcal{L}_{TTA}$ loss terms. Shaded \legendbox{hi_2}\/\legendbox{hi_1}-components are optimized during training and test-time adaptation. For a complete overview, please refer to the related works described in the text.}{fig:related_work}
 
-    TTA operates in the target data domain and, as opposed to UDA and SFDA methods, only requires one single target sample for adaptation\footnote{Some authors also use SFDA/UDA and TTA terms interchangeably --- by our definition TTA methods access only a single target sample and not a broader spectrum of the target data distribution.}.
-    Model adaptation can be driven by minimizing entropy-based measures \cite{wang2020tent,bateson2020source}
-    % \cite{wang2020tent} % TENT: FULLY TEST-TIME ADAPTATION BY ENTROPY MINIMIZATION: Minimize shannon entropy. Process batched data. Update affine transformation weights of channels (lightweight)
-    and the introduction of auxiliary tasks \cite{sun2020test,karani2021test,lyu2022learning}.
-    % \cite{sun2020test} % Test-time training with self-supervision for generalization under distribution shifts: Add an auxiliary task of rotation and predict rotation angle by shared feature layers.
-    % \cite{boudiaf2022parameter} % THIS IS SFDA... Parameter-free Online Test-time Adaptation: Minimize KL term to stay close to initial base model prediction and at the same time enforce features with high affinity to reduce loss by laplacian adjusted maximum likelihood estimation. classification task
-    These concepts were applied multifaceted in medical imaging, as depicted in some selected works in Fig. \ref{fig:related_work}.
+        TTA operates in the target data domain and, as opposed to UDA and SFDA methods, only requires one single target sample for adaptation\footnote{Some authors also use SFDA/UDA and TTA terms interchangeably --- by our definition TTA methods access only a single target sample and not a broader spectrum of the target data distribution.}.
+        Model adaptation can be driven by minimizing entropy-based measures \cite{wang2020tent,bateson2020source}
+        % \cite{wang2020tent} % TENT: FULLY TEST-TIME ADAPTATION BY ENTROPY MINIMIZATION: Minimize shannon entropy. Process batched data. Update affine transformation weights of channels (lightweight)
+        and the introduction of auxiliary tasks \cite{sun2020test,karani2021test,lyu2022learning}.
+        % \cite{sun2020test} % Test-time training with self-supervision for generalization under distribution shifts: Add an auxiliary task of rotation and predict rotation angle by shared feature layers.
+        % \cite{boudiaf2022parameter} % THIS IS SFDA... Parameter-free Online Test-time Adaptation: Minimize KL term to stay close to initial base model prediction and at the same time enforce features with high affinity to reduce loss by laplacian adjusted maximum likelihood estimation. classification task
+        These concepts were applied multifaceted in medical imaging, as depicted in some selected works in Fig. \ref{fig:related_work}.
 
-    % These concepts were applied multifaceted in medical imaging as described in the following:
-    % Entropy based + prior
-    In \emph{AdaMI} \cite{bateson2020source}, TTA is performed using a class-ratio prior and a mutual information-based entropy minimization of the predicted softmax output maps.
-    % complex supervision schemes
-    More complex supervision schemes can be found in \emph{RefSeg} \cite{huang2022online}, where a framework iteratively improves predictions by synthesizing input images from edge-maps and segmentation heatmaps. The synthesized images are supervised using normalized cross-correlation and MI-based loss functions.
-    % A pre-trained GAN model is used for image synthesization.
-    A denoising autoencoder is used in \cite{karani2021test} to fix implausible segmentation output by the base segmentation network. An image normalization layer is then adapted to provide correctly normalized input for the segmentation model by supervising it with the denoised pseudo-label.
-    % Test-time adaptable neural networks for robust medical image segmentation: Use denoising autoencoder to pull prediction network to better resemble the true segmentation and update the base network weights to reproduce this prediction.
-    % Learning From Synthetic CT Images via Test-Time Training for Liver Tumor Segmentation.
-    In \emph{SR-TTT}, a two-task training routine is employed \cite{lyu2022learning}: Healthy images are generated from hand-crafted, synthesized liver tumor images. A subsequent segmentation network predicts tumor masks and a third reconstruction network uses masks and healthy images to synthesize tumor images, forming a closed loop for TTA.
-    % where generation models are fixed and only the segmentation model is optimized.
-    % The hand-crafted sythesization is omitted during TTA.
-    % During TTA a test-time tumor image is inserted into the loop. Generation models are fixed and only the segmentation model is optimized for optimal reconstruction.
-    % The method is evaluated on two liver tumor datasets.
-    % Feature alignment
-    % IIT...
-    % Disentangled feature spaces are learnt in the CALAMITI approach in \cite{zuo2021unsupervised} by a strategy where parts of the networks are forced to learn shape information of T1/T2 weighted data (common space) and separated image intensity variation between T1/T2 maps for one acquistition site A. At test-time the same process is then repeated for newly acquired images from a new site B. Thus shape and intensity space are disentangled, the learnt shape model from the source data is combined with a newly learnt intensity model of the target data, where a reconstruction task scenario is used. The authors use their approach for image-to-image translation tasks where a cross-site domain gap of brain scan images is bridged. The authors also evaluate the quality of translated images by applying a segmentation post-processing method and rate the consistency of segmentations.
-    % Autoencoder based losses
-    Instead of entropy-based losses \emph{SDA-Net} \cite{he2020self, he2021autoencoder} uses several autoencoder-based losses to measure the feature discrepancy of target samples. The architecture consists of a U-Net with specific intertwined layers for adaptation.
-    % Additional layers are integrated inbetween convolution blocks in all levels of the U-Net in the encoder and decoder. Additionally, several autoencoders are added to detect and rate feature outliers.
-    % For that, encoder and decoder features on all levels of the U-Net were concatenated and the autoencoders trained to reconstruct the features after the training of the base U-Net is finished.
-    % During TTA, the adaptor and task specific layers are optimized by measuring the reconstruction error of the autoencoders. The method is validated for OCT inter-scanner segmentation and MRI T1 to T2 synthesis on brain scans.
-    % In \cite{li2022self} a similar architecture is proposed: A two-task segmentation and image reconstruction network is first trained with ground truth data. Two autoencoders are trained afterwards to reconstruct segmentation and images separately. During test-time, only a target-to-source image translation network and the encoder of the segmentation network is trained. This is done in via self supervision, where the trained autoencoders are used to measure the segmentation and image input and output discrepancy. The method is tested with a domain gap between 3D adult brain scans and pediatric brain scans. Compared to  \emph{SDA-Net}, the autoencoders are not measuring the main-network feature similarities, but the similarities of the final outputs. Moreover, reconstruction and segmentation tasks were processed jointly.
-    % Consistency is used
-    Apart from the indirect supervision of pseudo-targets, consistency schemes are also successfully applied: In \cite{liu2022single}, coefficients for a linear combination of fixed shape dictionary items are learned. During TTA, these coefficients are predicted for noise-perturbed input samples, and the consistency of shape coefficients and final segmentations is measured.
-    % Single-domain Generalization in Medical Image Segmentation via Test-time Adaptation from Shape Dictionary: While training coefficients for shape combinations are learnt by a regression branch. During TTA noise-pertubed inputs are fed to the trained networks and consistency of shape coefficients is enforced.
-    % A multi-source trained Domain and Content Adaptive Convolution (\emph{DCAC}) model is used in \cite{hu2022domain}.
-    % The authors hypothesis is that an unseen test-time sample is a mixture of domain samples that have been presented during the multi-source training routine. Alongside the U-Net based segmentation prediction a domain predictor is attached to the encoder feature maps of the network and the one-hot encoded domain prediction is optimized. The distribution vector is then used during TTA to predict the input image domain distribution. Based on the distribution vector MLPs infer the weights of a domain-controller head attached to the U-Net. Similarily the weights of a subsequent content-controller are conditioned using the U-Net's latent features.
-
-
-    % - approaches are too complex -> here we are
+        % These concepts were applied multifaceted in medical imaging as described in the following:
+        % Entropy based + prior
+        In \emph{AdaMI} \cite{bateson2020source}, TTA is performed using a class-ratio prior and a mutual information-based entropy minimization of the predicted softmax output maps.
+        % complex supervision schemes
+        More complex supervision schemes can be found in \emph{RefSeg} \cite{huang2022online}, where a framework iteratively improves predictions by synthesizing input images from edge-maps and segmentation heatmaps. The synthesized images are supervised using normalized cross-correlation and MI-based loss functions.
+        % A pre-trained GAN model is used for image synthesization.
+        A denoising autoencoder is used in \cite{karani2021test} to fix implausible segmentation output by the base segmentation network. An image normalization layer is then adapted to provide correctly normalized input for the segmentation model by supervising it with the denoised pseudo-label.
+        % Test-time adaptable neural networks for robust medical image segmentation: Use denoising autoencoder to pull prediction network to better resemble the true segmentation and update the base network weights to reproduce this prediction.
+        % Learning From Synthetic CT Images via Test-Time Training for Liver Tumor Segmentation.
+        In \emph{SR-TTT}, a two-task training routine is employed \cite{lyu2022learning}: Healthy images are generated from hand-crafted, synthesized liver tumor images. A subsequent segmentation network predicts tumor masks and a third reconstruction network uses masks and healthy images to synthesize tumor images, forming a closed loop for TTA.
+        % where generation models are fixed and only the segmentation model is optimized.
+        % The hand-crafted sythesization is omitted during TTA.
+        % During TTA a test-time tumor image is inserted into the loop. Generation models are fixed and only the segmentation model is optimized for optimal reconstruction.
+        % The method is evaluated on two liver tumor datasets.
+        % Feature alignment
+        % IIT...
+        % Disentangled feature spaces are learnt in the CALAMITI approach in \cite{zuo2021unsupervised} by a strategy where parts of the networks are forced to learn shape information of T1/T2 weighted data (common space) and separated image intensity variation between T1/T2 maps for one acquistition site A. At test-time the same process is then repeated for newly acquired images from a new site B. Thus shape and intensity space are disentangled, the learnt shape model from the source data is combined with a newly learnt intensity model of the target data, where a reconstruction task scenario is used. The authors use their approach for image-to-image translation tasks where a cross-site domain gap of brain scan images is bridged. The authors also evaluate the quality of translated images by applying a segmentation post-processing method and rate the consistency of segmentations.
+        % Autoencoder based losses
+        Instead of entropy-based losses \emph{SDA-Net} \cite{he2020self, he2021autoencoder} uses several autoencoder-based losses to measure the feature discrepancy of target samples. The architecture consists of a U-Net with specific intertwined layers for adaptation.
+        % Additional layers are integrated inbetween convolution blocks in all levels of the U-Net in the encoder and decoder. Additionally, several autoencoders are added to detect and rate feature outliers.
+        % For that, encoder and decoder features on all levels of the U-Net were concatenated and the autoencoders trained to reconstruct the features after the training of the base U-Net is finished.
+        % During TTA, the adaptor and task specific layers are optimized by measuring the reconstruction error of the autoencoders. The method is validated for OCT inter-scanner segmentation and MRI T1 to T2 synthesis on brain scans.
+        % In \cite{li2022self} a similar architecture is proposed: A two-task segmentation and image reconstruction network is first trained with ground truth data. Two autoencoders are trained afterwards to reconstruct segmentation and images separately. During test-time, only a target-to-source image translation network and the encoder of the segmentation network is trained. This is done in via self supervision, where the trained autoencoders are used to measure the segmentation and image input and output discrepancy. The method is tested with a domain gap between 3D adult brain scans and pediatric brain scans. Compared to  \emph{SDA-Net}, the autoencoders are not measuring the main-network feature similarities, but the similarities of the final outputs. Moreover, reconstruction and segmentation tasks were processed jointly.
+        % Consistency is used
+        Apart from the indirect supervision of pseudo-targets, consistency schemes are also successfully applied: In \cite{liu2022single}, coefficients for a linear combination of fixed shape dictionary items are learned. During TTA, these coefficients are predicted for noise-perturbed input samples, and the consistency of shape coefficients and final segmentations is measured.
+        % Single-domain Generalization in Medical Image Segmentation via Test-time Adaptation from Shape Dictionary: While training coefficients for shape combinations are learnt by a regression branch. During TTA noise-pertubed inputs are fed to the trained networks and consistency of shape coefficients is enforced.
+        % A multi-source trained Domain and Content Adaptive Convolution (\emph{DCAC}) model is used in \cite{hu2022domain}.
+        % The authors hypothesis is that an unseen test-time sample is a mixture of domain samples that have been presented during the multi-source training routine. Alongside the U-Net based segmentation prediction a domain predictor is attached to the encoder feature maps of the network and the one-hot encoded domain prediction is optimized. The distribution vector is then used during TTA to predict the input image domain distribution. Based on the distribution vector MLPs infer the weights of a domain-controller head attached to the U-Net. Similarily the weights of a subsequent content-controller are conditioned using the U-Net's latent features.
 
 
-    % DG augmentation method \cite{li2022domain}
+        % - approaches are too complex -> here we are
 
-    % transferability of features, Automated synthetic-to-real generalization: \cite{chen2020automated}
 
-\section{Methodology}
+        % DG augmentation method \cite{li2022domain}
+
+        % transferability of features, Automated synthetic-to-real generalization: \cite{chen2020automated}
+
+\section{Methods}
     \label{sec:method_dgtta}
     As shown in Fig. \ref{fig:method}, we split our method into two parts: Firstly, the model training takes place on the source domain data by minimizing cross-entropy and Dice loss terms \cite{isensee2021nnu}. We propose doing this with the DG techniques described below to prepare the model for prediction in out-of-domain scenarios. Secondly, our TTA strategy is employed on individual target domain samples after model training.
     % We want to stress, that applying \emph{DG-TTA} on non-DG pre-trained models is also possible, but for optimal results models should be pre-trained with DG techniques.
@@ -277,7 +277,7 @@
         with a learning rate of  $\eta=1e{-5}$, weight decay $\beta=0.01$, and no scheduling for twelve epochs.
         In former experiments, we identified that special caution has to be taken when applying test-time adaptation to models that require patch-based input. Since patch-based inference limits the field of view, the optimizer will adapt the model weights and overfit for consistency of the specific image region. Therefore, we accumulate gradients of $N_p = 16$ randomly drawn patches during one epoch prior to taking an optimization step to fit GPU memory limits.
 
-\section{Experiments}
+\section{Experiments and Results}
     % With our experimental setup, we want to first emphasize the need for DG/TTA methods in general and then show the potential of TTA.
     Experiment I: We perform an extensive evaluation of models with and without DG capabilities predicting across the domain gap between \fromto{CT}{MR} and \fromto{MR}{CT} and report the associated gaps in accuracy compared to models that have been trained in the target domain.
     Experiment II: TTA is then applied for \fromto{CT}{MR} prediction to show the potential of recovering model performance. We compare our method to a subset of related TTA approaches (see Sec. \ref{sec:related_work}).
@@ -348,86 +348,23 @@
             Building upon Experiment II, we show efficacy of our method leveraging the TS dataset with 104 labels as a strong basis in three segmentation tasks (all \fromto{CT}{MR}): Abdominal organ-(\fromto{TS}{AMOS}), lumbal spine- (\fromto{TS}{SPINE}) and whole-heart segmentation (\fromto{TS}{MMWHS MR}).
             Furthermore, we present results for whole-heart segmentation using only models pre-trained with as few as 16 CT samples in \fromto{MMWHS CT}{MMWHS MR}.
 
-\section{Results}
-    In the following sections, segmentation quality is evaluated using the Dice score overlap metric. The significance of TTA improvements is determined with the one-sided Wilcoxon Signed Rank test \cite{wilcoxon1992individual}.
+    \subsection{Results}
+        In the following sections, segmentation quality is evaluated using the Dice score overlap metric. The significance of TTA improvements is determined with the one-sided Wilcoxon Signed Rank test \cite{wilcoxon1992individual}.
 
-    \subsection{Experiment I: Domain gap evaluation of non-DG and DG pre-trained models}
-    \label{sec:exp1_results}
-    \columnfigure{\dgttaPath/figures/exp1.pdf}{1.}{Evaluation of non-DG and DG pre-trained models in out-of-domain prediction scenarios. Dice scores reported of the in-domain prediction (upper baseline, -\,-\,-) and model performance in either \mbox{\fromto{MR}{CT} \legendbox{hi_4}} or \mbox{\fromto{CT}{MR} \legendbox{hi_2}}  out-of-domain scenarios. Detailed gap scores of \mbox{\legendbox{hi_2}-colored} bars see Tab. \ref{tab:exp1}}{fig:exp1}
-
-    \begin{table*}
-    \centering
-        \caption{Evaluation of models in \fromto{CT}{MR} out-of-domain prediction for abdominal segmentation tasks (pre-training models on the BTCV dataset and testing on the AMOS dataset). This table shows detailed results \mbox{\legendbox{hi_2}-colored} bars of Fig. \ref{fig:exp1}. Full class names can be found in Sec. \ref{sec:BTCV_dataset}}
-        \label{tab:exp1}
-        \setlength{\tabcolsep}{3pt}
-        \resizebox{\textwidth}{!}{
-            \begin{tabular}{@{}lS[table-figures-decimal=1,table-format=2.1]lS[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,separate-uncertainty=true,table-format=2.1(3)]S[table-figures-decimal=1,table-format=3.1]@{}}
-                \toprule
-                  & \multicolumn{1}{l}{\textbf{MRI ID}} & \multicolumn{13}{c}{\textbf{MRI OOD (Dice \%)}}                        \\
-                \textbf{Pre-trained model} & \boldmath{$\mu$} & \hspace{5pt} &
-                \textbf{\legendbox{map10_10} SPL} &
-                \textbf{\legendbox{map10_9} RKN} &
-                \textbf{\legendbox{map10_8} LKN} &
-                \textbf{\legendbox{map10_7} GAL} &
-                \textbf{\legendbox{map10_6} ESO} &
-                \textbf{\legendbox{map10_5} LIV} &
-                \textbf{\legendbox{map10_4} STO} &
-                \textbf{\legendbox{map10_3} AOR} &
-                \textbf{\legendbox{map10_2} IVC} &
-                \textbf{\legendbox{map10_1} PAN} &
-                \boldmath{$\mu\pm\sigma$} &
-                \textbf{gap} \\ \midrule
-                NNUNET 2D        & 78.8           & & 14.1          & 3.0  & 2.0  & 2.0  & 4.5  & 15.2 & 0.1  & 10.1 & 2.8  & 0.8           & 5.5 \pm 11.2  & -73.3   \\ \midrule
-                NNUNET           & 84.5           & & 40.2          & 21.9 & 15.9 & 24.9 & 22.9 & 76.0 & 34.3 & 26.4 & 21.8 & 35.3          & 32.0 \pm 27.6 & -52.6 \\ \hdashline\noalign{\vskip 0.5ex}
-                NNUNET BN       & 84.3  & & 0.0           & 0.0  & 0.0  & 0.0  & 0.3  & 43.7 & 0.0  & 2.3  & 0.5  & 1.5           & 4.9 \pm 15.6  & -79.4 \\
-                INSANE DA & 84.6  & & 45.3          & 64.0 & 49.1 & 20.2 & 27.3 & 71.0 & 43.0 & 44.4 & 22.8 & 40.4          & 42.7 \pm 30.7 & -40.0 \\
-                MIC         & 84.2  & & 0.6           & 0.3  & 1.1  & 2.4  & 3.0  & 23.5 & 0.0  & 9.6  & 6.0  & 3.5           & 5.0 \pm 11.5  & -79.2 \\
-                GIN              & 84.8           & & 81.9          & 90.4 & 91.9 & 63.7 & 47.8 & 92.7 & 73.2 & 80.9 & 72.1 & 68.1          & 76.3 \pm 21.5 & -8.5  \\
-                MIND             & \B 85.4           & & \B 83.6 & 92.9 & 93.0 & 60.5 & 39.1 & 93.1 & 74.6 & 81.1 & 69.5 & \B 73.2 & 76.1 \pm 24.0 & -9.3  \\
-                GIN + MIND &
-                84.1 & &
-                83.0 &
-                \textbf{93.3} &
-                \textbf{93.3} &
-                \textbf{65.9} &
-                \textbf{50.3} &
-                \textbf{94.1} &
-                \textbf{76.5} &
-                \textbf{83.9} &
-                \textbf{73.7} &
-                71.9 &
-                \B 78.6 \pm 20.7 &
-                \B -5.5
-            \end{tabular}
-        }
-    \end{table*}
-    Prediction across the \fromto{CT}{MR} domain gap in the abdominal task of this experiment reveals that models behave differently depending on the model layer configuration and pre-training strategy (see Fig. \ref{fig:exp1}): As expected, the 2D model achieves lower in-domain scores compared to 3D models.
-    For seven of eight models, the domain gap from \fromto{CT}{MR} is more challenging to compensate for, resulting in lower scores during out-of-domain testing. We focus on this domain gap in the following subexperiments and discussions.
-    Inference of pre-trained models without generalization techniques results in severe gaps of \sipct{-52.6} and \sipct{-79.4} Dice when predicting in the MRI target domain (see Fig. \ref{fig:exp1} and Tab. \ref{tab:exp1}).
-    Increasing the data augmentation strength of the framework (\emph{INSANE DA}) can reduce the gap to \sipct{-40.0} Dice.
-    Using techniques specifically designed for DG proves to be more effective: MIC \cite{hoyer2023mic} reduces the gap in the \fromto{MR}{CT} scenario successfully, but we found it to be not as effective for the \fromto{CT}{MR} scenario. \emph{GIN} augmentation \cite{ouyang2022causality} and the \emph{MIND} descriptor layer \cite{heinrich2013towards} %TODO: add heinrich2012mind
-    significantly reduce the gap to (\sinum{-8.5}/\sipct{-9.3} Dice).
-    Combining \emph{GIN+MIND} results is the best strategy diminishing the gap to only \sipct{-5.5} Dice.
-    In detail, using the \emph{GIN+MIND} combination resulted in the highest scores for segmentation in eight of ten abdominal organs (see Tab. \ref{tab:exp1}).
-
-    \subsection{Experiment II: Performance evaluation of \emph{DG-TTA}}
-        \label{sec:exp2_tatta_results}
-        \begin{figure*}
-            \centerline{\includegraphics[width=\linewidth]{\dgttaPath/figures/exp2_tta.pdf}}
-            \caption{Test sample statistics before and after applying TTA (three of five models were pre-trained with DG techniques). For the \emph{NNUNET BN} model, additionally, only the Batch Normalisation layers (nor) or only the encoder (enc) parameters were adapted. Results for three of five \emph{SDA-Net} runs excluded due to collapsing predictions. Scores for individual classes can be found in Tab. \ref{tab:exp2_evaluation} for \emph{DG-TTA}, \emph{AdaMI} and \emph{SDA-Net}. \bplotdescription}
-            \label{fig:exp2_tta}
-        \end{figure*}
+        \subsubsection{Experiment I: Domain gap evaluation of non-DG and DG pre-trained models}
+        \label{sec:exp1_results}
+        \columnfigure{\dgttaPath/figures/exp1.pdf}{1.}{Evaluation of non-DG and DG pre-trained models in out-of-domain prediction scenarios. Dice scores reported of the in-domain prediction (upper baseline, -\,-\,-) and model performance in either \mbox{\fromto{MR}{CT} \legendbox{hi_4}} or \mbox{\fromto{CT}{MR} \legendbox{hi_2}}  out-of-domain scenarios. Detailed gap scores of \mbox{\legendbox{hi_2}-colored} bars see Tab. \ref{tab:exp1}}{fig:exp1}
 
         \begin{table*}
-            \centering
-            \caption{Evaluation of TTA methods for \fromto{CT}{MR} test-time adaptation for the abdominal segmentation task (see Sec. \ref{sec:exp1_description} and Tab. \ref{tab:exp1}). The class names are in Sec. \ref{sec:BTCV_dataset}. Bold scores indicate a per-model increase in scores, taking the scores of the non-adapted models of Tab. \ref{tab:exp1} into account. Results for three of five \emph{SDA-Net} runs excluded due to collapsing predictions.}
-            \label{tab:exp2_evaluation}
+        \centering
+            \caption{Evaluation of models in \fromto{CT}{MR} out-of-domain prediction for abdominal segmentation tasks (pre-training models on the BTCV dataset and testing on the AMOS dataset). This table shows detailed results \mbox{\legendbox{hi_2}-colored} bars of Fig. \ref{fig:exp1}. Full class names can be found in Sec. \ref{sec:BTCV_dataset}}
+            \label{tab:exp1}
             \setlength{\tabcolsep}{3pt}
             \resizebox{\textwidth}{!}{
-                \begin{tabular}{@{}lllS[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,separate-uncertainty=true,table-format=2.1(3)]S[table-figures-decimal=1,table-format=3.1,explicit-sign=+]@{}}
+                \begin{tabular}{@{}lS[table-figures-decimal=1,table-format=2.1]lS[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,separate-uncertainty=true,table-format=2.1(3)]S[table-figures-decimal=1,table-format=3.1]@{}}
                     \toprule
-                    % \textbf{\textsc{Experiment II}} & & \multicolumn{12}{c}{\textbf{CT \fromto{}{} MR TTA (Dice \%)}} \\
-                    \textbf{Pre-trained model} & \textbf{TTA method} & &
+                    & \multicolumn{1}{l}{\textbf{MRI ID}} & \multicolumn{13}{c}{\textbf{MRI OOD (Dice \%)}}                        \\
+                    \textbf{Pre-trained model} & \boldmath{$\mu$} & \hspace{5pt} &
                     \textbf{\legendbox{map10_10} SPL} &
                     \textbf{\legendbox{map10_9} RKN} &
                     \textbf{\legendbox{map10_8} LKN} &
@@ -439,77 +376,140 @@
                     \textbf{\legendbox{map10_2} IVC} &
                     \textbf{\legendbox{map10_1} PAN} &
                     \boldmath{$\mu\pm\sigma$} &
-                    \textbf{gain} \\ \midrule
-                    \multirow{3}{*}{NNUNET} &  Ours & & \B 76.0 & 70.0 & 74.4 & \B 42.5 & \B 42.0 & 79.8 & 52.0 & 65.2 & 46.7 & 60.8 & 60.9 \pm 25 & 28.9 \\
-                    & AdaMI & & 75.0 & \B 77.7 & \B 83.1 & 37.1 & 37.9 & \B 83.8 & \B 56.5 & \B 68.1 & \B 48.2 & \B 61.1 & \B 62.8 \pm 25.3 & \B 30.9 \\
-                    & SDA-Net & & 0.0	& 8.1	& 3.6	& 7.9	& 0.3	& 43.1 & 2.5	& 4.8	& 1.4	& 9.3	& 8.2 \pm 17.1	& -23.8 \\ \hdashline\noalign{\vskip 0.5ex}
-                    \multirow{2}{*}{NNUNET BN} & Ours & & 81.6 & 87.2 & 89.2 & \B 40.1 & \B 35.9 & 84.7 & \B 73.4 & \B 75.1 & \B 54.1 & \B 66.8 & \B 68.8 \pm 26.6 & \B 63.9 \\
-                    & AdaMI & & \B 88.3 & \B 88.3 & \B 90.5 & 34.2 & 30.9 & \B 94.0 & 72.5 & 68.3 & 45.1 & 63.6 & 67.4 \pm 27.9 & 62.4 \\ \hdashline\noalign{\vskip 0.5ex}
-                    % & SDA-Net & & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.4 & 0.0 & 0.0 & 0.0 & 0.0	& 0.0 \pm 0.3 & -4.9 \\ \hdashline\noalign{\vskip 0.5ex}
-                    \multirow{3}{*}{GIN} & Ours & & 81.6 & \B 90.5 & \B 92.1 & \B 72.3 & \B 48.9 & \B 93.3 & \B 74.7 & 79.2 & 70.9 & \B 70.6 & \B 77.4 \pm 19.8 & \B 1.1 \\
-                    & AdaMI & & 78.5 & 86.6 & 90.9 & 71.1 & 47.2 & 92.2 & 69.0 & 78.3 & 68.4 & 66.9 & 74.9 \pm 20.0 & -1.4 \\
-                    & SDA-Net & & 70.9 & 86.8 & 86.9 & 60.6 & 41.6 & 89.4 & 69.3 & 74.2 & 65.6 & 54.4 & 70.0 \pm 24.4 & -6.3 \\ \hdashline\noalign{\vskip 0.5ex}
-                    \multirow{2}{*}{MIND} & Ours & & 83.4 & 91.2 & 92.9 & 68.1 & \B 48.6 & 91.4 & 74.4 & \B 83.3 & \B 71.3 & 72.2 & \B 77.7 \pm 21.4 & \B 1.6 \\
-                    & AdaMI & & 81.1 & 92.4 & 92.5 & \B 69.7 & 41.7 & 92.7 & 72.6 & 80.7 & 69.5 & 72.9 & 76.6 \pm 21.7 & 0.5 \\ \hdashline\noalign{\vskip 0.5ex}
-                    % & SDA-Net & & 0.0 & 0.0 & 0.0 & 0.4 & 0.0 & 0.0 & 0.0 & 0.2 & 0.0 & 0.0 & 0.1 \pm 0.4 & -76.0 \\ \hdashline\noalign{\vskip 0.5ex}
-                    \multirow{2}{*}{GIN+MIND} & Ours & & 82.2 & 92.7 & 92.7 & 68.4 & 47.1 & 93.4 & 74.5 & \B 84.8 & 73.5 & \B 72.5 & 78.2 \pm 20.7 & -0.4 \\
-                    & AdaMI & & 79.4 & 91.5 & 92.6 & \B 70.5 & 47.9 & 91.9 & 73.5 & 80.7 & 72.3 & 70.8 & 77.1 \pm 20 & -1.5 \\
-                    % & SDA-Net & & 2.0 & 1.3 & 0.1 & 6.5 & 0.0 & 20.2 & 1.1 & 6.8 & 9.7 & 6.1 & 5.4 \pm 10.5 & -73.2
+                    \textbf{gap} \\ \midrule
+                    NNUNET 2D        & 78.8           & & 14.1          & 3.0  & 2.0  & 2.0  & 4.5  & 15.2 & 0.1  & 10.1 & 2.8  & 0.8           & 5.5 \pm 11.2  & -73.3   \\ \midrule
+                    NNUNET           & 84.5           & & 40.2          & 21.9 & 15.9 & 24.9 & 22.9 & 76.0 & 34.3 & 26.4 & 21.8 & 35.3          & 32.0 \pm 27.6 & -52.6 \\ \hdashline\noalign{\vskip 0.5ex}
+                    NNUNET BN       & 84.3  & & 0.0           & 0.0  & 0.0  & 0.0  & 0.3  & 43.7 & 0.0  & 2.3  & 0.5  & 1.5           & 4.9 \pm 15.6  & -79.4 \\
+                    INSANE DA & 84.6  & & 45.3          & 64.0 & 49.1 & 20.2 & 27.3 & 71.0 & 43.0 & 44.4 & 22.8 & 40.4          & 42.7 \pm 30.7 & -40.0 \\
+                    MIC         & 84.2  & & 0.6           & 0.3  & 1.1  & 2.4  & 3.0  & 23.5 & 0.0  & 9.6  & 6.0  & 3.5           & 5.0 \pm 11.5  & -79.2 \\
+                    GIN              & 84.8           & & 81.9          & 90.4 & 91.9 & 63.7 & 47.8 & 92.7 & 73.2 & 80.9 & 72.1 & 68.1          & 76.3 \pm 21.5 & -8.5  \\
+                    MIND             & \B 85.4           & & \B 83.6 & 92.9 & 93.0 & 60.5 & 39.1 & 93.1 & 74.6 & 81.1 & 69.5 & \B 73.2 & 76.1 \pm 24.0 & -9.3  \\
+                    GIN + MIND &
+                    84.1 & &
+                    83.0 &
+                    \textbf{93.3} &
+                    \textbf{93.3} &
+                    \textbf{65.9} &
+                    \textbf{50.3} &
+                    \textbf{94.1} &
+                    \textbf{76.5} &
+                    \textbf{83.9} &
+                    \textbf{73.7} &
+                    71.9 &
+                    \B 78.6 \pm 20.7 &
+                    \B -5.5
                 \end{tabular}
             }
         \end{table*}
-        % For the performance evaluation the best ranked block configuration was used for \emph{DG-TTA} (see previous Sec. \ref{sec:exp2_config_results}).
+        Prediction across the \fromto{CT}{MR} domain gap in the abdominal task of this experiment reveals that models behave differently depending on the model layer configuration and pre-training strategy (see Fig. \ref{fig:exp1}): As expected, the 2D model achieves lower in-domain scores compared to 3D models.
+        For seven of eight models, the domain gap from \fromto{CT}{MR} is more challenging to compensate for, resulting in lower scores during out-of-domain testing. We focus on this domain gap in the following subexperiments and discussions.
+        Inference of pre-trained models without generalization techniques results in severe gaps of \sipct{-52.6} and \sipct{-79.4} Dice when predicting in the MRI target domain (see Fig. \ref{fig:exp1} and Tab. \ref{tab:exp1}).
+        Increasing the data augmentation strength of the framework (\emph{INSANE DA}) can reduce the gap to \sipct{-40.0} Dice.
+        Using techniques specifically designed for DG proves to be more effective: MIC \cite{hoyer2023mic} reduces the gap in the \fromto{MR}{CT} scenario successfully, but we found it to be not as effective for the \fromto{CT}{MR} scenario. \emph{GIN} augmentation \cite{ouyang2022causality} and the \emph{MIND} descriptor layer \cite{heinrich2013towards} %TODO: add heinrich2012mind
+        significantly reduce the gap to (\sinum{-8.5}/\sipct{-9.3} Dice).
+        Combining \emph{GIN+MIND} results is the best strategy diminishing the gap to only \sipct{-5.5} Dice.
+        In detail, using the \emph{GIN+MIND} combination resulted in the highest scores for segmentation in eight of ten abdominal organs (see Tab. \ref{tab:exp1}).
 
-        In preliminary combinatorial experiments, we found \emph{DG-TTA} using gradients and backpropagation only in branch A and affine spatial augmentation in branches A and B to be an optimal tradeoff between non-DG-  and DG pre-trained models. Note that we do not apply intensity augmentation, which proved counterproductive for DG pre-trained models. These settings will be used in the following experiments.
+        \subsubsection{Experiment II: Performance evaluation of \emph{DG-TTA}}
+            \label{sec:exp2_tatta_results}
+            \begin{figure*}
+                \centerline{\includegraphics[width=\linewidth]{\dgttaPath/figures/exp2_tta.pdf}}
+                \caption{Test sample statistics before and after applying TTA (three of five models were pre-trained with DG techniques). For the \emph{NNUNET BN} model, additionally, only the Batch Normalisation layers (nor) or only the encoder (enc) parameters were adapted. Results for three of five \emph{SDA-Net} runs excluded due to collapsing predictions. Scores for individual classes can be found in Tab. \ref{tab:exp2_evaluation} for \emph{DG-TTA}, \emph{AdaMI} and \emph{SDA-Net}. \bplotdescription}
+                \label{fig:exp2_tta}
+            \end{figure*}
 
-        \emph{DG-TTA} and \emph{AdaMI} can recover prediction scores on non-DG pre-trained models by a large margin with significant improvements ($p<0.001$) as it can be seen in Fig. \ref{fig:exp2_tta}, left and Tab. \ref{tab:exp2_evaluation}: \emph{AdaMI} reaches a top mean Dice of \sipct{62.8} (\sipct{+30.9}) Dice for the pre-trained \emph{NNUNET} model. \emph{DG-TTA} reaches a top mean Dice of \sipct{68.8} (\sipct{+63.9}) for \emph{NNUNET BN}, which is remarkable comparing the scores to the low out-of-domain performance of the non-adapted model (\sipct{4.9}). As a further ablation, we report scores when only training the Batch Normalisation layers of \emph{NNUNET BN} and for only training the encoder and found the best results when training all model parameters during TTA.
-        Evaluating DG pre-trained models, \emph{DG-TTA} improves \emph{GIN} (\sipct{+1.1}) and \emph{MIND} (\sipct{+1.6}) model outcomes. Applied to the \emph{GIN+MIND} model, the Dice score decreases slightly (\sipct{-0.4}). \emph{AdaMI} improves outcomes in the case of the \emph{MIND} pre-trained model (\sipct{+0.5}) but does not reach the performance of our proposed method. We can show the superiority of our approach over the competing methods for four of five adapted models. The tested TTA methods for DG pre-trained models did not lead to statistically significant improvements, given that outcomes were already quite comparable to the in-domain performance.
+            \begin{table*}
+                \centering
+                \caption{Evaluation of TTA methods for \fromto{CT}{MR} test-time adaptation for the abdominal segmentation task (see Sec. \ref{sec:exp1_description} and Tab. \ref{tab:exp1}). The class names are in Sec. \ref{sec:BTCV_dataset}. Bold scores indicate a per-model increase in scores, taking the scores of the non-adapted models of Tab. \ref{tab:exp1} into account. Results for three of five \emph{SDA-Net} runs excluded due to collapsing predictions.}
+                \label{tab:exp2_evaluation}
+                \setlength{\tabcolsep}{3pt}
+                \resizebox{\textwidth}{!}{
+                    \begin{tabular}{@{}lllS[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,table-format=2.1]S[table-figures-decimal=1,separate-uncertainty=true,table-format=2.1(3)]S[table-figures-decimal=1,table-format=3.1,explicit-sign=+]@{}}
+                        \toprule
+                        % \textbf{\textsc{Experiment II}} & & \multicolumn{12}{c}{\textbf{CT \fromto{}{} MR TTA (Dice \%)}} \\
+                        \textbf{Pre-trained model} & \textbf{TTA method} & &
+                        \textbf{\legendbox{map10_10} SPL} &
+                        \textbf{\legendbox{map10_9} RKN} &
+                        \textbf{\legendbox{map10_8} LKN} &
+                        \textbf{\legendbox{map10_7} GAL} &
+                        \textbf{\legendbox{map10_6} ESO} &
+                        \textbf{\legendbox{map10_5} LIV} &
+                        \textbf{\legendbox{map10_4} STO} &
+                        \textbf{\legendbox{map10_3} AOR} &
+                        \textbf{\legendbox{map10_2} IVC} &
+                        \textbf{\legendbox{map10_1} PAN} &
+                        \boldmath{$\mu\pm\sigma$} &
+                        \textbf{gain} \\ \midrule
+                        \multirow{3}{*}{NNUNET} &  Ours & & \B 76.0 & 70.0 & 74.4 & \B 42.5 & \B 42.0 & 79.8 & 52.0 & 65.2 & 46.7 & 60.8 & 60.9 \pm 25 & 28.9 \\
+                        & AdaMI & & 75.0 & \B 77.7 & \B 83.1 & 37.1 & 37.9 & \B 83.8 & \B 56.5 & \B 68.1 & \B 48.2 & \B 61.1 & \B 62.8 \pm 25.3 & \B 30.9 \\
+                        & SDA-Net & & 0.0	& 8.1	& 3.6	& 7.9	& 0.3	& 43.1 & 2.5	& 4.8	& 1.4	& 9.3	& 8.2 \pm 17.1	& -23.8 \\ \hdashline\noalign{\vskip 0.5ex}
+                        \multirow{2}{*}{NNUNET BN} & Ours & & 81.6 & 87.2 & 89.2 & \B 40.1 & \B 35.9 & 84.7 & \B 73.4 & \B 75.1 & \B 54.1 & \B 66.8 & \B 68.8 \pm 26.6 & \B 63.9 \\
+                        & AdaMI & & \B 88.3 & \B 88.3 & \B 90.5 & 34.2 & 30.9 & \B 94.0 & 72.5 & 68.3 & 45.1 & 63.6 & 67.4 \pm 27.9 & 62.4 \\ \hdashline\noalign{\vskip 0.5ex}
+                        % & SDA-Net & & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.4 & 0.0 & 0.0 & 0.0 & 0.0	& 0.0 \pm 0.3 & -4.9 \\ \hdashline\noalign{\vskip 0.5ex}
+                        \multirow{3}{*}{GIN} & Ours & & 81.6 & \B 90.5 & \B 92.1 & \B 72.3 & \B 48.9 & \B 93.3 & \B 74.7 & 79.2 & 70.9 & \B 70.6 & \B 77.4 \pm 19.8 & \B 1.1 \\
+                        & AdaMI & & 78.5 & 86.6 & 90.9 & 71.1 & 47.2 & 92.2 & 69.0 & 78.3 & 68.4 & 66.9 & 74.9 \pm 20.0 & -1.4 \\
+                        & SDA-Net & & 70.9 & 86.8 & 86.9 & 60.6 & 41.6 & 89.4 & 69.3 & 74.2 & 65.6 & 54.4 & 70.0 \pm 24.4 & -6.3 \\ \hdashline\noalign{\vskip 0.5ex}
+                        \multirow{2}{*}{MIND} & Ours & & 83.4 & 91.2 & 92.9 & 68.1 & \B 48.6 & 91.4 & 74.4 & \B 83.3 & \B 71.3 & 72.2 & \B 77.7 \pm 21.4 & \B 1.6 \\
+                        & AdaMI & & 81.1 & 92.4 & 92.5 & \B 69.7 & 41.7 & 92.7 & 72.6 & 80.7 & 69.5 & 72.9 & 76.6 \pm 21.7 & 0.5 \\ \hdashline\noalign{\vskip 0.5ex}
+                        % & SDA-Net & & 0.0 & 0.0 & 0.0 & 0.4 & 0.0 & 0.0 & 0.0 & 0.2 & 0.0 & 0.0 & 0.1 \pm 0.4 & -76.0 \\ \hdashline\noalign{\vskip 0.5ex}
+                        \multirow{2}{*}{GIN+MIND} & Ours & & 82.2 & 92.7 & 92.7 & 68.4 & 47.1 & 93.4 & 74.5 & \B 84.8 & 73.5 & \B 72.5 & 78.2 \pm 20.7 & -0.4 \\
+                        & AdaMI & & 79.4 & 91.5 & 92.6 & \B 70.5 & 47.9 & 91.9 & 73.5 & 80.7 & 72.3 & 70.8 & 77.1 \pm 20 & -1.5 \\
+                        % & SDA-Net & & 2.0 & 1.3 & 0.1 & 6.5 & 0.0 & 20.2 & 1.1 & 6.8 & 9.7 & 6.1 & 5.4 \pm 10.5 & -73.2
+                    \end{tabular}
+                }
+            \end{table*}
+            % For the performance evaluation the best ranked block configuration was used for \emph{DG-TTA} (see previous Sec. \ref{sec:exp2_config_results}).
 
-        Despite thorough finetuning and valid decreasing epoch loss values during TTA, we could not successfully apply \emph{SDA-Net} in this 3D scenario and found scores to be collapsing by a large margin for most of the pre-trained models.
+            In preliminary combinatorial experiments, we found \emph{DG-TTA} using gradients and backpropagation only in branch A and affine spatial augmentation in branches A and B to be an optimal tradeoff between non-DG-  and DG pre-trained models. Note that we do not apply intensity augmentation, which proved counterproductive for DG pre-trained models. These settings will be used in the following experiments.
 
-    \subsection{Experiment III: High quality predictions on unseen data out-of-the-box: More scenarios}
-        \label{sec:exp3_results}
+            \emph{DG-TTA} and \emph{AdaMI} can recover prediction scores on non-DG pre-trained models by a large margin with significant improvements ($p<0.001$) as it can be seen in Fig. \ref{fig:exp2_tta}, left and Tab. \ref{tab:exp2_evaluation}: \emph{AdaMI} reaches a top mean Dice of \sipct{62.8} (\sipct{+30.9}) Dice for the pre-trained \emph{NNUNET} model. \emph{DG-TTA} reaches a top mean Dice of \sipct{68.8} (\sipct{+63.9}) for \emph{NNUNET BN}, which is remarkable comparing the scores to the low out-of-domain performance of the non-adapted model (\sipct{4.9}). As a further ablation, we report scores when only training the Batch Normalisation layers of \emph{NNUNET BN} and for only training the encoder and found the best results when training all model parameters during TTA.
+            Evaluating DG pre-trained models, \emph{DG-TTA} improves \emph{GIN} (\sipct{+1.1}) and \emph{MIND} (\sipct{+1.6}) model outcomes. Applied to the \emph{GIN+MIND} model, the Dice score decreases slightly (\sipct{-0.4}). \emph{AdaMI} improves outcomes in the case of the \emph{MIND} pre-trained model (\sipct{+0.5}) but does not reach the performance of our proposed method. We can show the superiority of our approach over the competing methods for four of five adapted models. The tested TTA methods for DG pre-trained models did not lead to statistically significant improvements, given that outcomes were already quite comparable to the in-domain performance.
 
-        \begin{figure*}
+            Despite thorough finetuning and valid decreasing epoch loss values during TTA, we could not successfully apply \emph{SDA-Net} in this 3D scenario and found scores to be collapsing by a large margin for most of the pre-trained models.
+
+        \subsubsection{Experiment III: High quality predictions on unseen data out-of-the-box: More scenarios}
+            \label{sec:exp3_results}
+
+            \begin{figure*}
+                \centering
+                \centerline{\includegraphics[width=\linewidth]{\dgttaPath/figures/exp3_visual.pdf}}
+                \caption{Visual results correspond to statistics of Fig. \ref{fig:exp3_ts_amos_spine_bplots} and \ref{fig:exp3_bplots_mmwhs}. Rows show source and target task scenarios; columns indicate the base models used. Ground truth is given in the left column. Positively predicted voxels are shown in colors. The erroneous area of predictions is marked with contours. Class colors for the abdominal task can be found in Tab. \ref{tab:exp1}. Whole-heart class labels comprise right ventricle \legendbox{map5_1}, right atrium \legendbox{map5_2}, left ventricle \legendbox{map5_3}, left atrium \legendbox{map5_4} and myocardium \legendbox{map5_5}. Best viewed digitally.}
+                \label{fig:exp3_visual}
+            \end{figure*}
+
+            \begin{figure*}
             \centering
-            \centerline{\includegraphics[width=\linewidth]{\dgttaPath/figures/exp3_visual.pdf}}
-            \caption{Visual results correspond to statistics of Fig. \ref{fig:exp3_ts_amos_spine_bplots} and \ref{fig:exp3_bplots_mmwhs}. Rows show source and target task scenarios; columns indicate the base models used. Ground truth is given in the left column. Positively predicted voxels are shown in colors. The erroneous area of predictions is marked with contours. Class colors for the abdominal task can be found in Tab. \ref{tab:exp1}. Whole-heart class labels comprise right ventricle \legendbox{map5_1}, right atrium \legendbox{map5_2}, left ventricle \legendbox{map5_3}, left atrium \legendbox{map5_4} and myocardium \legendbox{map5_5}. Best viewed digitally.}
-            \label{fig:exp3_visual}
-        \end{figure*}
+                \begin{minipage}{.49\linewidth}
+                    \centering
+                    \includegraphics[width=\linewidth]{\dgttaPath/figures/exp3_bplots_ts_amos_spine.pdf}
+                    \caption{Test sample statistics before and after applying \emph{DG-TTA}. Top: Abdominal organ prediction task of Exp. II. Bottom: Lumbal spine tasks. Symbols and axes description see Fig. \ref{fig:exp2_tta}.}
+                    \label{fig:exp3_ts_amos_spine_bplots}
+                \end{minipage}%
+                \hfill
+                \begin{minipage}{.49\linewidth}
+                    \centering
+                    \includegraphics[width=\linewidth]{\dgttaPath/figures/exp3_bplots_mmwhs.pdf}
+                    \caption{Test sample statistics before and after applying \emph{DG-TTA} for whole heart segmentation tasks. Top: TS pre-trained models. Bottom: MMWHS CT pre-trained models with only 16 training samples. Symbols and axes description see Fig. \ref{fig:exp2_tta}.}
+                    \label{fig:exp3_bplots_mmwhs}
+                \end{minipage}
+            \end{figure*}
 
-        \begin{figure*}
-        \centering
-            \begin{minipage}{.49\linewidth}
-                \centering
-                \includegraphics[width=\linewidth]{\dgttaPath/figures/exp3_bplots_ts_amos_spine.pdf}
-                \caption{Test sample statistics before and after applying \emph{DG-TTA}. Top: Abdominal organ prediction task of Exp. II. Bottom: Lumbal spine tasks. Symbols and axes description see Fig. \ref{fig:exp2_tta}.}
-                \label{fig:exp3_ts_amos_spine_bplots}
-            \end{minipage}%
-            \hfill
-            \begin{minipage}{.49\linewidth}
-                \centering
-                \includegraphics[width=\linewidth]{\dgttaPath/figures/exp3_bplots_mmwhs.pdf}
-                \caption{Test sample statistics before and after applying \emph{DG-TTA} for whole heart segmentation tasks. Top: TS pre-trained models. Bottom: MMWHS CT pre-trained models with only 16 training samples. Symbols and axes description see Fig. \ref{fig:exp2_tta}.}
-                \label{fig:exp3_bplots_mmwhs}
-            \end{minipage}
-        \end{figure*}
+            Now, we target prediction with \emph{DG-TTA} in various tasks using the TS dataset as a basis since it contains 104 classes, making it a versatile starting point. The test prediction statistics are shown in Fig. \ref{fig:exp3_ts_amos_spine_bplots} and Fig. \ref{fig:exp3_bplots_mmwhs}. Again, DG pre-trained models perform strongly in the AMOS abdominal target task. The highest mean value of \sipct{82.6} Dice can be achieved by applying \emph{DG-TTA} on the \emph{GIN} base model (see Fig. \ref{fig:exp3_ts_amos_spine_bplots}, top). This diminishes the domain gap to only \sipct{-2.2} compared to the MRI in-domain prediction of \sipct{84.8} (see Tab. \ref{tab:exp1}).
+            Out-of-domain prediction in the lumbal spine task \fromto{TS}{SPINE} is challenging. Without TTA, only the pre-trained \emph{GIN} model can reach a high performance of \sipct{73.2}. Applying \emph{DG-TTA} on the \emph{GIN+MIND} model leads to recovering the model's capabilities to the highest test score of \sipct{73.7} (\sipct{+15.8}).
+            Out-of-domain prediction in the whole-heart segmentation tasks is performed well by DG pre-trained models on the TS dataset (see Fig. \ref{fig:exp3_bplots_mmwhs}, top). The strong \emph{GIN} model performance can be increased to \sipct{82.6} Dice after applying TTA (\sipct{+1.2}).
 
-        Now, we target prediction with \emph{DG-TTA} in various tasks using the TS dataset as a basis since it contains 104 classes, making it a versatile starting point. The test prediction statistics are shown in Fig. \ref{fig:exp3_ts_amos_spine_bplots} and Fig. \ref{fig:exp3_bplots_mmwhs}. Again, DG pre-trained models perform strongly in the AMOS abdominal target task. The highest mean value of \sipct{82.6} Dice can be achieved by applying \emph{DG-TTA} on the \emph{GIN} base model (see Fig. \ref{fig:exp3_ts_amos_spine_bplots}, top). This diminishes the domain gap to only \sipct{-2.2} compared to the MRI in-domain prediction of \sipct{84.8} (see Tab. \ref{tab:exp1}).
-        Out-of-domain prediction in the lumbal spine task \fromto{TS}{SPINE} is challenging. Without TTA, only the pre-trained \emph{GIN} model can reach a high performance of \sipct{73.2}. Applying \emph{DG-TTA} on the \emph{GIN+MIND} model leads to recovering the model's capabilities to the highest test score of \sipct{73.7} (\sipct{+15.8}).
-        Out-of-domain prediction in the whole-heart segmentation tasks is performed well by DG pre-trained models on the TS dataset (see Fig. \ref{fig:exp3_bplots_mmwhs}, top). The strong \emph{GIN} model performance can be increased to \sipct{82.6} Dice after applying TTA (\sipct{+1.2}).
+            With fewer training samples in the \fromto{MMWHS CT}{MR} whole-heart segmentation tasks, lower scores are reported compared to the TS base model (see Fig. \ref{fig:exp3_bplots_mmwhs}, bottom). Applying \emph{DG-TTA} in such a challenging scenario can improve scores for all DG pre-trained models significantly (\sipct{+12.8}, \sipct{+11.8}, \sipct{+11.6}). Here, \emph{GIN+MIND} reaches the best mean of 71.5\,\% Dice.
+            Visual results of this experiment are depicted in Fig. \ref{fig:exp3_visual}.
 
-        With fewer training samples in the \fromto{MMWHS CT}{MR} whole-heart segmentation tasks, lower scores are reported compared to the TS base model (see Fig. \ref{fig:exp3_bplots_mmwhs}, bottom). Applying \emph{DG-TTA} in such a challenging scenario can improve scores for all DG pre-trained models significantly (\sipct{+12.8}, \sipct{+11.8}, \sipct{+11.6}). Here, \emph{GIN+MIND} reaches the best mean of 71.5\,\% Dice.
-        Visual results of this experiment are depicted in Fig. \ref{fig:exp3_visual}.
+            % Competitors:
+            %! SDA-Net https://github.com/heyufan1995/self-domain-adapted-network
+            % Li et al.: https://github.com/HaoLi12345/TTA -> No code inside
+            %! ADAMI https://github.com/mathilde-b/SFDA
 
-        % Competitors:
-        %! SDA-Net https://github.com/heyufan1995/self-domain-adapted-network
-        % Li et al.: https://github.com/HaoLi12345/TTA -> No code inside
-        %! ADAMI https://github.com/mathilde-b/SFDA
+            % RefSeg: NoCode
+            % SR-TTT: https://github.com/FeiLyu/SR-TTT -> Not implementable for non-pathologic images?
 
-        % RefSeg: NoCode
-        % SR-TTT: https://github.com/FeiLyu/SR-TTT -> Not implementable for non-pathologic images?
-
-\section{Discussion and outlook}
+\section{Discussion and Conclusion}
     Severe domain shifts in medical imaging currently still prevent the reuse of segmentation models on newly acquired data. It is impossible to estimate \mbox{a priori} whether a pre-trained model with or without DG capabilities functions well out-of-domain. At the time of prediction, the source data might not be available anymore, disclosed due to regulatory limitations, or physically non-transferable. By combining DG and TTA in our proposed \emph{DG-TTA} approach, we can show that prediction across scanner modalities can be improved significantly.
     In case DG works already well on the target domain, subsequent TTA gains are smaller but still yield substantial improvements in most cases. Most of the time, there is no control over how publicly available models are trained; thus, focussing on DG pre-training alone is insufficient. In this regard, improvements of up to \sipct{+63.8} Dice could be achieved for non-DG pre-trained models (see Sec. \ref{sec:exp2_tatta_results}).
     % for the \fromto{BTCV}{AMOS} scenario (\sipct{-0.4} up to \sipct{+1.1} Dice).

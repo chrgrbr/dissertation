@@ -56,7 +56,7 @@ Furthermore, we apply our method to the multi-atlas 3D image scenario where the 
 Nonetheless, we still can achieve an improvement by deriving an optimized consensus label from the extracted weights and applying a straightforward weighted-sum on the registered atlases.
 
 % \newpage
-\section{Method}
+\section{Methods}
 \label{sec:method_deepstaple}
     In this section, we will describe our data parameter adaption\footnote{Our code is openly available on GitHub: \url{https://github.com/multimodallearning/deep_staple}} and introduce our proposed extensions when using it in semantic segmentation tasks, namely a special regularization and a fixed weighting scheme. Furthermore, a multi-atlas specific extension will be described, which improves training stability.
     \paragraph{\textbf{Data parameters}}
@@ -141,7 +141,7 @@ Nonetheless, we still can achieve an improvement by deriving an optimized consen
 
 
 \newpage
-\section{Experiments}
+\section{Experiments and Results}
     \label{sec:experiments_deepstaple}
     In this section, we will describe general dataset and model properties as well as our four experiments which increase in complexity up to the successful application of our method in 3D multi-atlas label noise estimation. We will refer to oracle-labels\footnote{``The word oracle [...] properly refers to the priest or priestess uttering the prediction.''. ``Oracle.'' Wikipedia, Wikimedia Foundation, 03 Feb 2022, en.wikipedia.org/wiki/Oracle} as the real target labels which belong to an image and “registered/training/ground-truth”-labels as image labels that the network used to update its weights. Oracle-Dice refers to the overlapping area of oracle-labels and “registered/training/ground-truth”-labels.
     % The experiments are structured as follows:
@@ -261,7 +261,6 @@ Nonetheless, we still can achieve an improvement by deriving an optimized consen
     In the background the mean validation Dice of nnUnet-model trainings (150 epochs) is shown. As a reference, we trained directly on the T1-moving data with strong data augmentation (nnUNet ``insane'' augmentation) trying to overcome the domain gap directly (GAP). Furthermore, we trained on 40 randomly selected atlas labels (RND), all 400 atlas labels (ALL), STAPLE consensi, data parameter consensi (DP) and oracle-labels either on deeds or Convex Adam registered data. Note that the deeds data contained 40 unique moving atlases whereas the Convex Adam data contained 20 unique moving atlases, both warped to 40 fixed images as stated before.
     % Pay attention to boxplots STAPLE vs. DP (ours) and foreground vs. background i.e. consensus mean and subsequent nnUNet mean validation score when trained on the corresponding consensus.
 
-\section{Results and discussion}
     \label{sec:results}
     In \textbf{experiment I} we could show that our usage of data parameters is generally effective in the semantic segmentation scenario under artificial label noise.
     Fig. \ref{fig:exp1_deepstaple} (middle) shows an increase of validation scores when activating stepping on data parameters after 10 epochs for disturbance strengths \(>0.1\). Stronger disturbances lead to more severe score drops but can be recovered by using data parameters.
@@ -293,7 +292,7 @@ Nonetheless, we still can achieve an improvement by deriving an optimized consen
 %     \end{minipage}
 % \end{figure}
 
-\section{Conclusion and outlook}
+\section{Discussion and Conclusion}
     \label{sec:conclusion}
     Within this work, we showed that using data parameters in a multimodal prediction setting with propagated source labels is a valid approach to improve network training scores, get insight into training data quality and use the extracted info about sample quality in subsequent steps namely to generate consensus segmentations and provide these to further steps of deep learning pipelines. Our improvements over the original data parameter approach for semantic segmentation show strong results in both 2D- and 3D-training settings. Although we could extract sample quality information in the multi-atlas setting successfully, we could not improve network training scores in this setting directly since using the data parameters inline of the training loop resulted in unstable training.
     Regarding that, we want to continue investigating how an inline training can directly improve training scores in the multi-atlas setting. Furthermore our empirically chosen fixed weighting needs more theoretical foundation. The consensus generation could be further improved by trying more complex weighting schemes or incorporating the network predictions itself. Also we would like to compare our registration-segmentation pipeline against specialized approaches of Ding et al. and Liu et al. \cite{ding2019votenet,ding2020votenet+,liu2021style} which we consider as very interesting baselines.

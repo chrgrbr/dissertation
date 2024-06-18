@@ -55,11 +55,12 @@
 
     %%% Chapters
     \chapter{Introduction} % 8p
-        \input{sections/01_introduction/text}
+    \input{sections/01_introduction/text}
 
     \chapter{Background} % 11p
-        \input{sections/02_background/text}
+    \input{sections/02_background/text}
 
+    \addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
     \chapter{Generalization through dynamic data curation and aggregation}
         \input{sections/03_deepstaple/text}
 
@@ -71,6 +72,8 @@
 
     \chapter{Generalization by maximizing the data descriptive power}
         \input{sections/05_acquisitionfocus/text}
+
+    \addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
 
     \chapter{Summary}
         \input{sections/7_summary} % 10p
