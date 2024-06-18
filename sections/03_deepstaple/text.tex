@@ -154,14 +154,14 @@ Nonetheless, we still can achieve an improvement by deriving an optimized consen
     %     \item[EXP IV] Consensus generation and subsequent network training \label{last-item}
     % \end{itemize}
 
-    \vspace{-7pt}
+    % \vspace{-7pt}
     \paragraph{\textbf{Dataset}}
     For our experiments, we chose a challenging multimodal segmentation task which was part of the CrossMoDa challenge \cite{shapey2021segmentation}. The data contains contrast-enhanced T1-weighted brain tumour MRI scans and high-resolution T2-weighted images (initial resolution of \(384/448\times348/448\times80~vox\) @ \(0.5~mm\times0.5~mm\times1.0-1.5~mm\) and \(512\times512\times120~vox\) @ \(0.4\times0.4\times1.0 - 1.5~mm\)).
     We used the original TCIA dataset \cite{shapey2021segmentation} to provide omitted labels of the CrossModa challenge which served as oracle-labels.
     Prior to training isotropic resampling to \(0.5~mm\times0.5~mm\times0.5~mm\) was performed as well as cropping the data to \(128\times128\times128~vox\) around the tumour. We omitted the provided cochlea labels and train on binary masks of background/tumour. As the tumour is either contained on the right- or left side of the hemisphere, we flipped the right samples to provide pre-oriented training data and omit the data without tumour structures. For the 2D experiments we sliced the last data dimension.
     % \footnote{Preprocessing scripts can be found in our code repository on GitHub}.
 
-    \vspace{-7pt}
+    % \vspace{-7pt}
     \paragraph{\textbf{Model and training settings}}
     % As our main model we use a 2D-MobileNetV3 \cite{howard2019searching} and a custom 3D-MobileNet backbone similar to MobileNetV2 \cite{sandler2018mobilenetv2} with aspp pooling and an LR-ASPP head \cite{howard2019searching}.
     For 2D segmentation, we employ a LR-ASPP MobileNetV3-Large model \cite{howard2019searching}. For 3D experiments we use a custom 3D-MobileNet backbone similar as proposed in \cite{sandler2018mobilenetv2} with an adapted 3D-LR-ASPP head \cite{hempe2022opportunistic}.
@@ -193,9 +193,10 @@ Nonetheless, we still can achieve an improvement by deriving an optimized consen
         \includegraphics[width=\textwidth]{\deepstaplePath/figures/exp1}
         \caption{\textbf{Left:} Sample disturbance \legendbox{red} at strengths [0.1, 0.5, 1.0, 5.0]. \textbf{Middle:} Validation Dice when training with named disturbance strenghts, either with data parameters enabled (\sampleline{}) or disabled (\sampleline{dashed}). \textbf{Right:} Parameter distribution for combinations of risk regularization (RR) and fixed weighting (FW): RR+FW \legendbox{amethyst} \textpipe~RR \legendbox{amber(sae/ece)} \textpipe~FW \legendbox{amber}  \textpipe~NONE \legendbox{applegreen}. Saturated data points indicate higher oracle-Dice. Value of ranked Spearman-correlation \(r_s\) between data parameters and oracle-Dice given.}
         \label{fig:exp1_deepstaple}
-        \vspace{-12pt}
+        % \vspace{-12pt}
     \end{figure}
-    \vspace{-7pt}
+    % \vspace{-7pt}
+
     \paragraph{\textbf{Experiment I: 2D model training, artificially disturbed ground-truth labels}}
     This experiment shows the general applicability of data parameters in the semantic segmentation setting when using one parameter per 2D slice.
     % when training on labels in the T1-weighted image domain.
@@ -203,7 +204,8 @@ Nonetheless, we still can achieve an improvement by deriving an optimized consen
     % for runs with and without data parameters enabled.
     In case of runs with data parameters the optimization was enabled after 10 epochs.
     % colored by oracle dice of a selected run of 1.0 disturbance strength.
-    \vspace{-7pt}
+    % \vspace{-7pt}
+
     \paragraph{\textbf{Experiment II: 2D model training, quality-mixed registered single-atlas labels}}
     Extending experiment I, in this setting we train on real registration noise with 2D slices on single-atlases.
     We use 30 T1-weighted images as fixed targets (non-labelled) and T2-weighted images and labels as moving pairs. For registration we use the deep learning-based algorithm Convex Adam \cite{siebert2021fast}. We select two registration qualities to show quality influence during training: \emph{Best}-quality registration means the single best registration with an average of around 80\% oracle-Dice across all atlas registrations. \emph{Combined}-quality means a clipped, gaussian-blurred sum of all 30 registered atlas registrations (some sort of consensus).
@@ -241,16 +243,16 @@ Nonetheless, we still can achieve an improvement by deriving an optimized consen
             \caption{\textbf{FG:} Box plots of STAPLE and DP consensus quality, mean value on the right. \textbf{BG:} Bar plot of nnUNet scores; deeds \legendbox{green}, Convex Adam \legendbox{yellow}}
             \label{fig:exp4_boxplot}
         \end{minipage}
-        \vspace{-12pt}
+        % \vspace{-12pt}
     \end{figure}
 
-    \vspace{-7pt}
+    % \vspace{-7pt}
     \paragraph{\textbf{Experiment III: 3D model training, registered multi-atlas labels}}
     Extending experiment II, in this setting we train on real registration noise but with 3D volumes and multiple atlases per image.
     We follow the CrossMoDa \cite{shapey2021segmentation} challenge task and use T2-weighted images as fixed targets (non-labelled) and T1-weighted images and labels as moving pairs. We conducted registration with two algorithms (iterative deeds \cite{heinrich2012globally} and deep learning-based algorithm Convex Adam \cite{siebert2021fast}). For each registration method 10 registered atlases per image are fed to the training routine expanding the T2-weighted training size from 40 to 400 label-image pairs each.
     Fig. \ref{fig:exp3_scores_drop} shows a run with inline and out-of-line (see Sec. \ref{sec:ool_backprop}) data parameter training on the deeds registrations as an example how training scores behave.
 
-    \vspace{-7pt}
+    % \vspace{-7pt}
     \paragraph{\textbf{Experiment IV: Consensus generation and subsequent network training}}
     Using the training output of experiment III, we built 2x40 consensi: [10 deeds registered @ 40 fixed] and [10 Convex Adam registered @ 40 fixed]. Consensi were built by applying the STAPLE algorithm as baseline and opposed to that our proposed weighted-sum method on data parameters (DP) (see Sec. \ref{sec:fixed_weighting}).
     On these, we trained several powerful nnUnet-models for segmentation
