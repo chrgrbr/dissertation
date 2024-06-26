@@ -37,6 +37,8 @@
 
 \input{final_includes}
 
+\newboolean{RENDER_CHAPTERS}
+\setboolean{RENDER_CHAPTERS}{false}
 \begin{document}
     \thispagestyle{headings}
     \pagenumbering{roman}
@@ -65,18 +67,25 @@
     \input{sections/02_background/text}
 
     \addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
-    \chapter{Generalizing learning based data acquisition}
-        \input{sections/05_acquisitionfocus/text}
+    \chapter{Generalizing Learning-based Data Acquisition}
+        \ifthenelse{\boolean{RENDER_CHAPTERS}}{
+            \input{sections/05_acquisitionfocus/text}
+        }{}
 
-    \chapter{Generalizing sample weighting and aggregation schemes}
-        \input{sections/03_deepstaple/text}
+    \chapter{Generalizing Sample Weighting and Aggregation Schemes}
+        \ifthenelse{\boolean{RENDER_CHAPTERS}}{
+            \input{sections/03_deepstaple/text}
+        }{}
 
-    \chapter{Generalizing equivariant kernel architectures}
-        \input{sections/04_xedgeconv/text}
+    \chapter{Generalizing Equivariant Kernel Architectures}
+        \ifthenelse{\boolean{RENDER_CHAPTERS}}{
+            \input{sections/04_xedgeconv/text}
+        }{}
 
-    \chapter{Generalizing augmentation based training and test-time adaptation}
-        \input{sections/06_dgtta/text}
-
+    \chapter{Generalizing Augmentation-based Training and Test-time Adaptation}
+        \ifthenelse{\boolean{RENDER_CHAPTERS}}{
+            \input{sections/06_dgtta/text}
+        }{}
 
     \addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
 

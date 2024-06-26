@@ -1,6 +1,16 @@
 Foundations for terms and concepts of generalization, deep learning as a form of artificial learning and generalization in deep learning will be formulated in this chapter.
 
-\section{Learning, Artificial Learning and Generalization}
+\section{Clinical Background: Volumetric Medical Imaging}
+    % ct, mri, cardiac
+    % numbers of acquisitions
+    \subsection{Diagnostic Disciplines and Tasks}
+    % \subsection{Possibilities of Volumetric Imaging}
+    \subsection{Imaging Domains and Scanner Properties}
+    \subsection{Generalization: Possibilities and Challenges}
+    %     What makes Generalization hard?
+    %     What can be done to achieve generalization in each of the steps?
+
+\section{Methodological Background: Deep Learning}
 
     % https://books.google.de/books?hl=de&lr=&id=qOF4AgAAQBAJ&oi=fnd&pg=PP1&ots=vNTiX5Lu_U&sig=UEC7rljJ7dVsAbh_XQeMmCrNqcU#v=onepage&q&f=false
     The principal mechanisms of learning were studied in the last century by investigating conditioned learning, where an outcome is associated to a stimulus by a learning organism e.g. a dog that awaits food after hearing the sound of a bell \citep{pavlov1928conditioned, pavlov2010conditioned, banich2011generalization}. Later, fear responses were especially studied and two sub-mechanisms of conditioned learning --- generalization and specialization --- were discovered \citep{banich2011generalization}.
@@ -10,42 +20,50 @@ Foundations for terms and concepts of generalization, deep learning as a form of
 
     On the cell level, learning and building memory is assumed to work as the change of neuron connection-strength through synaptic plasticity \citep{do1949organization,martin2000synaptic}. Apart from synaptic information exchange it was also figured out that information exchange occurs volumetrically between glia cells and neurons with extracellular vesicles in the nervous system \citep{schiera2019communcation}.
 
-    \subsection{Deep Learning}
+    % TODO: How does generalization work on the cell level?
+
+    \subsection{Basic Principles}
         % https://cs.stanford.edu/people/eroberts/courses/soco/projects/neural-networks/History/history1.html
 
         Inspired by the research findings in biological learning processes, \citeauthor{mcculloch1943logical} decribed several parts of network structures mimicking neural systems \citep{mcculloch1943logical}.
-
-        (first mlp)\citep{rosenblatt1957perceptron}
-
-        Over a decade later, this concept was translated and used in numerical computation and devices and \citeauthor{rosenblatt1957perceptron} developed the concept of a \emph{perceptron} as a learning electronic or electromechanical to recognize patterns.
-        First classification experiments were conducted by \citeauthor{widrow1960adaptive} using small neural networks \citep{widrow1960adaptive}.
+        Over a decade later \citeauthor{rosenblatt1957perceptron} developed the concept of a \emph{perceptron} as a learning element for electronic or electromechanical systems to recognize patterns \citep{rosenblatt1957perceptron}.
+        First real classification experiments were conducted by \citeauthor{widrow1960adaptive} using small neural networks \citep{widrow1960adaptive}.
+        % TODO: were those exp based on value tables? vs. backprop?
         More than two decades later the \emph{Backpropagation} mechanism was developed, that is nowadays used in current deep learning approaches to systematically configure the weights and biases of neural networks \citep{rumelhart1986learning}.
 
+        % With increasing computational power and availability of large data through the internet machine learning techniques experienced increased interest \citep{xx}.
+
+        \paragraph{Backpropagation} The basic principle of deep learning is the backpropagation mechanism.
+
+        \begin{align}
+            \diffp{E}{{y_j}} &= y_j - d_j \\
+            \diffp{E}{{x_j}} &= \diffp{E}{{y_j}} \cdot \diffp{{y_j}}{{x_j}}
+        \end{align}
         how does deep learning work?
         what are the challenges for generalization in artificial and deep learning?
         How is that equal to learning and generalization in learning, where does it differ?
-
-    \subsection{Generalization in Deep Learning: Current discussion and challenges}
-        What are the current approaches in deep learning? How is the idea of AGI related to our gerneralization approach? What can be problems of AGI and why do we analyse generalization in a limited scope such as medical image analysis?
 
 
 
     And now that we know how artificial learning works and what generalization is, we can transfer this knowledge to medical deep learning.
 
-\section{Generalization in the Medical Image Analysis Pipeline}
-    What special properties apply for medical imaging?
-    What makes Generalization hard?
-    What can be done to achieve generalization in each of the steps?
-
-    \subsection{Data Acquisition}
-    \subsection{Data Curation and Preprocessing}
-        \subsubsection{Modalities}
-        \subsubsection{Scanners}
-            Histograms
-    \subsection{Model Building}
-        \subsubsection{Convolutional Models}
-            Kernels
-
-    \subsection{Model Application and Evaluation}
 
     Now that we know what is special about medical deep learning and what has been done in the field, we know what is possible and missing and this is our starting point to present our methods in the context of these methods.
+
+    \subsection{Data Representation and Model Architectures}
+
+        \subsubsection{Convolutional Neural Networks}
+            % cnns, unets
+            % cnn Kernels
+        \subsubsection{Graph Neural Networks}
+
+            % feature aggregation
+            % rota groups, equivariance,
+
+    \subsection{Training and Optimization Strategies}
+        % curriculum learning, dice loss
+        % metrics
+
+    \subsection{Generalization: Recent Discussion and Approaches}
+        % What are the current approaches in deep learning? How is the idea of AGI related to our gerneralization approach? What can be problems of AGI and why do we analyse generalization in a limited scope such as medical image analysis?
+        % generalization methods
