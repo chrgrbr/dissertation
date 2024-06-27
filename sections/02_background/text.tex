@@ -1,17 +1,17 @@
-Foundations for terms and concepts of generalization, deep learning as a form of artificial learning and generalization in deep learning will be formulated in this chapter.
+This chapter will lay foundations for medical imaging for clinical diagnostics and the basic methodology used throughout this thesis to tackle advanced imaging diagnostics.
 
 \section{Clinical Background: Volumetric Medical Imaging}
-    % ct, mri, cardiac
-    % numbers of acquisitions
+    % How important is volumetric imaging?
     \subsection{Diagnostic Disciplines and Tasks}
-    % \subsection{Possibilities of Volumetric Imaging}
+        % Which different disciplines are common? What are challenges?
     \subsection{Imaging Domains and Scanner Properties}
+        % What are the special benefits and downsides of CT, MRI?
     \subsection{Generalization: Possibilities and Challenges}
-    %     What makes Generalization hard?
-    %     What can be done to achieve generalization in each of the steps?
+        % What makes Generalization hard?
+        % What can be done to achieve generalization in each of the steps?
 
 \section{Methodological Background: Deep Learning}
-
+    % TODO: This needs to be a lot shorter now
     % https://books.google.de/books?hl=de&lr=&id=qOF4AgAAQBAJ&oi=fnd&pg=PP1&ots=vNTiX5Lu_U&sig=UEC7rljJ7dVsAbh_XQeMmCrNqcU#v=onepage&q&f=false
     The principal mechanisms of learning were studied in the last century by investigating conditioned learning, where an outcome is associated to a stimulus by a learning organism e.g. a dog that awaits food after hearing the sound of a bell \citep{pavlov1928conditioned, pavlov2010conditioned, banich2011generalization}. Later, fear responses were especially studied and two sub-mechanisms of conditioned learning --- generalization and specialization --- were discovered \citep{banich2011generalization}.
     In fear learning, initially an instance-based generalization occurs that maps a novel fear to an environment \citep{banich2011generalization}. Later, this generalization is specialized and mapped to specific environmental stimuli leading to discrimination \citep{banich2011generalization}.
@@ -19,8 +19,6 @@ Foundations for terms and concepts of generalization, deep learning as a form of
     The concept of gerneralization and spezialization can be tracked down to individual parts of the brain, where the initial generalized learning is associated to the amygdala whereas the specialization occurs in the prefrontal cortex and the hippocampus \citep{banich2011generalization}.
 
     On the cell level, learning and building memory is assumed to work as the change of neuron connection-strength through synaptic plasticity \citep{do1949organization,martin2000synaptic}. Apart from synaptic information exchange it was also figured out that information exchange occurs volumetrically between glia cells and neurons with extracellular vesicles in the nervous system \citep{schiera2019communcation}.
-
-    % TODO: How does generalization work on the cell level?
 
     \subsection{Basic Principles}
         % https://cs.stanford.edu/people/eroberts/courses/soco/projects/neural-networks/History/history1.html
@@ -39,16 +37,8 @@ Foundations for terms and concepts of generalization, deep learning as a form of
             \diffp{E}{{y_j}} &= y_j - d_j \\
             \diffp{E}{{x_j}} &= \diffp{E}{{y_j}} \cdot \diffp{{y_j}}{{x_j}}
         \end{align}
-        how does deep learning work?
-        what are the challenges for generalization in artificial and deep learning?
-        How is that equal to learning and generalization in learning, where does it differ?
 
-
-
-    And now that we know how artificial learning works and what generalization is, we can transfer this knowledge to medical deep learning.
-
-
-    Now that we know what is special about medical deep learning and what has been done in the field, we know what is possible and missing and this is our starting point to present our methods in the context of these methods.
+        % Now that we know how deep learning works in general, we can have a look at individual building blocks models / data concepts / supervision tasks
 
     \subsection{Data Representation and Model Architectures}
 
@@ -56,7 +46,6 @@ Foundations for terms and concepts of generalization, deep learning as a form of
             % cnns, unets
             % cnn Kernels
         \subsubsection{Graph Neural Networks}
-
             % feature aggregation
             % rota groups, equivariance,
 

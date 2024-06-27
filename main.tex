@@ -39,7 +39,9 @@
 
 \newboolean{RENDER_CHAPTERS}
 \setboolean{RENDER_CHAPTERS}{false}
+
 \begin{document}
+
     \thispagestyle{headings}
     \pagenumbering{roman}
     \input{./titlepage}
@@ -95,46 +97,50 @@
 
     \printbibliography[heading=bibintoc]
 
+
     \addchap{List of publications}
 
-        \begin{refsection}[bib/journals_first_author]
-            \nocite{*}
-            \printbibliography[title={Journal articles as first author}, heading=subbibliography, keyword=journals_first_author]
-        \end{refsection}
+    \begin{refsection}[bib/journals_first_author]
+        \nocite{*}
+        \printbibliography[title={Journal articles as first author}, heading=subbibliography, keyword=journals_first_author]
+    \end{refsection}
 
-        \begin{refsection}[bib/proceedings_first_author]
-            \nocite{*}
-            \printbibliography[title={Conference papers as first author}, heading=subbibliography, keyword=proceedings_first_author]
-        \end{refsection}
+    \begin{refsection}[bib/proceedings_first_author]
+        \nocite{*}
+        \printbibliography[title={Conference papers as first author}, heading=subbibliography, keyword=proceedings_first_author]
+    \end{refsection}
 
-        \begin{refsection}[bib/abstracts_first_author]
-            \nocite{*}
-            \printbibliography[title={Abstracts as first author}, heading=subbibliography, keyword=abstracts_first_author]
-        \end{refsection}
+    \begin{refsection}[bib/abstracts_first_author]
+        \nocite{*}
+        \printbibliography[title={Abstracts as first author}, heading=subbibliography, keyword=abstracts_first_author]
+    \end{refsection}
 
-        % \begin{refsection}[bib/journals_co_author]
-        %     \nocite{*}
-        %     \printbibliography[title={Journal articles as co-author}, heading=subbibliography, keyword=journals_co_author]
-        % \end{refsection}
+    % \begin{refsection}[bib/journals_co_author]
+    %     \nocite{*}
+    %     \printbibliography[title={Journal articles as co-author}, heading=subbibliography, keyword=journals_co_author]
+    % \end{refsection}
 
-        \begin{refsection}[bib/proceedings_co_author]
-            \nocite{*}
-            \printbibliography[title={Conference papers as co-author}, heading=subbibliography, keyword=proceedings_co_author]
-        \end{refsection}
+    \begin{refsection}[bib/proceedings_co_author]
+        \nocite{*}
+        \printbibliography[title={Conference papers as co-author}, heading=subbibliography, keyword=proceedings_co_author]
+    \end{refsection}
 
-        % \begin{refsection}[bib/abstracts_co_author]
-        %     \nocite{*}
-        %     \printbibliography[title={Abstracts as co-author}, heading=subbibliography, keyword=abstracts_co_author]
-        % \end{refsection}
+    % \begin{refsection}[bib/abstracts_co_author]
+    %     \nocite{*}
+    %     \printbibliography[title={Abstracts as co-author}, heading=subbibliography, keyword=abstracts_co_author]
+    % \end{refsection}
 
-        \begin{refsection}[bib/preprints_first_author]
-            \nocite{*}
-            \printbibliography[title={Preprints as first author}, heading=subbibliography, keyword=preprints_first_author]
-        \end{refsection}
+    \begin{refsection}[bib/preprints_first_author]
+        \nocite{*}
+        \printbibliography[title={Preprints as first author}, heading=subbibliography, keyword=preprints_first_author]
+    \end{refsection}
 
-        % \begin{refsection}[bib/preprints_co_author]
-        %     \nocite{*}
-        %     \printbibliography[title={Preprints as co-author}, heading=subbibliography, keyword=preprints_co_author]
-        % \end{refsection}
+    % \begin{refsection}[bib/preprints_co_author]
+    %     \nocite{*}
+    %     \printbibliography[title={Preprints as co-author}, heading=subbibliography, keyword=preprints_co_author]
+    % \end{refsection}
 
-\end{document}
+    \addchap{Abbreviations}
+        \input{acronyms}
+
+    \end{document}
