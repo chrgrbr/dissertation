@@ -50,7 +50,7 @@
     \setcounter{page}{1}
 
     \chapter*{Abstract} % 1p
-        This is an abstract.
+        This is the abstract.
     \cleardoublepage
 
     \chapter*{Zusammenfassung} % 1p
@@ -63,28 +63,34 @@
 
     %%% Chapters
     \chapter{Introduction} % 8p
-    \input{sections/01_introduction/text}
+        \label{chap:introduction}
+        \input{sections/01_introduction/text}
 
     \chapter{Background} % 11p
-    \input{sections/02_background/text}
+        \label{chap:background}
+        \input{sections/02_background/text}
 
     \addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
     \chapter{Generalizing Learning-based Data Acquisition}
+        \label{chap:acquisitionfocus}
         \ifthenelse{\boolean{RENDER_CHAPTERS}}{
             \input{sections/05_acquisitionfocus/text}
         }{}
 
     \chapter{Generalizing Sample Weighting and Aggregation Schemes}
+        \label{chap:deepstaple}
         \ifthenelse{\boolean{RENDER_CHAPTERS}}{
             \input{sections/03_deepstaple/text}
         }{}
 
     \chapter{Generalizing Equivariant Kernel Architectures}
+        \label{chap:xedgeconv}
         \ifthenelse{\boolean{RENDER_CHAPTERS}}{
             \input{sections/04_xedgeconv/text}
         }{}
 
     \chapter{Generalizing Augmentation-based Training and Test-time Adaptation}
+        \label{chap:dgtta}
         \ifthenelse{\boolean{RENDER_CHAPTERS}}{
             \input{sections/06_dgtta/text}
         }{}
@@ -92,6 +98,7 @@
     \addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
 
     \chapter{Summary}
+        \label{chap:summary}
         \input{sections/7_summary} % 10p
     % p++31
 

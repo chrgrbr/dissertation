@@ -136,27 +136,56 @@
             Enabling generalization in all of these areas can reinforce the overall generalization capabilities and improve the final outcome. The following chaptes will thus cover the process of data acquisition, data aggregation and sample weighting, model design and the strategies to train the desinged models given the available data.
 
         \paragraph{Levels of Exploration}
-            Clinical level
-
-            Technical level
-
-                Model design, globally
-                Model deisgn, kernel level
-
-                Model training and inference process
-                Intensity augmentation
+            This thesis will evaluate the achieved improvements two-fold: On the one hand, the clinical level outcome is presented and the gained improvements that generalization enables are highlighted. This is also reflected by the organization of the thesis presented in the next section \ref{sec:organization}.
+            On the other hand the technical level that enables or improves generalization for volumetric medical deep learning is discussed. In this thesis, technical findings are presented again on different levels:
+            On a global level, acquisition process modeling as well as training strategies are examined. On a smaller scale, individual parts of the training and inference pipeline such as training loss function changes for curriculum learning are presented. Even individual parameter/kernel-level changes of the model are optimized to enable generalization by model design. Looking at the data fed to the model, augmentation schemes on the image intensity-level are developed.
 
         \section{Organization and Contributions}  % p 3.5
-        % TODO describe how this thesis is structured bg chapter, individual chapters, discussion conlusion, clinical and methodological / technical part
-        \begin{figure}
-            \label{fig:draft}
-            \includegraphics[width=\textwidth]{sections/01_introduction/figures/draft_areas_levels.pdf}
-            \caption{Thesis organization: Four main chapters of this thesis will explore possible different areas and different levels for generalization symbolized by the spreading and stacking of the cubes, which symbolize volumetric medical images. Keywords are given below the chapter names.}
-        \end{figure}
+            \label{sec:organization}
+            The thesis is divided into three major parts:
+            Foundations are laid in chapter \ref{chap:background} \nameref{chap:background}, which is itself divided into clinical and methodological deep learning background.
+            The following four chapters \ref{chap:acquisitionfocus} to  \ref{chap:dgtta} explain the developed generalizing methods in medical deep learning for volumetric images. Each of these four chaptes is itself divided into a self-contained introduction, description of the methodology, the experiment configuration and results as well as a discussion and conclusion for the method. % TODO check the individual structure
+            \figref{fig:draft} highlights the major aspects of the four chapters which are explained in more detail now.
 
-        \noindent\fullcite{weihsbach2022deepstaple}
+            \begin{figure}
+                \includegraphics[width=\textwidth]{sections/01_introduction/figures/draft_areas_levels.pdf}
+                \caption{Thesis organization: Four main chapters of this thesis will explore possible different areas and different levels for generalization symbolized by the spreading and stacking of the cubes, which symbolize volumetric medical images. Keywords are given below the chapter names.}
+                \label{fig:draft}
+            \end{figure}
 
-    \noindent\fullcite{weihsbach2022xedgeconv}
+            \begin{itemize}
+                \item
+                    In Chapter \ref{chap:acquisitionfocus} a wholistic view on the  high-level deep learning process is used to derive a concept for optimized data acquisition. Given a cardiac shape reconstruction task, the data acquisition process and the shape reconstruction model are jointly modelled and optimized to find generalizing MRI view planes describing the overall heart shape best. The ideas and methods were published in:
 
-    \noindent\fullcite{weihsbach2023acquisitionfocus}
-    \noindent\fullcite{weihsbach2024acquisitionfocus}
+                    \vspace{1em}
+                    \noindent\fullcite{weihsbach2023acquisitionfocus}
+
+                    \vspace{1em}
+                    \noindent\fullcite{weihsbach2024acquisitionfocus}
+
+                \item
+                    Chapter \ref{chap:dgtta} explains concepts to enable generalization for different imaging domains shifting view to the training and inference (application) phase of the model. Here, data augmentation is used to train models with generalizing capabilities to optimally segment various organs and bone structures given a large CT base dataset. The generalizing models are further optimized on individual MR images to optimize their performance when segmenting the same anatomical structures given very different image intensity distributions compared to the training domain. The method was published as a preprint in:
+
+                    \vspace{1em}
+                    \noindent\fullcite{weihsbach2023dg}
+
+                \item
+                    Chapter \ref{chap:deepstaple} explains concepts of data aggregation and curriculum learning for generalizing on the data level. Applied to the task of vestibular schwanomma tumour and cochlea segmentation for differently weighted MR images, the method was developed to weight individual samples during the training phase of the model. This enables to learn a generalized shape representation given noisy, probably imperfect input labels derived by image registration. The method was published in:
+
+                    \vspace{1em}
+                    \noindent\fullcite{weihsbach2022deepstaple}
+
+                \item
+                    Moving to a lower level of detail, in Chapter \ref{chap:xedgeconv} modifications of the model kernels are explained that enable to learn generalized representations of organs to be segmented for differently oriented image volumes. This is especially interesting for the MRI domain, where image volumes can be acquired with arbitrary orientation.
+                    The task-agnostic capabilities of the method were shown for an abdominal organ segmentation scenario as well as a cardiac chamber segmentation scenario.
+                    The method was published in:
+
+                    \vspace{1em}
+                    \noindent\fullcite{weihsbach2022xedgeconv}
+
+
+            \end{itemize}
+
+            In the last chapter of this thesis \ref{chap:summary} \nameref{chap:summary} all of the findings are summarized again two-fold: The clinical outcome is evaluated and further possibilities of the methodological improvements are evaluated with respect to the clinical benefit.
+
+            Technical improvements are further elaborated on, possibly not only yielding insight for medical volumetric deep learning but also other fields of deep learning research.
