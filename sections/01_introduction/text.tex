@@ -47,7 +47,7 @@
 
         \noindent \emph{Generalization in Deep Learning Methods for Volumetric Medical Image Analysis}
 
-        \noindent be improved?
+        \noindent be enabled?
         % $\vdots$
     \end{quote}
 
@@ -116,20 +116,42 @@
 
 
     \section{Objectives} % p 1.5
-        % Objectives of this thesis
-        % % TODO: What should go here?
+        In this thesis different areas in which generalization can be enabled are explored. Secondly it will be examined on which levels the medical deep learning process can be influenced to enable generalization. The different areas and levels are laid out in the following paragraphs.
 
         \paragraph{Areas of Exploration}
+            Based on the intention that medical tasks shall be supported by automated analysis of volumetric images, model generalization approaches should not only be developed for one medical task but several.
+            This thesis will thus cover volumetric analysis tasks throughout the whole body.
+            Volumetric imaging of the heart is needed to asses heart function via its end-sytole and end-diastole ventricular volumes. Furthermore assessing the cardiac chambers shape can yield valuable information for cardiac-disease risk stratification. In cardiac tasks the heart movement is of particular interest.
+            Volumetric brain imaging can detect brain injuries, lesions and tumours. Follow-up scans enable the monitoring of tissue changes such as tumour growth.
+            Abdominal body scans can yield valuable information such as the position of cancerous tissue, pancreatitis, kidney infection and kidney stones.
+            Besides soft-tissue, volumetric imaging enables the detection and treatment planning of bone fractures and other malformations such as spinal osteoporosis.
+            The classification and segmentation of the mentioned body parts imposes all their own different challenges, but model generalization methods shoud nevertheless as task-agnostic as possible to be versatile. All developed methods of this thesis will be examined for various tasks and body areas or at least if only a special tasks is examined further extension of the methods for different tasks is explained.
+
+            Dense volumetric images can be acquiried with CT or MRI scanners. Both methods differ subsantially in their priciple of acquisition and thus resulting images have very different tissue contrast properties which can be utilized for different diagnostic questions.
+            The resulting image modality gap imposes a challenge with deep learning methods that achieve outstanding results in the training domain, but quality can significantly be reduced when learnt models are applied to the images of the other domain.
+            In this thesis it will be shown, that with the right techniques it is possible to configure methods so that the transfer of knowledge gained in one domain to the other domain is possible.
+
+            Lastly, different areas of the the deep learning process itself are in the focus of this thesis.
+            The quality of automated assessment does not only depend on the model capabilities and configuration but also on the data that is fed to the model and the strategy that is used for training and inference.
+            Enabling generalization in all of these areas can reinforce the overall generalization capabilities and improve the final outcome. The following chaptes will thus cover the process of data acquisition, data aggregation and sample weighting, model design and the strategies to train the desinged models given the available data.
 
         \paragraph{Levels of Exploration}
+            Clinical level
 
+            Technical level
 
-        \section{Organisation and Contributions}  % p 3.5
+                Model design, globally
+                Model deisgn, kernel level
+
+                Model training and inference process
+                Intensity augmentation
+
+        \section{Organization and Contributions}  % p 3.5
         % TODO describe how this thesis is structured bg chapter, individual chapters, discussion conlusion, clinical and methodological / technical part
         \begin{figure}
             \label{fig:draft}
-            \includegraphics[width=\textwidth]{sections/01_introduction/figures/draft.pdf}
-            \caption{Thesis draft}
+            \includegraphics[width=\textwidth]{sections/01_introduction/figures/draft_areas_levels.pdf}
+            \caption{Thesis organization: Four main chapters of this thesis will explore possible different areas and different levels for generalization symbolized by the spreading and stacking of the cubes, which symbolize volumetric medical images. Keywords are given below the chapter names.}
         \end{figure}
 
         \noindent\fullcite{weihsbach2022deepstaple}
