@@ -1,14 +1,24 @@
 \section{Motivation} % p 2.5
     Clinical diagnostics and research has been improved dramatically with emergence of volumetric imaging such as \ac{CT} and \ac{MRI} technology which enables visualizing body parts and organs.
-    Since its invention in xx, the number of acquired \ac{CT} scans has increased xx-fold until 2024. The importance of \ac{MRI} scans, which offer better soft-tissue contrast without exposing radiation to the patient examined \citep{xx}, has likewise increase with now approximately xx million scans taken every year worldwide. % TODO add numbers and references
+    In recent years, \ac{CT} examinations have increased substantially in many countries \citep{westmark2023increasing, masjedi2020european, martella2023diagnostic}. The importance of \ac{MRI} scans, which offer better soft-tissue contrast without exposing radiation to the patient examined \citep{martella2023diagnostic}, has likewise increased in most countries reaching up to 160 scans per 1000 people in 2021 \citep{statista2021number}. % TODO check claims of this sentence
     % Are there some papers that have evidence for benefit of methods?
 
     Volumetric imaging offers the benefit of capturing the organ of interest in its \ac{3D} space. However, visualizing the \ac{3D} volume is currently still performed on \ac{2D} screens where in case of \ac{CT} and \ac{MRI} a suitable form of \ac{3D} projection for the densly acquired volume has to be found or individual view planes / imaging slices have to be selected for examination. Automated processing is needed in the first case for the visualization itself and in the latter case automated processing can support clinicians navigating the \ac{3D} volume, help classifying organ boundaries, measuring tumour sizes and highlight organ deformations, all of which is complicated to perform manually when navigating a \ac{3D} volume in \ac{2D} space.
 
-    Deep learning with its basic principles invented in the last century, has become a de-facto standard now for automated processing in versatile fields such as for processing text, images, audio, video, analogous signals, biological processes and molecule configurations, agent simulations purely digitally or in combination with sensors and actuators for physical interaction \citep{xx} and has created a significant technology push throughout all of the mentioned areas of application \citep{xx}.
+    Deep learning with its basic principles invented in the last century, has become a de-facto standard now for automated processing in versatile fields such as for processing text, images, audio, video, analogous signals, biological processes or physical agent simulations
+    \citep{%
+        ouyang2022training, %text
+        kirillov2023segment, %images
+        birtchnell2018listening,%audio
+        huang2020movienet,%video
+        sahoo2020machine,%analogous signals (ecg)
+        jumper2021highly,%biological processes
+        makoviychuk2021isaac,%physical interaction ,%agent simulations
+    }
+    and has created a significant technology push throughout all of the mentioned areas of application.
     Of course, this holds true for volumetric medical image analysis as well, where formerly hand-crafted method design is now combined or even entirely replaced with data-driven, learning-based methods \citep{xx}.
 
-    Deep learning as a special concept of artificial learning, was sought to mimick the neuronal activity in brain tissue. It has been found that higher-level concepts of human learning such as reasoning about generalization applies to deep learning in similar ways \citep{xx}. Shifting our view to the main topic of this thesis --- generalization --- a question is raised to the reader:
+    Deep learning as a special concept of artificial learning, was sought to mimick the neuronal activity in brain tissue. It has been found that higher-level concepts of human learning such as reasoning about generalization applies to deep learning in similar ways \citep{jakel2008generalization}. Shifting our view to the main topic of this thesis --- generalization --- a question is raised to the reader:
 
     \begin{quote}
         \centering \Large
@@ -18,17 +28,17 @@
 
     \begin{figure}
         \includegraphics[width=\textwidth]{sections/01_introduction/figures/synthesized_generalization.pdf}
-        \caption{Visualizations of a state-of-the-art text-to-image generator DALL$\cdot$E 3 \citep{xx} when prompted to \textquote{visualize generalization} (left), to \textquote{visualize generalization in deep learning} (middle) and to \textquote{visualize generalization in deep learning for volumetric medical images} (right).}
+        \caption{Visualizations of a state-of-the-art text-to-image generator DALL$\cdot$E 3 \citep{betker2023improving} when prompted to \textquote{visualize generalization} (left), to \textquote{visualize generalization in deep learning} (middle) and to \textquote{visualize generalization in deep learning for volumetric medical images} (right).}
         \label{fig:synthesized_generalization}
     \end{figure}
 
     % This question will serve us as starting point to motivate the main aspects of this thesis.
-    As a help for brainstorming, a deep learning-based text-to-image generator \citep{xx} was prompted to visualize \textquote{generalization}, \textquote{generalization in deep learning} and \textquote{generalization for volumetric medical images} (see \figref{fig:synthesized_generalization}).
+    As a help for brainstorming, a deep learning-based text-to-image generator \citep{betker2023improving} was prompted to visualize \textquote{generalization}, \textquote{generalization in deep learning} and \textquote{generalization for volumetric medical images} (see \figref{fig:synthesized_generalization}).
     % In the following lines, the above raised question is answered using the generative output of \figref{fig:synthesized_generalization}.
 
     \textquote{Generalization} (\figref{fig:synthesized_generalization}, left) was depicted as a human brain related topic, showing abstract organic shapes emerging from the central skull boundary.
     % as well as regular wire-like structures at the top and bottom of the image.
-    The initial definition of generalization is indeed brain related and was described for fear learning, where two sub-mechanisms of conditioned learning --- generalization and specialization --- were discovered \citep{xx, banich2011generalization}. % TODO primary source needed
+    The initial definition of generalization is indeed brain related and was described for fear learning, where two sub-mechanisms of conditioned learning --- generalization and specialization --- were discovered \citep{banich2011generalization}. % TODO primary source needed
     In fear learning, initially an instance-based generalization\footnote{Opposed to the presented finding, in deep learning, specialization is considered to be formed instance-based} occurs that maps a novel fear to an environment \citep{banich2011generalization}.
     % Later, this generalization is specialized and mapped to specific environmental stimuli leading to the learning of discriminative aspects \citep{banich2011generalization}.
 
@@ -46,7 +56,7 @@
     In deep learning, the ability of models to generalize is like in biological learning a desirable aspect.
     The mechanisms of artificial generalization are an active area of research but have not been understood or even solved entirely yet.
     This is also due to the fact that deep learning models are considered a blackbox model and forming an understanding of the internal reasoning of the models is hard, if not impossible.
-    A trained deep learning model should e.g. still work if the specific anatomy in question is visible regardless of the individual image properties of the scanner used to acquire the image to enable a reliable analysis but it was often shown that even current methods for generalizing learning struggle under imaging domain shifts \citep{xx}.
+    A trained deep learning model should e.g. still work if the specific anatomy in question is visible regardless of the individual image properties of the scanner used to acquire the image to enable a reliable analysis but it was often shown that even current methods for generalizing learning struggle under imaging domain shifts \citep{ouyang2022causality}.
 
     % This thesis will likewise investigate the differnt levels of data acquisition, data presentation, training and inference strategies, as well as model kernel level design to find elements necessary for generalization.
     The above mentioned findings lead us to the final research question of this thesis:
@@ -69,10 +79,10 @@
 
     % When training deep learning models, over-specialization is an often experienced challenge which is more technically referred to as overfitting and undesirable as it limits the performance of trained models for unseen data points \citep{xx}.
 
-    % in human learning, generalization enables the transfer of an experienced stimulus or input to a broader context \citep{}.
+    % in human learning, generalization enables the transfer of an experienced stimulus or input to a broader context \citep{xx}.
 
     % , whereas specialization narrows generalized concepts down to more individual cases \citep{xx}.
-    % Both steps were first described for fear-learning \citep{}.
+    % Both steps were first described for fear-learning \citep{xx}.
     % % TODO explain concept of the study.
 
     % Over-generalization can lead to anxiety disorders in this regard \citep{xx}, whereas over-specialization can lead to missclassify dangerous situations. These mechanisms could be tracked down to individual parts of the brain: The amygdala is responsible for generalization whereas specialization occurs in the prefrontal cortex and the hippocampus \citep{banich2011generalization}.
@@ -132,21 +142,21 @@
             % Given the relevance of volumetric medical imaging for several body parts and disease diagnosis, model generalization approaches should not only be developed for one medical task but ideally provide benefit for many different analysis tasks and be task-agnostic.
             This thesis will thus cover volumetric analysis tasks throughout several body parts and organs. The examined tasks comprise the following scenarios:
 
-            Volumetric imaging of the heart has been proven to successfully to asses heart function e.g. via its time-varying end-sytole and end-diastole ventricular volumes \citep{}. Furthermore, assessing the cardiac chambers' shapes can yield valuable information for future risk prediction \citep{}.
+            Volumetric imaging of the heart has been proven to successfully to asses heart function e.g. via its time-varying end-sytole and end-diastole ventricular volumes \citep{xx}. Furthermore, assessing the cardiac chambers' shapes can yield valuable information for future risk prediction \citep{xx}.
             % In cardiac tasks the heart movement is of particular interest.
-            Volumetric brain imaging can be utilized to detect brain injuries, lesions and tumours \citep{} and follow-up scans enable the monitoring of tissue changes such as tumour growth providing valuable information for treatment planning \citep{}.
+            Volumetric brain imaging can be utilized to detect brain injuries, lesions and tumours \citep{xx} and follow-up scans enable the monitoring of tissue changes such as tumour growth providing valuable information for treatment planning \citep{xx}.
             Abdominal body scans can yield valuable insight into the existence of cancerous tissue, pancreatitis, kidney infection and kidney stones
-            \citep{}.
+            \citep{xx}.
             % TODO improve this enumeration with more systematic cases
-            Besides soft-tissues, volumetric imaging enables the detection and classification of bone fractures and other malformations such as spinal osteoporosis \citep{}.
+            Besides soft-tissues, volumetric imaging enables the detection and classification of bone fractures and other malformations such as spinal osteoporosis \citep{xx}.
             The deep learning based analysis of the mentioned body parts imposes all their own different challenges, but model generalization methods should nevertheless be as agnostic as possible to be versatile. All developed methods of this thesis will be evaluated for various tasks and body areas or at least possibilites and limitations of the methods regarding other tasks are discussed.
 
             A further area of exploration covers the differrent scanners used for acquisition such as CT or MRI scanners. Both device methods differ subsantially in their physical priciple of acquisition and thus resulting images inherit vastly different tissue contrast properties which can be utilized according to the diagnostic questions at hand.
-            When analysing these images with one deep learning model, the resulting image modality gap imposes a challenge. While deep learning methods can achieve outstanding results in the training domain, prediction quality can significantly be reduced when the learnt models are applied to images of a different domain \citep{}.
+            When analysing these images with one deep learning model, the resulting image modality gap imposes a challenge. While deep learning methods can achieve outstanding results in the training domain, prediction quality can significantly be reduced when the learnt models are applied to images of a different domain \citep{xx}.
             % So generalization methods of this thesis will also explicitly cover scanner-induced domain shifts.
 
             The deep learning process itself has different areas to explore.
-            The quality of automated assessment does not only depend on the model capabilities and configuration but also on the data that is fed to the model and the strategy that is used for model training and inference given that data \citep{}.
+            The quality of automated assessment does not only depend on the model capabilities and configuration but also on the data that is fed to the model and the strategy that is used for model training and inference given that data \citep{xx}.
             Enabling generalization in any of these areas can reinforce the overall generalization and improve the final outcome which is investigated throughout this thesis. The following chapters will thus cover the areas of data acquisition, data aggregation, sample weighting, model design and the strategies to train the desinged models given the available data.
 
         \paragraph{Levels of Exploration}
