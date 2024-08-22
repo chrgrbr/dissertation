@@ -16,7 +16,7 @@
         makoviychuk2021isaac,%physical interaction ,%agent simulations
     }
     and has created a significant technology push throughout all of the mentioned areas of application.
-    Of course, this holds true for (volumetric) medical image analysis as well, where formerly hand-crafted method design is now combined or even entirely replaced with data-driven, learning-based methods \citep{hosny2018artificial}.
+    Of course, this holds true for (volumetric) medical image analysis as well, where formerly hand-crafted method design is now combined or even entirely replaced with data-driven, learning-based methods \citep{hosny2018artificial, rajpurkar2022ai}.
 
     Deep learning as a special concept of artificial learning, was sought to mimick the neuronal activity in brain tissue. It has been found that higher-level concepts of human learning such as reasoning about generalization applies to deep learning in similar ways \citep{jakel2008generalization}. Shifting our view to the main topic of this thesis --- generalization --- a question is raised to the reader:
 
@@ -142,21 +142,30 @@
             % Given the relevance of volumetric medical imaging for several body parts and disease diagnosis, model generalization approaches should not only be developed for one medical task but ideally provide benefit for many different analysis tasks and be task-agnostic.
             This thesis will thus cover volumetric analysis tasks throughout several body parts and organs. The examined tasks comprise the following scenarios:
 
-            Volumetric imaging of the heart has been proven to successfully to asses heart function e.g. via its time-varying end-sytole and end-diastole ventricular volumes \citep{bernard2018deep}. Furthermore, assessing the cardiac chambers' shapes can yield valuable information for future risk prediction \citep{ly2022interpretable}.
+            Volumetric imaging of the heart has been proven to successfully to asses heart function e.g. via its time-varying end-sytole and end-diastole ventricular volumes
+            \citep{pattynama1994evaluation}. % bernard2018deep %DL method
+            Furthermore, assessing the cardiac chambers' shapes can yield valuable information for future risk prediction
+            \citep{ly2022interpretable}. %DL method
             % In cardiac tasks the heart movement is of particular interest.
-            Volumetric brain imaging can be utilized to detect brain injuries, lesions and tumours \citep{xx} and follow-up scans enable the monitoring of tissue changes such as tumour growth providing valuable information for treatment planning \citep{xx}.
-            Abdominal body scans can yield valuable insight into the existence of cancerous tissue, pancreatitis, kidney infection and kidney stones
-            \citep{xx}.
+            Volumetric brain imaging can be utilized to detect brain lesions, tumours, other pathologies
+            \citep{
+                hering2024improving, %lesions %DL method
+                uzunova2019unsupervised, %tumours and other %DL method
+            }
+            and follow-up scans enable the monitoring of tissue changes providing valuable information for treatment planning or evaluation
+            \citep{baheti2021brain}. %DL method
+            Abdominal body scans can yield valuable insight into the existence of cancerous tissue, pancreatitis, liver infection and spleen abnormalities (non-exhaustive list).
+            \citep{caraiani2020indications}.
             % TODO improve this enumeration with more systematic cases
-            Besides soft-tissues, volumetric imaging enables the detection and classification of bone fractures and other malformations such as spinal osteoporosis \citep{xx}.
+            Besides soft-tissues, volumetric imaging enables the detection and classification of bone fractures and other malformations \citep{kuo2022artificial}.
             The deep learning based analysis of the mentioned body parts imposes all their own different challenges, but model generalization methods should nevertheless be as agnostic as possible to be versatile. All developed methods of this thesis will be evaluated for various tasks and body areas or at least possibilites and limitations of the methods regarding other tasks are discussed.
 
             A further area of exploration covers the differrent scanners used for acquisition such as CT or MRI scanners. Both device methods differ subsantially in their physical priciple of acquisition and thus resulting images inherit vastly different tissue contrast properties which can be utilized according to the diagnostic questions at hand.
-            When analysing these images with one deep learning model, the resulting image modality gap imposes a challenge. While deep learning methods can achieve outstanding results in the training domain, prediction quality can significantly be reduced when the learnt models are applied to images of a different domain \citep{xx}.
+            When analysing these images with one deep learning model, the resulting image modality gap imposes a challenge. While deep learning methods can achieve outstanding results in the training domain, prediction quality can significantly be reduced when the learnt models are applied to images of a different scanner even within one modality \citep{pooch2020can}.
             % So generalization methods of this thesis will also explicitly cover scanner-induced domain shifts.
 
             The deep learning process itself has different areas to explore.
-            The quality of automated assessment does not only depend on the model capabilities and configuration but also on the data that is fed to the model and the strategy that is used for model training and inference given that data \citep{xx}.
+            The quality of automated assessment does not only depend on the model capabilities and configuration but also on the data that is fed to the model and the strategy that is used for model training given that data \citep{soviany2022curriculum}.
             Enabling generalization in any of these areas can reinforce the overall generalization and improve the final outcome which is investigated throughout this thesis. The following chapters will thus cover the areas of data acquisition, data aggregation, sample weighting, model design and the strategies to train the desinged models given the available data.
 
         \paragraph{Levels of Exploration}
