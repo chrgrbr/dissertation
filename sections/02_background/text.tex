@@ -2,12 +2,67 @@
 This chapter will lay foundations for medical imaging for clinical diagnostics and the basic methodology used throughout this thesis to tackle advanced imaging diagnostics.
 
 \section{Clinical Background: Volumetric Medical Imaging} %4 pages
-    % How important is volumetric imaging?
-    \subsection{Diagnostic Disciplines and Tasks} %1.5 pages
+
+% Ideas:
+% zhang2024challenges (foundation models in deep learning)
+% https://3dqlab.stanford.edu/what-is-3d-imaging-2/
+
+    \subsection{Diagnostic Disciplines and Tasks} %1 pages
+        What is Medical volumetric Imaging used for in general?
+
+
+        "This article celebrates this breadth of scientific discovery and develop-ment by examining the impact that CT has had on the di-agnosis, characterization, and management of a sampling of major health challenges,
+        1111 including stroke, vascular dis-eases, cancer, trauma, acute abdominal pain, and diffuselung diseases, 1111
+        as related to key technical advances in CT and manifested in Radiology." \cite{rubin2014computed}
+
+        a substantialchange in overall volume can be seen on three-dimensional images (C and F) (fig 1 from reference 271). \cite{rubin2014computed}
+
+        . With the introduction ofvolumetric CT, the ability to discrim-inate global and regional growth im-proved greatly, allowing estimation ofdoubling times (271) and providingprincipled approaches to followinglung nodules (256,272) (Fig 13). \cite{rubin2014computed}
+
+
+        Tissue vol-ume quantification was established forthe left cardiac ventricle (343), cere-bral spinal fluid (344), liver and spleen(345), and tumoral neoplasia (346) allwithin the 1st decade after the intro-duction of CT. \cite{rubin2014computed}
+
+        Within this con-text, the need to reformat, reconstruct,and render CT images into alternativedisplays was driven by a desire to pro-vide all physicians with an understand-ing of the anatomic nuances that CTprovided in a manner that might beencountered in the surgical suite. Al-though computers and computation arefundamental to CT, the applications ofcomputer graphics, vision, and quan-titation methods were not sufficientlymature to make their use routine un-til the latter days of the 20th century. \cite{rubin2014computed}
+
+
+        s. One quickly meet challenges associated to memoryand compute consumption when using CNNs with higher-dimensional image data, challenges thatresearchers are trying various approaches to deal with (treating 3D as stacks of 2Ds, patch- orsegment-based training and inference, downscaling, etc). It is clear that the ideas behind state-of-the-art two-dimensional CNNs can be lifted to three dimensions, but also that adding a thirdspatial dimension results in additional constraints. \cite{lundervold2019overview}
+
+        The 1.5T clinical MRI was launched as a commercially avail-able clinical system in the early 1980s. \cite{kabasawa2022mr}
+
+
+        Broadly speaking, thereare three distinct imaging objectives: to detect, resolve, and characterizeabnormalities \cite{abramson2023surgeons}
+
+        . MRI sequences, on the other hand, can be tailored towards one ormore of these goals by altering the trade-off between resolution,contrast, and noise. A traditional T2 fat suppressed sequence is excellentfor tumor detection, as most tumors are T2 bright and standout againstthe dark (suppressed) fat. However, these sequences are often 5 mmthick with gaps between slices, maximizing signal to noise but limitingresolution. \cite{abramson2023surgeons}.
+
+        It is overly simplistic to state that CT has high spatial resolution andMRI exhibits excellent contrast. \cite{abramson2023surgeons}
+
+        However, when greater soft tissue contrast isrequired, there currently is no substitute for MRI. \cite{abramson2023surgeons}
+
+        utting-edge CTtechniques, including the use of more sensitive photon counting de-tectors3 and dual energy data acquisition,4,5 will increase CT spatial resolution and contrast while minimizing noise, but this is unlikely toovercome the multitude of MR sequences tailored to images varioustissues throughout the body.  \cite{abramson2023surgeons}
+
+        % DL specific
+        \cite{litjens2017survey}
+        \cite{piccialli2021survey}
+
+        How does it differ from non-volumetric imaging?
+        Why are CT and MRI so important?
+        Why is US not explained in this thesis?
+
+        Volumetric medical imaging enables the diagnosis of xyz.
+        % How did volumetrict Medical Imaging evolve
+        CT and MRI are often done paired follow ups? This is why these are in focus.
+        CT (and PET) and MRI are important imaging domains.
+        CT was invented in xyz and evolved to abc.
+        MRI was invented in xyz and evolved to abc.
+        % How important is volumetric imaging?
+
+        % How important is MRI
+        % How important is CT
         % Which different disciplines are common? What are challenges?
+
     \subsection{Imaging Domains and Scanner Properties} %1.5 pages
-        % What are the special benefits and downsides of CT, MRI?
-    \subsection{Generalization: Possibilities and Challenges} %1 pages
+    % What are the special benefits and downsides of CT, MRI?
+    \subsection{Generalization: Possibilities and Challenges} %1.5 pages
         % What makes Generalization hard?
         % What can be done to achieve generalization in each of the steps?
 
