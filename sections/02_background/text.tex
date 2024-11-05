@@ -22,8 +22,6 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
         \ac{MRI}, which is available commercially since the early 1980s, has superior contrast over CT regarding soft-tissue \citep{abramson2023surgeons, kabasawa2022mr}. \ac{MRI} sequences can be specifically tailored towards the application regarding. This requires a trade-off beetween sufficient \ac{SNR}, voxel volume and acquisition time under the influence of the examined object\footnote{A more in-depth explanation can be found in \ref{chap:acquisitionfocus}} \citep{macovski1996noise}. E.g. T2 sequences suppressing fat are excellent for tumor detection, where tumors are displayed brighter than the dark, suppressed fat, but spatial resolution is rather coarse with 5mm thick slicing gaps \citep{abramson2023surgeons}.
         \ac{MRI} can be used in various applications such to assess brain and heart function (see \chapref{chap:deepstaple} and \chapref{chap:acquisitionfocus}), abdominal organs such as liver and pancreas (see \chapref{chap:dgtta}) and knee cartilage \citep{mazurowski2019deep}.
 
-
-
         % Within this con-text, the need to reformat, reconstruct,and render CT images into alternativedisplays was driven by a desire to pro-vide all physicians with an understand-ing of the anatomic nuances that CT provided in a manner that might been countered in the surgical suite. Al-though computers and computation arefundamental to CT, the applications ofcomputer graphics, vision, and quan-titation methods were not sufficientlymature to make their use routine un-til the latter days of the 20th century. \citep{rubin2014computed}
 
 
@@ -41,9 +39,38 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
 
     \subsection{Imaging Domains and Scanner Properties} %1.5 pages
 
+        \begin{figure}
+            \begin{minipage}{\textwidth}
+                \centering
+                \includegraphics[width=.89\textwidth]{sections/02_background/figures/contrast_imgs.pdf}
+                \includegraphics[width=\textwidth]{sections/02_background/figures/contrast_histograms.pdf}
+                \caption{Top: One \ac{CT} and several \ac{MRI} images of different datasets. Bottom: Histogram of the image intensities each scaled to min-max feature scales. The \ac{CT} historgram is shaded with the corresponding image grayscale intensities. Appearance of \ac{CT} and \ac{MRI} images differ substantially but also \ac{MRI} images have a large variation in appearance due to different scanners and acquisition protocols.}
+                \label{fig:domain_contrast}
+            \end{minipage}
+        \end{figure}
+
+        \figref{fig:domain_contrast}
+
+        \citep{withers2021x}
         % What are the special benefits and downsides of CT, MRI, technically speaking.
-    \subsection{Generalization: Possibilities and Challenges} %1.5 pages
+
+        % example images
+        % Value ranges (histogram) https://pmc.ncbi.nlm.nih.gov/articles/PMC9011180/pdf/nihms-1794910.pdf
+        % Image normalization by scanner (HU vs. MRI)
+        % MRI magic triangle T1 weighted / T2 weighted scans
+        % slicing MRI vs CT
+        % image recovery: MRI k-Space transform, CT Radon transform
+        % Acquisition timing
+        % Scanner costs
+
+
+
+    \subsection{Generalization: Challenges and Possibilities} %1.5 pages
+    % Number of manufacturers, number of MRI sequences
+        % Studies that show problems with generalization for CT / MRI
+        % Studies that show approaches to overcome scanner domain gaps
         % What makes Generalization hard?
+
         % What can be done to achieve generalization in each of the steps?
 
 \section{Methodological Background: Deep Learning} %7 pages
