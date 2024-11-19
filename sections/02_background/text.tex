@@ -22,6 +22,8 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
         \ac{MRI}, which is available commercially since the early 1980s, has superior contrast over CT regarding soft-tissue \citep{abramson2023surgeons, kabasawa2022mr}. \ac{MRI} sequences can be specifically tailored towards the application regarding. This requires a trade-off beetween sufficient \ac{SNR}, voxel volume and acquisition time under the influence of the examined object\footnote{A more in-depth explanation can be found in \ref{chap:acquisitionfocus}} \citep{macovski1996noise}. E.g. T2 sequences suppressing fat are excellent for tumor detection, where tumors are displayed brighter than the dark, suppressed fat, but spatial resolution is rather coarse with 5mm thick slicing gaps \citep{abramson2023surgeons}.
         \ac{MRI} can be used in various applications such to assess brain and heart function (see \chapref{chap:deepstaple} and \chapref{chap:acquisitionfocus}), abdominal organs such as liver and pancreas (see \chapref{chap:dgtta}) and knee cartilage \citep{mazurowski2019deep}.
 
+        TODO insert segmentation, registration, shape reconstruction, data hires / data reconstruction
+
         % Within this con-text, the need to reformat, reconstruct,and render CT images into alternativedisplays was driven by a desire to pro-vide all physicians with an understand-ing of the anatomic nuances that CT provided in a manner that might been countered in the surgical suite. Al-though computers and computation arefundamental to CT, the applications ofcomputer graphics, vision, and quan-titation methods were not sufficientlymature to make their use routine un-til the latter days of the 20th century. \citep{rubin2014computed}
 
 
@@ -107,21 +109,62 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
 
         As described in xx generalizatoin needs xyz
 
-        \citep{ben2010theory} therory of domain shift
+        connected: domain shift, domain adaptation, source data, target data
+        \citep{ben2010theory} therory of domain shift, optimal ratio of target and test set size on spam classifiers.
 
 
         \citep{recht2019imagenet} classification not working due to domain shift (imagenet)
 
-        \citep{wang2022generalizing}
+        \citep{recht2019imagenet}  ence the third term is the standard generalization gap commonly studied in machinelearning. It is determined solely by the random sampling error.
+
+        \citep{recht2019imagenet}  cenario. So at least on CIFAR-10 and ImageNet, multiple yearsof competitive test set adaptivity did not lead to diminishing accuracy numbers.
+
+        The lack of diminishing returns in our experiments points towards the distribution gap as the primaryreason for the accuracy drops. Moreover, our results on ImageNet show that changes in the samplingstrategy can indeed affect model accuracies by a large amount, even if the data source and otherparts of the dataset creation process stay the same. \citep{recht2019imagenet}
+
+
+        \citep{wang2022generalizing} in recent years, Domaingeneralization (DG) has received much attention. As shownin Fig. 1, the goal of domain generalization is to learn amodel from one or several different but related domains (i.e.,diverse training datasets) that will generalize well on unseentesting domains.
+
+        The goal of domain generalization is to learn a robust andgeneralizable predictive function h : X  Y from the M training domains to achieve a minimum prediction error on an unseentest domain Stest:
+
+        A domain is composed of data that aresampled from a distribution.
+
+        The joint distributions between each pairof domains are different: P
+
+        The goal of domain generalization is to learn a robust andgeneralizable predictive function h : X → Y from the M training
+        domains to achieve a minimum prediction error on an unseentest domain Stest (i.e.,
+
+
+
+
+
 
         \citep{yang2024generalized}
 
 
+        1/10 methods stating problems MRI CT (domain shift for image segmentation?)
 
-        10 methods stating problems MRI CT
+        \citep{yan2019domain} we generated adversarial
+        examples for a well-trained Unet for the left ventricle (LV) segmentation task in
+        magnetic resonance image (MRI)
 
-        10 methods giving answers MRI CT
-        \citep{ouyang2022causality} MRI CT method
+
+
+
+        9/10 methods giving answers MRI CT
+
+
+        \citep{siebert2021fast} MRI CT registration method
+        \citep{ouyang2022causality} MRI CT segmentation method
+        \citep{liu2020shape} prostate MRI segmentation all T2 weighted
+        \citep{huang2022online} Multi-vendor MRI segmentation
+        \citep{gao2024desam} abdominal CT MR + Prostate multi-center segmentation
+
+        \citep{wang2021harmonization} alzheimer disease Classification
+
+        \citep{zhu2023uod} one-shot Landmark detection x-ray
+        CT image reconstruction \citep{choi2023ct}
+        MRI/PET Multi-domain reconstruction \citep{gautier2024bimodal}
+
 
 
 \section{Methodological Background: Deep Learning} %7 pages
