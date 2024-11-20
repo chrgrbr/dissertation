@@ -47,7 +47,7 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
                 \includegraphics[width=.89\textwidth]{sections/02_background/figures/contrast_imgs.pdf}
                 \includegraphics[width=\textwidth]{sections/02_background/figures/contrast_histograms.pdf}
                 \caption{Top: One \ac{CT} and several \ac{MRI} images of cardiac studies and one internal dataset (Nancy) \citep{zhuang2019evaluation,martin2023deep,
-                campello2021multi,bernard2018deep}. Bottom: Histogram of the image intensities each scaled to min-max feature scales. The \ac{CT} histogram is shaded with the corresponding image grayscale intensities. Appearance of \ac{CT} and \ac{MRI} images differ substantially but also \ac{MRI} images have a large variation in appearance due to different scanners and acquisition protocols.}
+                campello2021multi,bernard2018deep}. Bottom: Histogram of the image intensities each scaled to min-max feature scales. The \ac{CT} histogram is shaded with the corresponding image grayscale intensities. Appearance of \ac{CT} and \ac{MRI} images differ substantially but also \ac{MRI} images have a large variation in appearance due to different scanners and acquisition protocols. Similar findings are presented in \citep{guan2021domain}.}
                 \label{fig:domain_contrast}
             \end{minipage}
         \end{figure}
@@ -141,17 +141,36 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
         \citep{yang2024generalized}
 
 
-        1/10 methods stating problems MRI CT (domain shift for image segmentation?)
+
+        4/6 methods stating problems MRI CT (domain shift for image segmentation?)
+
+        OVERVIEW OF BENCHMARK DATASETS FOR DOMAIN ADAPTATION RESEARCH ON DIFFERENT MEDICAL IMAGE ANALYSIS TASKS. \citep{guan2021domain}
+
+        \citep{guan2021domain} survey on domain adaptation
+        in medical image anal-ysis, a major challenge in constructing reliable and robustmachine learning models is the lack of labeled data \citep{guan2021domain}
+
+        Although adopting pre-trained models on a dataset (e.g.,ImageNet) is a popular way for supervised DA for medicalimage analysis, the 2D CNN structure may not able to fullyexplore the rich information conveyed in 3D medical images. \citep{guan2021domain} (problem of 2D networks. are often used but this may not be enough)
+
+        \citep{han2018deep} radial MRI sampling pattern by learning from large-scale CT data (problem of data scarcity)
+
+        \citep{ganin2016domain} domain adversarial learning - domains need to be defined (not medical, problem of defining domains)
+
+        \citep{yan2019edge} multi-vendor mri segmentation (non-harmonized protocols)
 
         \citep{yan2019domain} we generated adversarial
         examples for a well-trained Unet for the left ventricle (LV) segmentation task in
         magnetic resonance image (MRI)
+
+        \citep{yan2019domain} shift: transfer learning > domain adaptation
+        data: domain generalization > domain adaptation
 
 
 
 
         9/10 methods giving answers MRI CT
 
+
+        \citep{zhang2020generalizing} MRI heart US / prostate segmentation
 
         \citep{siebert2021fast} MRI CT registration method
         \citep{ouyang2022causality} MRI CT segmentation method
@@ -160,6 +179,8 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
         \citep{gao2024desam} abdominal CT MR + Prostate multi-center segmentation
 
         \citep{wang2021harmonization} alzheimer disease Classification
+
+        \citep{cheplygina2019not} emphysema classification in CT: Learning scenarios, illustrated by a task of classifying healthy (green) vs emphysema (red) tissue in chest CT images
 
         \citep{zhu2023uod} one-shot Landmark detection x-ray
         CT image reconstruction \citep{choi2023ct}
