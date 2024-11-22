@@ -40,7 +40,7 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
         % CT (and PET) and MRI are important imaging domains.
 
     \subsection{Imaging Domains and Scanner Properties} %1.5 pages
-
+        \label{sec:imaging_domains}
         \begin{figure}
             \begin{minipage}{\textwidth}
                 \centering
@@ -52,7 +52,7 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
             \end{minipage}
         \end{figure}
 
-        Due to the different acquisition principles of \ac{CT} and \ac{MRI} scanners and the adjustability of \ac{MRI} scanner sequences the appearance of images showing the same content can differ substantially as shown in \figref{fig:domain_contrast} forming multiple imaging \emph{domains}.
+        Due to the different acquisition principles of \ac{CT} and \ac{MRI} scanners and the adjustability of \ac{MRI} scanner sequences the appearance of images showing the same content can differ substantially as shown in \figref{fig:domain_contrast} forming multiple imaging \emph{domains} and as per definition an imaging domain contains data of the same distribution \citep{wang2022generalizing}.
 
         In a \ac{CT} scanner, X-ray beams are emitted and detected after the beams have been influenced by the matter and tissue of interest according to Beer-Lamberts law given in \eqqref{eq:beer_lambert}, where $I_0$ initially transmitted X-ray intensity and $I$ the output intensity influenced by $n$ materials with linear attenuation coefficient $\mu_i$ and path length $x_i$ through each material. Differences in attenuation coefficients between materials and different sizing contributes to a larger \emph{attenuation contrast}. For soft tissue which does not yield sufficent attenuation contrast, \emph{phase contrast} can be utilized to improve distinction.
         The materials' refractive index $n_r$ consists of factor $\beta$ influencing the aforementioned attenuation process and $\delta$ responsible for phase changes of the X-ray waves that pass the object described by \eqqref{eq:refractive_index} \citep{withers2021x}.
@@ -97,61 +97,20 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
         % Acquisition timing
         % Scanner costs
 
-
-
     \subsection{Generalization: Challenges and Possibilities} %1.5 pages
-    % Number of manufacturers, number of MRI sequences
-        % Studies that show problems with generalization for CT / MRI
-        % Studies that show approaches to overcome scanner domain gaps
-        % What makes Generalization hard?
+        In case of deep learning, where an algorithm is used to train a model on existing data from a \emph{source} domain (see \secref{sec:deep_learning}), the usage of this trained model on another \emph{target} domain often leads to performance degradation, as presented in this section.
+        This can be shown even for low-dimensional data tasks, where optimal and less optimal ratios of source and target data used in the training phase of the model can theoretically be derived \citep{ben2010theory}.
+        In \ac{2D}-tasks, such as the classification of several thousand images of the ImageNet dataset, this performance decline was even shown after the commonly used training and test data selection (refered to as data split) was altered for models that were optimized solely under the unaltered data split \citep{recht2019imagenet}. This example shows, that defining different domains is a non-trivial task and boundaries can be blurred.
+        % \citep{recht2019imagenet}  ence the third term is the standard generalization gap commonly studied in machinelearning. It is determined solely by the random sampling error.
+        % \citep{recht2019imagenet}  cenario. So at least on CIFAR-10 and ImageNet, multiple yearsof competitive test set adaptivity did not lead to diminishing accuracy numbers.
+        % The lack of diminishing returns in our experiments points towards the distribution gap as the primaryreason for the accuracy drops. Moreover, our results on ImageNet show that changes in the samplingstrategy can indeed affect model accuracies by a large amount, even if the data source and otherparts of the dataset creation process stay the same. \citep{recht2019imagenet}
 
-        % What can be done to achieve generalization in each of the steps?
+        \paragraph{Challenges} Given that trained deep learning models suffer performance degradation under shifts of the data domain, several challenges arise for volumetric medical imaging tasks comprising images of scanners with different acquisition principles and sequence properties (see \secref{sec:imaging_domains}).
+        First of all, the lack of data and labeled data restricts the training of deep learning models to be conducted in a limited number of source domains (and often only one domain) \citep{guan2021domain}.
+        This becomes more severe if deep learning models for less prominent imaging techniques such as \ac{MRI} with radial instead of orthogonal sampling patterns are studied \citep{han2018deep}.
+        Leveraging models pretrained on a large amount of natural image data (e.g. from the mentioned ImageNet dataset) may be helpful, but using \ac{2D} models for \ac{3D} images does not access all information shared between image layers in the volumetric image \citep{guan2021domain}.
+        % TODO continue here
 
-        As described in xx generalizatoin needs xyz
-
-        connected: domain shift, domain adaptation, source data, target data
-        \citep{ben2010theory} therory of domain shift, optimal ratio of target and test set size on spam classifiers.
-
-
-        \citep{recht2019imagenet} classification not working due to domain shift (imagenet)
-
-        \citep{recht2019imagenet}  ence the third term is the standard generalization gap commonly studied in machinelearning. It is determined solely by the random sampling error.
-
-        \citep{recht2019imagenet}  cenario. So at least on CIFAR-10 and ImageNet, multiple yearsof competitive test set adaptivity did not lead to diminishing accuracy numbers.
-
-        The lack of diminishing returns in our experiments points towards the distribution gap as the primaryreason for the accuracy drops. Moreover, our results on ImageNet show that changes in the samplingstrategy can indeed affect model accuracies by a large amount, even if the data source and otherparts of the dataset creation process stay the same. \citep{recht2019imagenet}
-
-
-        \citep{wang2022generalizing} in recent years, Domaingeneralization (DG) has received much attention. As shownin Fig. 1, the goal of domain generalization is to learn amodel from one or several different but related domains (i.e.,diverse training datasets) that will generalize well on unseentesting domains.
-
-        The goal of domain generalization is to learn a robust andgeneralizable predictive function h : X  Y from the M training domains to achieve a minimum prediction error on an unseentest domain Stest:
-
-        A domain is composed of data that aresampled from a distribution.
-
-        The joint distributions between each pairof domains are different: P
-
-        The goal of domain generalization is to learn a robust andgeneralizable predictive function h : X → Y from the M training
-        domains to achieve a minimum prediction error on an unseentest domain Stest (i.e.,
-
-
-
-
-
-
-        \citep{yang2024generalized}
-
-
-
-        4/6 methods stating problems MRI CT (domain shift for image segmentation?)
-
-        OVERVIEW OF BENCHMARK DATASETS FOR DOMAIN ADAPTATION RESEARCH ON DIFFERENT MEDICAL IMAGE ANALYSIS TASKS. \citep{guan2021domain}
-
-        \citep{guan2021domain} survey on domain adaptation
-        in medical image anal-ysis, a major challenge in constructing reliable and robustmachine learning models is the lack of labeled data \citep{guan2021domain}
-
-        Although adopting pre-trained models on a dataset (e.g.,ImageNet) is a popular way for supervised DA for medicalimage analysis, the 2D CNN structure may not able to fullyexplore the rich information conveyed in 3D medical images. \citep{guan2021domain} (problem of 2D networks. are often used but this may not be enough)
-
-        \citep{han2018deep} radial MRI sampling pattern by learning from large-scale CT data (problem of data scarcity)
 
         \citep{ganin2016domain} domain adversarial learning - domains need to be defined (not medical, problem of defining domains)
 
@@ -167,8 +126,9 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
 
 
 
-        9/10 methods giving answers MRI CT
+        12/10 methods giving answers MRI CT
 
+        \citep{han2018deep} radial MRI sampling pattern by learning from large-scale CT data (problem of data scarcity)
 
         \citep{zhang2020generalizing} MRI heart US / prostate segmentation
 
@@ -186,9 +146,40 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
         CT image reconstruction \citep{choi2023ct}
         MRI/PET Multi-domain reconstruction \citep{gautier2024bimodal}
 
+        % Number of manufacturers, number of MRI sequences
+        % Studies that show problems with generalization for CT / MRI
+        % Studies that show approaches to overcome scanner domain gaps
+        % What makes Generalization hard?
+
+        % What can be done to achieve generalization in each of the steps?
+
+
+        As described in xx generalizatoin needs xyz
+
+
+        OVERVIEW OF BENCHMARK DATASETS FOR DOMAIN ADAPTATION RESEARCH ON DIFFERENT MEDICAL IMAGE ANALYSIS TASKS. \citep{guan2021domain}
+
+        \citep{guan2021domain} survey on domain adaptation
+
+
+        \citep{wang2022generalizing} in recent years, Domaingeneralization (DG) has received much attention. As shownin Fig. 1, the goal of domain generalization is to learn amodel from one or several different but related domains (i.e.,diverse training datasets) that will generalize well on unseentesting domains.
+
+        The goal of domain generalization is to learn a robust andgeneralizable predictive function h : X  Y from the M training domains to achieve a minimum prediction error on an unseentest domain Stest:
+
+        A domain is composed of data that aresampled from a distribution.
+
+        The joint distributions between each pairof domains are different: P
+
+        The goal of domain generalization is to learn a robust andgeneralizable predictive function h : X → Y from the M training
+        domains to achieve a minimum prediction error on an unseentest domain Stest (i.e.,
+
+        \citep{yang2024generalized}
+
+
 
 
 \section{Methodological Background: Deep Learning} %7 pages
+    \label{sec:deep_learning}
     % TODO: This needs to be a lot shorter now
     % https://books.google.de/books?hl=de&lr=&id=qOF4AgAAQBAJ&oi=fnd&pg=PP1&ots=vNTiX5Lu_U&sig=UEC7rljJ7dVsAbh_XQeMmCrNqcU#v=onepage&q&f=false
     The principal mechanisms of learning were studied in the last century by investigating conditioned learning, where an outcome is associated to a stimulus by a learning organism e.g. a dog that awaits food after hearing the sound of a bell \citep{pavlov1928conditioned, pavlov2010conditioned, banich2011generalization}. Later, fear responses were especially studied and two sub-mechanisms of conditioned learning --- generalization and specialization --- were discovered \citep{banich2011generalization}.
