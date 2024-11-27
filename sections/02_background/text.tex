@@ -109,24 +109,19 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
         First of all, the lack of data and labeled data restricts the training of deep learning models to be conducted in a limited number of source domains (and often only one domain) \citep{guan2021domain}.
         This becomes more severe if deep learning models for less prominent imaging techniques such as \ac{MRI} with radial instead of orthogonal sampling patterns are studied \citep{han2018deep}.
         Leveraging models pretrained on a large amount of natural image data (e.g. from the mentioned ImageNet dataset) may be helpful, but using \ac{2D} models for \ac{3D} images does not access all information shared between image layers in the volumetric image \citep{guan2021domain}.
-        % TODO continue here
-
-
-        \citep{ganin2016domain} domain adversarial learning - domains need to be defined (not medical, problem of defining domains)
-
-        \citep{yan2019edge} multi-vendor mri segmentation (non-harmonized protocols)
-
-        \citep{yan2019domain} we generated adversarial
-        examples for a well-trained Unet for the left ventricle (LV) segmentation task in
-        magnetic resonance image (MRI)
-
-        \citep{yan2019domain} shift: transfer learning > domain adaptation
-        data: domain generalization > domain adaptation
+        Even if in general the same imaging sequence is used such as \ac{SSFP}, image domain shifts can be severe enough between multiple vendors to diminish the results of deep learning models as shown in a segmentation task for GE, Siemens and Philips scanners \citep{yan2019edge}.
+        Image content changes can even be undistinguishably small so that changes cannot be observed by humans but results for deep learning based algorithms may vary by a large margin. This was shown also shown for medical image tasks with adversarial perturbations made to the input images in cardiac segmentation \citep{yan2019domain}.
+        Explicitly leveraging the knowledge of different domains can lead to improve generalization abilities \citep{ganin2016domain}. But this requires to forcably label image sets with a domain label --- which is difficult regarding that even slightest changes can form a new domain.
 
 
 
+        % \citep{yan2019domain} shift: transfer learning > domain adaptation
+        % data: domain generalization > domain adaptation % TODO integrate this into a generalization / domain adaptation paragraph
 
-        12/10 methods giving answers MRI CT
+        \paragraph{Possibilities}
+        % 12/10 methods giving answers MRI CT
+
+
 
         \citep{han2018deep} radial MRI sampling pattern by learning from large-scale CT data (problem of data scarcity)
 
