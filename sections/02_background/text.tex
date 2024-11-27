@@ -113,62 +113,46 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
         Image content changes can even be undistinguishably small so that changes cannot be observed by humans but results for deep learning based algorithms may vary by a large margin. This was shown also shown for medical image tasks with adversarial perturbations made to the input images in cardiac segmentation \citep{yan2019domain}.
         Explicitly leveraging the knowledge of different domains can lead to improve generalization abilities \citep{ganin2016domain}. But this requires to forcably label image sets with a domain label --- which is difficult regarding that even slightest changes can form a new domain.
 
-
-
-        % \citep{yan2019domain} shift: transfer learning > domain adaptation
-        % data: domain generalization > domain adaptation % TODO integrate this into a generalization / domain adaptation paragraph
-
-        \paragraph{Possibilities}
+        \paragraph{Possibilities} The mentioned challenges on the other hand give rise to solutions for generalizing approaches.
         % 12/10 methods giving answers MRI CT
+        The problem of data scarcity in \ac{MRI} with specific, rare sequences i.e. can be solved by leveraging larger-scales \ac{CT} as seen in \citep{han2018deep}.
+        Extracting edge-features of the image may serve as a robust intermediate training step to cope with multi-vendor \ac{MRI} data\citep{huang2022online}.
+        Scores in cross-site segmentation can effectively be recovered with pretraining on large-scale computer-vision datasets when the correct input prompting mechanisms are delivered for medical imaging data \citep{gao2024desam}.
+        Moreover, specifically designed shape constraints for the target organs can improve model generalization for T2-weighted cross-site \ac{MRI} data \citep{liu2020shape}.
+        Cross-modality segmentation between \ac{MRI} and \ac{US} can be improved with intensive data augmentation \citep{zhang2020generalizing} for different tasks such as heart or prostate segmentation. Overcoming a domain gap from \ac{MRI} and \ac{CT} domains is likewise improved with targeted augmentation schemes \citep{ouyang2022causality}.
+
+        Depending on the target task at hand, the generalization approaches can be specifically tailored (apart from medical image segmentation that is extensively studied for volumetric images).
+        Alzheimer classification was improved using structural-causal-models in \citep{wang2021harmonization} in brain \ac{MRI}. Landmark detection on medical data was enabled for different unlabeled domains leveraging domain-specific and domain-shared model parts  \citep{zhu2023uod}. Registration of \ac{CT} and \ac{MRI} volumes becomes possible by extracting robust, hand-crafted image features and a coupled optimization approach \citep{siebert2021fast}. And also image reconstruction for multiple domains of \ac{CT} image kernels is feasible by using generator-guided constrastive learning approaches \citep{choi2023ct}. Joint intra-domain image features of \ac{PET} and \ac{MRI} can be combined to improve the reconstruction of undersampled \ac{MRI} data \citep{gautier2024bimodal}.
 
 
-
-        \citep{han2018deep} radial MRI sampling pattern by learning from large-scale CT data (problem of data scarcity)
-
-        \citep{zhang2020generalizing} MRI heart US / prostate segmentation
-
-        \citep{siebert2021fast} MRI CT registration method
-        \citep{ouyang2022causality} MRI CT segmentation method
-        \citep{liu2020shape} prostate MRI segmentation all T2 weighted
-        \citep{huang2022online} Multi-vendor MRI segmentation
-        \citep{gao2024desam} abdominal CT MR + Prostate multi-center segmentation
-
-        \citep{wang2021harmonization} alzheimer disease Classification
-
-        \citep{cheplygina2019not} emphysema classification in CT: Learning scenarios, illustrated by a task of classifying healthy (green) vs emphysema (red) tissue in chest CT images
-
-        \citep{zhu2023uod} one-shot Landmark detection x-ray
-        CT image reconstruction \citep{choi2023ct}
-        MRI/PET Multi-domain reconstruction \citep{gautier2024bimodal}
-
-        % Number of manufacturers, number of MRI sequences
-        % Studies that show problems with generalization for CT / MRI
-        % Studies that show approaches to overcome scanner domain gaps
-        % What makes Generalization hard?
-
-        % What can be done to achieve generalization in each of the steps?
+        % and emphysema classification by using
+        %  alzheimer disease Classification
+        % \citep{cheplygina2019not} emphysema classification in CT: Learning scenarios, illustrated by a task of classifying healthy (green) vs emphysema (red) tissue in chest CT images (only a meta paper)
 
 
-        As described in xx generalizatoin needs xyz
+        % TODO integrate these basics about DG / DA etc
+        % As described in xx generalizatoin needs xyz
+
+        % % \citep{yan2019domain} shift: transfer learning > domain adaptation
+        % % data: domain generalization > domain adaptation % TODO integrate this into a generalization / domain adaptation paragraph
+
+        % OVERVIEW OF BENCHMARK DATASETS FOR DOMAIN ADAPTATION RESEARCH ON DIFFERENT MEDICAL IMAGE ANALYSIS TASKS. \citep{guan2021domain}
+
+        % \citep{guan2021domain} survey on domain adaptation
 
 
-        OVERVIEW OF BENCHMARK DATASETS FOR DOMAIN ADAPTATION RESEARCH ON DIFFERENT MEDICAL IMAGE ANALYSIS TASKS. \citep{guan2021domain}
+        % \citep{wang2022generalizing} in recent years, Domaingeneralization (DG) has received much attention. As shownin Fig. 1, the goal of domain generalization is to learn amodel from one or several different but related domains (i.e.,diverse training datasets) that will generalize well on unseentesting domains.
 
-        \citep{guan2021domain} survey on domain adaptation
+        % The goal of domain generalization is to learn a robust andgeneralizable predictive function h : X  Y from the M training domains to achieve a minimum prediction error on an unseentest domain Stest:
 
+        % A domain is composed of data that aresampled from a distribution.
 
-        \citep{wang2022generalizing} in recent years, Domaingeneralization (DG) has received much attention. As shownin Fig. 1, the goal of domain generalization is to learn amodel from one or several different but related domains (i.e.,diverse training datasets) that will generalize well on unseentesting domains.
+        % The joint distributions between each pairof domains are different: P
 
-        The goal of domain generalization is to learn a robust andgeneralizable predictive function h : X  Y from the M training domains to achieve a minimum prediction error on an unseentest domain Stest:
+        % The goal of domain generalization is to learn a robust andgeneralizable predictive function h : X → Y from the M training
+        % domains to achieve a minimum prediction error on an unseentest domain Stest (i.e.,
 
-        A domain is composed of data that aresampled from a distribution.
-
-        The joint distributions between each pairof domains are different: P
-
-        The goal of domain generalization is to learn a robust andgeneralizable predictive function h : X → Y from the M training
-        domains to achieve a minimum prediction error on an unseentest domain Stest (i.e.,
-
-        \citep{yang2024generalized}
+        % \citep{yang2024generalized}
 
 
 
