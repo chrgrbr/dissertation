@@ -175,7 +175,7 @@ Nonetheless, we still can achieve an improvement by deriving an optimized consen
     For all experiments, we used spatial affine- and b-spline-augmentation and random-noise-augmentation on image intensities.
     Prior to augmenting we upscaled the input images and labels to \(256\times256~px\) in 2D- and \(192\times192\times192~vox\) in 3D-training.
     % in 3D training which increased performance of the LRASPP variants significantly.
-    Data was split into \(2/3\) training and \(1/3\) validation images during all runs and used global class weights \(1/{n_{bins}}^{0.35}\). %TODO edit bincount formula
+    Data was split into \(2/3\) training and \(1/3\) validation images during all runs and used global class weights \(1/{n_{bins}}^{0.35}\).
     % \paragraph{\textbf{Metrics}}
     % \label{sec:metrics}
     % During our experiments we used the 2D- and 3D-DICE metric to evaluate prediction quality of the model as well as the consensus quality. We also measured the pearson correlation coefficient between the values of the training data parameters and the oracle dice i.e. the dice score between the provided training-label and the expert/“true” label which was not shown to the network during training.
@@ -275,8 +275,7 @@ Nonetheless, we still can achieve an improvement by deriving an optimized consen
     % This seems reasonable since the STAPLE algorithm only takes registered labels as inputs and has no information about the image intensity context our network training captures during training.
     Regarding training times of over an hour with our LR-ASPP MobileNetV3-Large training, one has to consider that applying the STAPLE algorithm is magnitudes faster.
     % However network training yields the opportunity to furthermore predict segmentations on the target domain directly.
-    % Additionally, sorting all training samples by their data parameter value can give researchers a valuable insight into the dataset sample quality distribution in general to optimize network training data prior to experimenting with new methods. TODO probably move this.
-    % TODO: Add other CrossMoDa results
+    % Additionally, sorting all training samples by their data parameter value can give researchers a valuable insight into the dataset sample quality distribution in general to optimize network training data prior to experimenting with new methods. 
 % \begin{figure}
 %     \centering
 %     \begin{minipage}[b]{0.45\linewidth}
