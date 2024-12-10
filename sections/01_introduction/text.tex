@@ -9,7 +9,7 @@
 % Wie lernen Kinder -> Wie viele Beispiele bruachen Kinder?
 % Wie viele brauchen Maschinen
 
-\section{Motivation} % p 2.5
+\section{Motivation} % pages 4
     Clinical diagnostics and research has been improved dramatically with emergence of volumetric imaging such as \ac{CT} and \ac{MRI} technology which enables visualizing body parts and organs.
     In recent years, \ac{CT} examinations have increased substantially in many countries \citep{westmark2023increasing, masjedi2020european, martella2023diagnostic}. The importance of \ac{MRI} scans, which offer better soft-tissue contrast without exposing radiation to the patient examined, has likewise increased reaching above 200 scans per 1000 people in some countries in 2020 \citep{martella2023diagnostic}.
     % TODO Are there some papers that have evidence for benefit of methods?
@@ -152,7 +152,7 @@
     % Definition of generalization
 
 
-    \section{Objectives} % p 1.5
+    \section{Objectives} % pages 3
         In this thesis different areas and levels in which generalization can be enabled are explored. The different areas and levels are laid out in the following paragraphs.
 
         \paragraph{Areas of Exploration}
@@ -197,51 +197,51 @@
 
             % Looking at the data fed to the model, augmentation schemes on the image intensity-level are developed.
 
-        \section{Organization and Contributions}  % p 3.5
-            \label{sec:organization}
-            The thesis is divided into three major parts:
-            Foundations are laid in \chapref{chap:background} \nameref{chap:background}, which is itself divided into clinical and methodological deep learning background.
-            The following four chapters \ref{chap:acquisitionfocus} to \ref{chap:dgtta} explain the developed generalizing methods in medical deep learning for volumetric images. Each of these four chaptes is itself divided into a self-contained introduction, description of the methodology, the experiment configuration and results as well as a discussion and conclusion for the method. % TODO check the individual structure
-            \figref{fig:draft} highlights the major aspects of the four chapters which are explained in more detail now.
+    \section{Organization and Contributions}  % pages 5
+        \label{sec:organization}
+        The thesis is divided into three major parts:
+        Foundations are laid in \chapref{chap:background} \nameref{chap:background}, which is itself divided into clinical and methodological deep learning background.
+        The following four chapters \ref{chap:acquisitionfocus} to \ref{chap:dgtta} explain the developed generalizing methods in medical deep learning for volumetric images. Each of these four chaptes is itself divided into a self-contained introduction, description of the methodology, the experiment configuration and results as well as a discussion and conclusion for the method. % TODO check the individual structure
+        \figref{fig:draft} highlights the major aspects of the four chapters which are explained in more detail now.
 
-            \begin{figure}
-                \includegraphics[width=\textwidth]{sections/01_introduction/figures/draft_areas_levels.pdf}
-                \caption{Thesis organization: Four main chapters of this thesis will explore possible different areas and different levels for generalization. Different areas of exploration are described in the horizontal 3D plane. The levels of exploration are visualized perpendicular to the areas on the vertical axis of each chapter sub-figure.}
-                \label{fig:draft}
-            \end{figure}
+        \begin{figure}
+            \includegraphics[width=\textwidth]{sections/01_introduction/figures/draft_areas_levels.pdf}
+            \caption{Thesis organization: Four main chapters of this thesis will explore possible different areas and different levels for generalization. Different areas of exploration are described in the horizontal 3D plane. The levels of exploration are visualized perpendicular to the areas on the vertical axis of each chapter sub-figure.}
+            \label{fig:draft}
+        \end{figure}
 
-            \begin{itemize}
-                \item
-                    In Chapter \ref{chap:acquisitionfocus} a wholistic view on the  high-level deep learning process is used to derive a concept for optimized data acquisition. Given a cardiac shape reconstruction task, the data acquisition process and the shape reconstruction model are jointly modelled and optimized to find generalizing MRI view planes describing the overall heart shape best. The ideas and methods were published in:
+        \begin{itemize}
+            \item
+                In Chapter \ref{chap:acquisitionfocus} a wholistic view on the  high-level deep learning process is used to derive a concept for optimized data acquisition. Given a cardiac shape reconstruction task, the data acquisition process and the shape reconstruction model are jointly modelled and optimized to find generalizing MRI view planes describing the overall heart shape best. The ideas and methods were published in:
 
-                    \vspace{1em}
-                    \noindent\fullcite{weihsbach2023acquisitionfocus}
+                \vspace{1em}
+                \noindent\fullcite{weihsbach2023acquisitionfocus}
 
-                    \vspace{1em}
-                    \noindent\fullcite{weihsbach2024acquisitionfocus}
+                \vspace{1em}
+                \noindent\fullcite{weihsbach2024acquisitionfocus}
 
-                \item
-                    Chapter \ref{chap:dgtta} explains concepts to enable generalization for different imaging domains shifting view to the training and inference (application) phase of the model. Here, data augmentation is used to train models with generalizing capabilities to optimally segment various organs and bone structures given a large CT base dataset. The generalizing models are further optimized on individual MR images to optimize their performance when segmenting the same anatomical structures given very different image intensity distributions compared to the training domain. The method was published as a preprint in:
+            \item
+                Chapter \ref{chap:dgtta} explains concepts to enable generalization for different imaging domains shifting view to the training and inference (application) phase of the model. Here, data augmentation is used to train models with generalizing capabilities to optimally segment various organs and bone structures given a large CT base dataset. The generalizing models are further optimized on individual MR images to optimize their performance when segmenting the same anatomical structures given very different image intensity distributions compared to the training domain. The method was published as a preprint in:
 
-                    \vspace{1em}
-                    \noindent\fullcite{weihsbach2023dg}
+                \vspace{1em}
+                \noindent\fullcite{weihsbach2023dg}
 
-                \item
-                    In Chapter \ref{chap:deepstaple} data aggregation and curriculum learning enable generalization on the data level. Applied to the task of vestibular schwanomma tumour and cochlea segmentation for differently weighted MR images, the method is developed to weight individual samples during the training phase of the model. This leads to the learning of a generalized shape representation given noisy, probably imperfect input labels derived by image registration. The method was published in:
+            \item
+                In Chapter \ref{chap:deepstaple} data aggregation and curriculum learning enable generalization on the data level. Applied to the task of vestibular schwanomma tumour and cochlea segmentation for differently weighted MR images, the method is developed to weight individual samples during the training phase of the model. This leads to the learning of a generalized shape representation given noisy, probably imperfect input labels derived by image registration. The method was published in:
 
-                    \vspace{1em}
-                    \noindent\fullcite{weihsbach2022deepstaple}
+                \vspace{1em}
+                \noindent\fullcite{weihsbach2022deepstaple}
 
-                \item
-                    Moving to a lower level of detail, in Chapter \ref{chap:xedgeconv} modifications of the model kernels are explained that enable to learn generalized representations of organs to be segmented for differently oriented image volumes. This is especially interesting for the MRI domain, where image volumes can be acquired with arbitrary orientation.
-                    The task-agnostic capabilities of the method were shown for an abdominal organ segmentation scenario as well as a cardiac chamber segmentation scenario.
-                    The method was published in:
+            \item
+                Moving to a lower level of detail, in Chapter \ref{chap:xedgeconv} modifications of the model kernels are explained that enable to learn generalized representations of organs to be segmented for differently oriented image volumes. This is especially interesting for the MRI domain, where image volumes can be acquired with arbitrary orientation.
+                The task-agnostic capabilities of the method were shown for an abdominal organ segmentation scenario as well as a cardiac chamber segmentation scenario.
+                The method was published in:
 
-                    \vspace{1em}
-                    \noindent\fullcite{weihsbach2022xedgeconv}
+                \vspace{1em}
+                \noindent\fullcite{weihsbach2022xedgeconv}
 
 
-            \end{itemize}
+        \end{itemize}
 
-            In the last chapter of this thesis \ref{chap:summary} \nameref{chap:summary} all of the findings are summarized again two-fold: The clinical impact of the mentioned contributions is evaluated with respect to the clinical benefit.
-            Furthermore, technical improvements are discussed, not only yielding insight for deep learning in volumetric medical imaging but also for other fields of research.
+        In the last chapter of this thesis \ref{chap:summary} \nameref{chap:summary} all of the findings are summarized again two-fold: The clinical impact of the mentioned contributions is evaluated with respect to the clinical benefit.
+        Furthermore, technical improvements are discussed, not only yielding insight for deep learning in volumetric medical imaging but also for other fields of research.

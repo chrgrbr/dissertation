@@ -38,7 +38,7 @@
 \input{final_includes}
 
 \newboolean{RENDER_CHAPTERS}
-\setboolean{RENDER_CHAPTERS}{false}
+\setboolean{RENDER_CHAPTERS}{true}
 
 \begin{document}
 
@@ -62,11 +62,11 @@
     \pagenumbering{arabic}
 
     %%% Chapters
-    \chapter{Introduction} % 8 pages
+    \chapter{Introduction} % 12 pages
         \label{chap:introduction}
         \input{sections/01_introduction/text}
 
-    \chapter{Background} % 11 pages
+    \chapter{Background} % 22 pages
         \label{chap:background}
         \input{sections/02_background/text}
 
@@ -100,7 +100,7 @@
 
     \chapter{Summary}
         \label{chap:summary}
-        \input{sections/7_summary} % 10 pages
+        \input{sections/7_summary} % 16 pages
     % p++31
 
     \printbibliography[heading=bibintoc]

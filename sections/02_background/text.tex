@@ -1,13 +1,13 @@
-% 11 pages
+% 22 pages
 This chapter will lay foundations for medical imaging for clinical diagnostics and the basic methodology used throughout this thesis to tackle advanced imaging diagnostics.
 
-\section{Clinical Background: Volumetric Medical Imaging} %4 pages
+\section{Clinical Background: Volumetric Medical Imaging} %7 pages
 
 % Ideas:
 % zhang2024challenges (foundation models in deep learning)
 % https://3dqlab.stanford.edu/what-is-3d-imaging-2/
 
-    \subsection{Diagnostic Disciplines and Tasks} %1 pages
+    \subsection{Diagnostic Disciplines and Tasks} % 2 pages
         With the development of the CT scanner by Godfrey Hounsfield in the late 1960s, taking volumetric images of the body became possible and was used and researched with increasing effort in the following decades \citep{alexander2010emi, rubin2014computed}. Volumetric \ac{CT} images can be used to diagnose and plan the treatment of several diseases and conditions such as stroke, vascular diseases, cancer (see \chapref{chap:deepstaple}), trauma, acute abdominal pain and diffuse lung disease \citep{rubin2014computed}. With volumetric \ac{CT} images an exact evaluation of  three-dimensional measures such as tumor growth and estimation
         of doubling times % (271) TODO orig source of doubling times
         and analyzing the three-dimensional shape became possible \citep{rubin2014computed}. Similarly other volumetric quantities could be measured such as the volume of the
@@ -39,7 +39,7 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
         % CT and MRI are often done paired follow ups? This is why these are in focus.
         % CT (and PET) and MRI are important imaging domains.
 
-    \subsection{Imaging Domains and Scanner Properties} %1.5 pages
+    \subsection{Imaging Domains and Scanner Properties} % 2.5 pages
         \label{sec:imaging_domains}
         \begin{figure}
             \begin{minipage}{\textwidth}
@@ -97,7 +97,7 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
         % Acquisition timing
         % Scanner costs
 
-    \subsection{Generalization: Challenges and Possibilities} %1.5 pages
+    \subsection{Generalization: Challenges and Possibilities} % 2.5 pages
         In case of deep learning, where an algorithm is used to train a model on existing data from a \emph{source} domain (see \secref{sec:deep_learning}), the usage of this trained model on another \emph{target} domain often leads to performance degradation, as presented in this section.
         This can be shown even for low-dimensional data tasks, where optimal and less optimal ratios of source and target data used in the training phase of the model can theoretically be derived \citep{ben2010theory}.
         In \ac{2D}-tasks, such as the classification of several thousand images of the ImageNet dataset, this performance decline was even shown after the commonly used training and test data selection (refered to as data split) was altered for models that were optimized solely under the unaltered data split \citep{recht2019imagenet}. This example shows, that defining different domains is a non-trivial task and boundaries can be blurred.
@@ -157,7 +157,7 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
 
 
 
-\section{Methodological Background: Deep Learning} %7 pages
+\section{Methodological Background: Deep Learning} % 15 pages
     \label{sec:deep_learning}
     % TODO: This needs to be a lot shorter now
     % https://books.google.de/books?hl=de&lr=&id=qOF4AgAAQBAJ&oi=fnd&pg=PP1&ots=vNTiX5Lu_U&sig=UEC7rljJ7dVsAbh_XQeMmCrNqcU#v=onepage&q&f=false
@@ -168,7 +168,7 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
 
     On the cell level, learning and building memory is assumed to work as the change of neuron connection-strength through synaptic plasticity \citep{do1949organization,martin2000synaptic}. Apart from synaptic information exchange it was also figured out that information exchange occurs volumetrically between glia cells and neurons with extracellular vesicles in the nervous system \citep{schiera2019communcation}.
 
-    \subsection{Basic Principles} % 1 pages
+    \subsection{Basic Principles} % 2 pages
         % https://cs.stanford.edu/people/eroberts/courses/soco/projects/neural-networks/History/history1.html
 
         Inspired by the research findings in biological learning processes, \citeauthor{mcculloch1943logical} decribed several parts of network structures mimicking neural systems \citep{mcculloch1943logical}.
@@ -188,7 +188,7 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
 
         % Now that we know how deep learning works in general, we can have a look at individual building blocks models / data concepts / supervision tasks
 
-    \subsection{Data Representation and Model Architectures} % 2 pages
+    \subsection{Data Representation and Model Architectures} % 4 pages
 
         \subsubsection{Convolutional Neural Networks}
             % cnns, unets
@@ -197,10 +197,12 @@ This chapter will lay foundations for medical imaging for clinical diagnostics a
             % feature aggregation
             % rota groups, equivariance,
 
-    \subsection{Training and Optimization Strategies} % 3 pages
+    \subsection{Training and Optimization Strategies} % 5 pages
         % curriculum learning, dice loss
         % metrics
+    \subsection{Generalization: Approaches} % 3 pages
+        % What are the current approaches in deep learning?
 
-    \subsection{Generalization: Recent Discussion and Approaches} % 1 pages
-        % What are the current approaches in deep learning? How is the idea of AGI related to our gerneralization approach? What can be problems of AGI and why do we analyse generalization in a limited scope such as medical image analysis?
+    \subsection{Generalization: Recent Discussion} % 1 pages
+        How is the idea of AGI related to our gerneralization approach? What can be problems of AGI and why do we analyse generalization in a limited scope such as medical image analysis?
         % generalization methods
