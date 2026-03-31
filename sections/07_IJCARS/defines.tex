@@ -1,0 +1,10 @@
+\newcommand{\boldparagraph}[1]{%
+    \hfill \break \textbf{#1} \medspace%
+}
+
+\newcommand\blfootnote[1]{%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{-1}%
+  \endgroup
+}

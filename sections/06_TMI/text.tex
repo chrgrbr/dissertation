@@ -1,0 +1,768 @@
+% begin{abstract}
+% Registration of medical image data requires methods that can align anatomical structures precisely while applying smooth and plausible transformations. Ideally, these methods should furthermore operate quickly and apply to a wide variety of tasks. Deep learning-based image registration methods usually entail an elaborate learning procedure with the need for extensive training data. However, they often struggle with versatility when aiming to apply the same approach across various anatomical regions and different imaging modalities. In this work, we present a method that extracts semantic or hand-crafted image features and uses a coupled convex optimisation followed by Adam-based instance optimisation for multitask medical image registration. We make use of pre-trained semantic feature extraction models for the individual datasets and combine them with our fast dual optimisation procedure for deformation field computation. Furthermore, we propose a very fast automatic hyperparameter selection procedure that explores many settings and ranks them on validation data to provide a self-configuring image registration framework. With our approach, we can align image data for various tasks with little learning. We conduct experiments on all available Learn2Reg challenge datasets and obtain results that are to be positioned in the upper ranks of the challenge leaderboards. \href{https://github.com/multimodallearning/convexAdam}{github.com/multimodallearning/convexAdam}
+% \end{abstract}
+
+\section{Introduction}
+\label{sec:introduction}
+Medical image registration entails many requirements and challenges, all of which should ideally be met simultaneously by a versatile image registration method. Methods should be able to align anatomical structures precisely, applying smooth and plausible transformations and, preferably, operating fast enough to allow real-time application. However, there are particular challenges such as capturing large displacements or movements as well as handling multimodal or inter-patient data. Especially large three-dimensional image data requires many degrees of freedom for deformable image registration, which can quickly become very computationally expensive. Deep learning techniques have recently facilitated many medical image processing tasks and thus also registration methods benefit from fast inference times of trained models that offer the possibility of deformable alignment of large image volumes. Image registration methods usually involve multiple hyperparameters that can control the properties of the generated registration results to meet requirements such as accuracy, smoothness, or time efficiency. The optimal balance of these properties as well as the applicability for different tasks poses a challenge for current research in the field of learning-based image registration.
+
+\subsection{Related Work}
+As this work presents an approach for image registration that involves deep learning for feature extraction, as well as correlation, conventional convex optimisation for feature alignment, instance optimisation, and an automatic hyperparameter selection scheme, a brief overview is given on state-of-the-art learning-based image registration methods and on hyperparameter selection strategies. 
+
+A deep-learning-based image registration framework called VoxelMorph has been introduced in \citep{balakrishnan2019voxelmorph}. It consists of a U-Net architecture that estimates a deformation field followed by a spatial transformer for image warping and can be trained unsupervised or with included label supervision. This approach often is considered a baseline method for deep learning-based deformable pairwise image registration and has inspired other medical image registration methods \citep{li2022dual,zhu2022swin, jia2021learning, mok2020fast,zhao2019recursive}. Another registration architecture whose basic principles can be found in many other methods is PWC-Net \citep{sun2018pwc} which uses feature pyramids, a warping layer, and a cost volume for optical flow estimation with dense correlation for two-dimensional input data. Multi-resolution registration with image pyramids has also been successfully applied in various learning-based registration approaches for three-dimensional image data \citep{hering2019mlvirnet,gunnarsson2020learning,mok2020large,mok2021conditional} and, together with label supervision, yield state-of-the-art registration performance \citep{mok2020large}. The principle of using a dense correlation layer for registration learning has been employed in PDD-Net \citep{heinrich2019closing} for an end-to-end trainable registration approach that requires less trainable weights. In PDD-Net, feature extraction CNNs provide features of both fixed and moving image that are passed to the correlation layer and a spatial fitting with differentiable mean-field regularisation. Recently, Transformer-based architectures have shown potential in image registration tasks as they can capture long-range spatial correspondence between image pairs with the help of self-attention mechanisms \citep{chen2022transmorph,mok2022affine}.
+
+Conventional strategies to determine a learning-based registration method's most suitable hyperparameters involve random search, grid search, or sequential search with training and validating multiple models with multiple sets of hyperparameters which often is time-consuming. Meta-learning aims to learn how to learn across tasks in a systematic, objective, and data-driven way \citep{vanschoren2019meta}. A method that learns the influence of registration hyperparameters on deformation fields is HyperMorph \citep{hoopes2021hypermorph} which comprises a meta network, or hyper network, that estimates a spectrum of registration models by learning a continuous function of the hyperparameters. Whereas this method strongly increases the number of trainable parameters compared to the method without hypernetwork, a more parameter-efficient method to learn the effect of hyperparameters is proposed in \citep{mok2021conditional}. The authors present a framework that learns the conditional features which are correlated with the regularisation hyperparameter. Based on the assumption that deformation field characteristics can be captured and separated by a CNN, conditional image registration modules that contain hidden states are used to shift feature statistics. This enables the control of smoothness regularisation during inference and fast hyperparameter tuning. Other approaches in the field of medical image registration use meta-learning for interactive adaption of network initialisation to improve the performance of individual registration tasks formed by data varied by interaction \citep{baum2023meta} or within a gradient-based method to quickly adapt to various image registration tasks on limited datasets from new domains \citep{park2022meta}.
+
+While conventional methods such as ANTs SyN \citep{avants2008symmetric}, NiftyReg \citep{modat2010fast}, Deeds \citep{heinrich2015multi} or Diffeomorphic demons \citep{vercauteren2009diffeomorphic} are still ubiquitously used for many medical registration tasks, they require a good degree of domain knowledge to properly function for unseen tasks. Their rather long inference times have also thus far prevented a more in-depth automatic hyperparameter tuning.
+
+\subsection{Contributions}
+Despite recent advances, deep-learning-based approaches for medical image registration usually involve an elaborate learning procedure and yet they often struggle with the versatile usability for a wide range of tasks. We aim for a method that requires little learning, builds upon efficient registration strategies \citep{heinrich2014non}, and applies to a wide variety of medical image registration tasks. 
+
+In this work, we propose \textit{ConvexAdam}, a coupled convex optimisation with Adam-based instance optimisation for medical image registration. To apply ConvexAdam for various tasks, we also propose an automatic hyperparameter selection scheme that is entirely data-driven. The Learn2Reg challenge \citep{hering2022learn2reg} provides the opportunity to evaluate and compare medical image registration algorithms for multiple anatomies and imaging modalities. With our method, we were able to achieve the overall 2020 and 2021 Learn2Reg challenge's first place \citep{siebert2021fast,hering2022learn2reg}. The contributions can be summarised as follows:
+\begin{itemize}
+    \item We introduce a fast method for large-deformation medical image registration that requires little learning.
+    \item Feature extraction is decoupled from feature alignment which allows task-specific adjustments for optimal results. We propose to learn semantic label features or generate hand-crafted MIND features.
+    \item Our method is capable of aligning medical image data for various tasks as demonstrated by our experiments that are conducted on all Learn2Reg challenge datasets.
+    \item We propose an automatic hyperparameter selection procedure that rapidly compares dozens of settings amongst each other, yielding a self-configuring image registration framework.
+\end{itemize}
+
+\section{Methods}
+Our method extracts features from an input image pair with the help of a pretrained segmentation network or by using a hand-crafted descriptor method. The extracted features are passed to a dual optimisation procedure, which comprises a discrete coupled convex optimiser followed by an iterative refinement using Adam \citep{kingma2014adam} and a continuous energy functional. These steps are included in our self-configuring step that examines multiple hyperparameter combination options and leads to an automatic and versatile framework for medical image registration.
+
+\subsection{ConvexAdam: Coupled convex optimisation and instance optimisation with Adam} \label{subsec:convexadam}
+The proposed method called ConvexAdam performs image registration in three steps: In step 1, we extract features $feat_M$ and $feat_F$ of an input image pair consisting of a moving image $I_M$ and a fixed image $I_F$. In step 2, we use the extracted features to estimate a displacement field $\mathbf{\hat{u}}$ between the input image pair with a coupled convex discrete optimisation \citep{heinrich2014non}. In step 3, the displacement field $\mathbf{\hat{u}}$ is used as a starting point for an iterative Adam-based instance optimisation (fine-tuning), which provides the final displacement field $\mathbf{u}$. Figure~\ref{fig:method} gives an overview of ConvexAdam.
+\begin{figure*}[tbh]
+\centering
+\includegraphics[width=1\textwidth]{\tmiPath/figures/method_overview.png}
+\caption{Overview of our image registration method: After feature extraction, we perform correlation and coupled convex optimisation followed by Adam-based instance optimisation.} 
+\label{fig:method}
+\end{figure*}
+\\\\
+\noindent \textbf{Step 1: Feature extraction.} Our method initially requires an extraction of the features $feat_F$ and $feat_M$ from the input images $I_F$ and $I_M$. Although various feature extraction approaches are conceivable, we propose two different strategies that can precede the further steps of our method. One strategy is to compute modality independent neighbourhood descriptors (MIND) \citep{heinrich2012mind}. MIND features ensure versatility regarding different types of registration tasks as they are hand-crafted and contrast and modality invariant. The other strategy is to use automatic segmentations as provided by the nnU-Net \citep{isensee2021nnu} that naturally can only be used if labelled image data is available to train the segmentation models. Here, we avoid using the expert labels only at the end for the warping loss as done in \citep{hu2018label}, which may lead to sub-optimal results due to limited gradient backflow. We instead found that using off-the-shelf segmentation networks produces the best results.
+\\\\
+\noindent \textbf{Step 2: Coupled convex discrete optimisation.} For coupled convex discrete optimisation, we feed the extracted image features from the input images into a correlation layer. We construct a six-dimensional displacement space volume $DSV$ which extends the three spatial image dimensions by three displacement dimensions. The displacements represent a larger number of discretised potential displacements within a dense 3D search region. The entries of $DSV$ refer to the similarity costs when applying these displacements to the moving image's voxels. Note, that this technique is similar to the correlation layer proposed in \citep{sun2018pwc,heinrich2019closing}. We use the sum of squared differences (SSD) to compute the similarity costs with a box filter. 
+Before entering the correlation and optimisation loop we downsample the feature tensors to a certain coarser grid spacing to save memory and computational resources and effectively increase the capture range of the discrete correlation step. Next, an approximate optimum is found by effectively penalising inconsistent motion within local regions. By taking the argmin, an initial displacement field with an initial best displacement for each voxel is provided. 
+For efficient global regularisation, the output of the correlation layer is used to solve two coupled convex optimisation problems: smoothness and similarity optimisation. A combined cost function
+\begin{equation}\label{eqDecouple2}
+E_{1}(\mathbf{v},\mathbf{\hat{u}})=DSV(\mathbf{v})+\frac{1}{2\theta}(\mathbf{v}-\mathbf{\hat{u}})^2+\alpha\vert\nabla\mathbf{\hat{u}}\vert^2
+\end{equation}
+is minimised as described in \citep{heinrich2014non}. To find the searched deformation field $\mathbf{\hat{u}}$, it splits up the optimisation into two convex problems by using an auxiliary deformation field $\mathbf{v}$. The first term of the cost function is for the similarity and the last term is for the regularisation. For similarity optimisation, we use a discretised search space with quantised displacements $\mathbf{d} = \{0,\pm q, \pm 2q, ..., \pm l_{max}\}$ ranging from $0$ to $l_{max}$ with quantisation step $q$. For smoothness, the second term introduces a regularisation penalty with a parameter $\alpha$ that controls the diffusivity of the deformation field. Similar to the seminal work of \citep{vercauteren2009diffeomorphic} (cf. below Eq. 2) an equivalent solution to the second part of the decoupled energy that includes an explicit diffusive regulariser can be approximated by employing a Gaussian-like kernel with unit stride, which leads to an implicit choice of $\alpha$ related to the smoothing kernel. Within a few iterations, smoothness and similarity are optimised in alternation while increasing the linking between them with the help of the parameter  $\theta$: A spatially smoothed field with current optimal displacement in terms of minimal SSD costs is generated followed by adding a penalty to the discrete SSD costs based on the discrepancy of this current globally smooth optimum. When $\theta \rightarrow 0$, convergence is reached and the searched deformation field $\mathbf{\hat{u}}$ equals the auxiliary deformation field $\mathbf{v}$. In Algorithm~\ref{alg:Coupled}, the procedure of the proposed coupled convex discrete optimisation method is outlined.
+
+To enforce forward-backward consistency, i.e. swapping fixed and moving images should yield inverted deformation fields, we integrate inverse consistency optimisation into our method. For this purpose, we calculate the forward deformation field $\mathbf{\hat{u}}_{I_{M}\rightarrow I_{F}}$ and the backward deformation field $\mathbf{\hat{u}}_{I_{F}\rightarrow I_{M}}$ with our coupled convex discrete optimisation method. We iteratively update the deformation fields minimising the inverse consistency error $E_{ic} = \vert \mathbf{\hat{u}}_{I_{M}\rightarrow I_{F}} - \mathbf{\hat{u}}_{I_{F}\rightarrow I_{M}} \vert$, as introduced in \citep{heinrich2014non}.
+
+\begin{algorithm}
+\caption{Coupled convex discrete optimisation}\label{alg:Coupled}
+
+\begin{algorithmic}[1]
+\State\scriptsize$feat_F, feat_M$\Comment{\tiny Input: features}
+\State \scriptsize $\mathbf{\hat{u}}^0 \gets \mathbf{0}$ \Comment{\tiny initialisation of the current displacement field to zeros}
+\State \scriptsize $DSV \gets \texttt{SSD}(feat_M(\mathbf{d}), feat_F)$ \Comment{\tiny computation of a correlation volume}
+\State \scriptsize $\mathbf{v} \gets \texttt{smooth}(\texttt{argmin}(DSV))$ \Comment{\tiny auxiliary displacement field} \scriptsize
+\For{$i\leq N_{coupled}$} \Comment{\tiny iterative coupled convex optimisation}
+\State \scriptsize $coupled \gets DSV(\mathbf{v})+\frac{1}{2\theta^i}(\mathbf{v}-\mathbf{\hat{u}}^i)^2$ \Comment{\tiny regularising coupling term added}
+\State \scriptsize $\mathbf{\hat{u}}^i_{reg} \gets \texttt{argmin}(coupled)$ \Comment{\tiny argmin operator across all possible displacements}
+\State \scriptsize $\mathbf{\hat{u}}^i_{smooth} \gets \texttt{smooth}(\mathbf{\hat{u}}^i_{reg})$ \Comment{\tiny spatial smoothing step}
+\State \scriptsize $\mathbf{\hat{u}}^{i+1} \gets \mathbf{\hat{u}}^i_{smooth}$ \Comment{\tiny update displacement field}
+\scriptsize \EndFor
+\State\scriptsize$\mathbf{\hat{u}}$\Comment{\tiny Output: coarse displacements}
+
+\end{algorithmic}
+\end{algorithm}
+
+\noindent \textbf{Step 3: Instance optimisation based on Adam optimiser.} 
+The resulting displacement field $\mathbf{\hat{u}}$ is used as a starting point for an Adam-based instance optimisation. This step is very similar to classic optical flow estimation \citep{papenberg2006highly} and provides the final displacement field $\mathbf{u}$ used for warping of the moving input image $I_M$. For this purpose, the cost function is linearised to
+\begin{equation}\label{adamloss}
+E_{2}(\mathbf{u})= \vert feat_M(\mathbf{u}) - feat_F \vert^2 +\lambda\vert\nabla\mathbf{u}\vert^2
+\end{equation}
+and the Adam optimiser \citep{kingma2014adam} is used for gradient descent. This is enabled by a differentiable grid sampling step with trilinear interpolation that computes the cost function with respect to the displacement field $\mathbf{u}$. Smoothness of the displacement field is induced by adding a B-spline deformation model and diffusion regularisation (weighted by $\lambda$). Algorithm~\ref{alg:Adam} describes the process of our approach for Adam-based instance optimisation. Again the deformation model has a certain grid spacing $grid\_sp\_adam$. 
+
+The runtime of any considered hyperparameter setting of the convex optimisation ranges from $0.09-8.9$ secs for large volumes with 256$^3$ voxels and $0.04-0.60$ secs for smaller ones with dimensions of 64$^3$ on a GPU. The continuous Adam optimisation requires between $1.2-27.1$ secs for large volumes (where times over 4 secs are only observed for $adam\_grid\_sp=1$) and $0.2-0.46$ secs for smaller volumes. The selected parameters yield runtimes of around $1-5$ secs, hence much faster than conventional algorithms. 
+
+\begin{algorithm}
+\caption{Adam-based instance optimisation}\label{alg:Adam}
+\begin{algorithmic}[1]
+\State\scriptsize$\mathbf{u}^{0}, feat_F, feat_M$\Comment{\tiny Input: coarse displacement field and features}
+\scriptsize 
+\For{$i\leq N_{Adam}$}
+\State\scriptsize $\mathbf{u}^{i}_{smooth} \gets \texttt{BSplineModel}(\mathbf{u}^{i})$ \Comment{\tiny apply B-spline model}
+\State\scriptsize $E^{i}_{diff} \gets  \vert\nabla\mathbf{u}^{i}_{smooth}\vert^2$ \Comment{\tiny calculate diffusion error}
+\State\scriptsize $feat^{i}_W \gets feat_M(\mathbf{u}^{i}_{smooth})$ \Comment{\tiny warp moving features}
+\State\scriptsize $E^{i}_{sim} \gets \vert feat^{i}_W - feat_F\vert^2$ \Comment{\tiny calculate similarity error}
+\State\scriptsize $E^{i}_{2} \gets E^{i}_{sim}+ \lambda E^{i}_{diff}$ \Comment{\tiny calculate loss}
+\State\scriptsize $\mathbf{u}^{i+1} \gets \texttt{Adam.step()}$\Comment{\tiny update parameters of deformation grid using Adam}
+\scriptsize\EndFor
+\State\scriptsize$\mathbf{u}$\Comment{\tiny Output: refined displacements}
+
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Automatic hyperparameter selection} \label{subsec:hyperparameter}
+
+\begin{figure*}[tbh]
+\centering
+\includegraphics[width=0.98\textwidth]{\tmiPath/figures/sc_graphic2.pdf}
+\caption{Overview of our self-configuring hyperparameter selection procedure: After a semantic (nnU-Net) or contrast-invariant self-similarity (MIND) feature extraction from the input data, registration with ConvexAdam is performed for a random subset of combinations for a total of 6 (nnU-Net) and 10 ($\color{mind_feature_color}{\blacksquare}$ MIND) hyperparameters. The final settings are chosen by evaluating the results of every explored hyperparameter combination based on the provided evaluation metrics followed by a scoring and ranking scheme. 
+}
+\label{fig:sc}
+\end{figure*}
+
+The application of ConvexAdam requires that various hyperparameters be set. We propose an automatic hyperparameter selection with predefined parameter options on validation data and compare the results of all possible parameter combinations to find a combination that yields the best trade-off in terms of accuracy of the alignment between fixed and warped image, smoothness of deformation field, and computation speed. Therefore, our hyperparameter selection scheme requires that an evaluation procedure is provided comprising at least one accuracy metric, a metric that indicates the smoothness of the deformation fields, and per-case computation time measurement. Fig.~\ref{fig:sc} gives an overview of our self-configuring hyperparameter selection approach. The random selection of hyperparameters is performed in two separate steps for the \emph{Convex} and \emph{Adam} optimisations subsequently. After both the first and second steps the hyperparameter selection is done by evaluation of the results of all hyperparameter combinations and a scoring and ranking procedure. Optimal choices for \emph{Convex} are fixed when performing the search for \emph{Adam}.
+\\\\
+If semantic label features are provided, the following self-configuring hyperparameter selection investigates nnU-Net features. If not, only MIND features are considered for feature extraction. All other choices are completely data-driven.
+\\\\
+For any tasks that provide semantic labels, training data is used to train a nnU-Net model. For the abdominal datasets, which are relatively small in size, we include further external training data (TotalSegmentator \citep{wasserthal2022totalsegmentator} for CT and AMOS22 \citep{ji2022amos} for MR data)). Validation data is then used to select optimal hyperparameters. This prevents data leaks when using nnU-Net-features and thus an incorrect/overconfident parameter selection. However, if very little validation data ($<15$ cases) and corresponding labels or landmarks are available, we opt to include some of the training data in the hyperparameter selection process. Finally, the test data is used to report the results of our method using the chosen parameter settings.
+\\\\
+
+% \begin{table}[tbh] 
+% \scriptsize
+% \centering
+% \caption{Hyperparameters to be selected for ConvexAdam and the options that are proposed for our automatic hyperparameter selection.}
+% \label{tab:hyperparameters}
+% \begin{tabular}{l|c|c}
+% \toprule
+% \textbf{Coupled convex discrete optimisation} & \textbf{opt. lrg. vol.}& \textbf{opt. sm. vol.}\\
+%  \midrule
+%  $grid\_sp$ & $\{4,6\}$ & $\{2,4\}$\\
+% grid spacing used for feature sampling&&\\
+% \midrule
+% $disp\_hwd$ & $\{4,6,8\}$& $\{2,4,6\}$\\
+% displacement range of discretised search space &&\\
+% %\midrule
+% %$ic$ & whether to enforce inverse consistency & \multicolumn{2}{c}{$True^{*}$}\\
+% \midrule\midrule
+% \textbf{Adam-based instance optimisation}& \multicolumn{2}{c}{\textbf{options}}\\
+% \midrule
+% $grid\_sp\_adam$ & \multicolumn{2}{c}{}\\ 
+% grid spacing used for feature sampling &\multicolumn{2}{c}{$2$}\\
+% \midrule
+% $lambda$  &\multicolumn{2}{c}{}\\  
+% weight for diffusion regularisation &\multicolumn{2}{c}{$\{0.75, 1.0, 1.25\}$}\\
+% \midrule
+% $n\_adam$&\multicolumn{2}{c}{}\\ 
+% number of iterations & \multicolumn{2}{c}{$\{40, 60, 80, 100\}$}\\
+% \midrule\midrule
+% \textbf{Post-processing smoothing}& \multicolumn{2}{c}{\textbf{options}}\\
+% \midrule
+% $iters\_smooth$  & \multicolumn{2}{c}{}\\ 
+% kernel for smoothing with AvgPool &\multicolumn{2}{c}{$\{N/A, 3, 5\}$}\\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+%We distinguish between parameter options for large volumes and parameter options for small volumes by means of a threshold value $th_{\text{vol}} = 1 \times 10^{6}$. 
+%The proposed hyperparameter options are based on our findings with empirically selected hyperparameters for our Learn2Reg-2021 submission \citep{siebert2021fast}. 
+
+% 
+\noindent \textbf{Registration with ConvexAdam for all hyperparameter combinations.} 
+Regardless of input image dimensions, we explore the following wide range of potential parameter choices. For \emph{Convex} these include:
+\begin{itemize}
+    \item \emph{disp\_hwd} $\in \{2,3,4,5,6,7\}$: The displacement range in voxels of the discretised search space.
+    \item \emph{grid\_sp} $\in \{2,3,4,5\}$: The grid spacing in voxels used for the effective resolution of features and deformable transformation.
+    \item \emph{convex\_mind\_r} $\in \{1,2,3\}$: The MIND radius in voxels.
+    \item \emph{convex\_mind\_d} $\in \{1,2,3\}$: The MIND dilation in voxels.
+\end{itemize}
+Note that this would comprise up to 216 possible choices out of which we randomly sample 100. For the \emph{Adam} part we explore:
+\begin{itemize}
+    \item \emph{adam\_mind\_r} $\in \{1,2\}$: The MIND radius in voxels.
+    \item \emph{adam\_mind\_d} $\in \{1,2\}$: The MIND dilation in voxels.
+    \item \emph{adam\_grid\_sp} $\in \{1,2,3,4\}$: The grid spacing in voxels for the displacement field resolution.
+    \item \emph{gauss\_$\sigma$} $\in \{.7,1.,1.3,1.6,1.9,2.2,2.5,2.8\}$:  $\sigma$ of Gaussian kernel in voxels for B-spline deformation model \footnote{ implemented using either Gaussian kernels for small $\sigma$ or multiple recursively applied 0$^{th}$-order B-spline kernels}.
+    \item \emph{$\lambda$} $\in \{.4,.6,.8,1.,1.2,1.4,1.6\}$: The diffusive regularisation weight.
+    \item \emph{iters} $\in \{60,80,100,120\}$: The number of iterations for \emph{Adam} optimisation.
+    \item \emph{iters\_smooth} $\in \{0,1,2,3\}$: The number of post-smoothing (average) steps with a kernel size of 3.
+\end{itemize}
+Note that the Gaussian kernel for the transformation should be linked to the field resolution and we hence skip the two or one lowest values for a grid spacing of 1 or 2 respectively and the highest two values for spacings of 3 and 4. In addition, we evaluated the number of iterations \emph{n\_adam} within a discrete range of ${60,80,100,120}$ steps and the number of post-smoothing steps - either none, 1, 2, or 3 with a kernel size of 3 voxels. Those 16 (4$\times$4) additional combinations can be evaluated on the fly.
+%Out of the total 672 combinations we randomly sample 75 to capture enough of the very fine-grained hyperparameter space.} %see below
+%Preliminary studies have also shown that there are exceptions to datasets where it is more conductive when rigid alignment replaces deformable alignment. Therefore, we add another step to our procedure, in which it is checked whether, for the previously determined combination of hyperparameters, a rigid fitting instead of instance optimisation leads to improved results.
+\\\\
+\noindent \textbf{Hyperparameter selection.} The ranking method that is used to select the best hyperparameter combination is based on the Learn2Reg challenge's ranking scheme \citep{hering2022learn2reg}: For each of $m$ metrics applied for a registration task, all $n$ hyperparameter combinations $c_{1,...,n}$ are compared against each other and mapped to a numerical score with values between $0.1$ and $1.0$ with the value $v = 0.1$ indicating the worst and the value $v = 1.0$ indicating the best-observed result. Finally, we multiply the scores of all $m$ included metrics to obtain a score for all $n$ hyperparameter combinations and then select the hyperparameter combination that achieves the highest product $score_{i=1,...,n} = \prod_{k=0}^{m} v_{metric_k}^{c_i}$. Unlike the Learn2Reg challenge's ranking scheme, we do not use statistical ties, since the strong correlation of results (same algorithm) does not usually lead to statistically significantly different results. The parameter options described above result in up to $216$ combinations for the \emph{Convex} and $672$ for the \emph{Adam} part (along with $\times$16 on-the-fly evaluations). These are randomly subsampled to $100$ and $75\times16$ respectively in the hyperparameter selection process.
+
+\section{Experiments and Results}
+We perform experiments on all seven non-hidden Learn2Reg challenge (2020-2022) datasets. They comprise scans acquired by ultrasound (US), computed tomography (CT), and magnetic resonance imaging (MRI). Detailed information on the individual datasets can be found in \citep{hering2022learn2reg} and on the platform grand-challenge.org\footnote{\href{https://learn2reg.grand-challenge.org}{https://learn2reg.grand-challenge.org}}. A summary of the tasks and datasets is described in the following.
+
+\textbf{CuRIOUS} \citep{easyresect2020,xiao2017re,xiao2019evaluation}: The dataset for this task consists of 22 training and 10 testing datasets of the modalities MR and US with a resolution of $256\times256\times288$ voxels. The task is to perform multimodal intra-patient registration between MR and US brain scans.
+
+\textbf{HippocampusMR} \citep{antonelli2022medical}: This dataset contains hippocampus MR scans with a size of $64\times64\times64$ voxels for monomodal inter-patient registration. It includes label data for two anatomical structures, 263 training cases, and 131 test cases.
+
+\textbf{LungCT} \citep{hering2020}: This task is to perform inspiration-expiration registration on intra-patient lung CT data with a resolution of $192\times160\times256$ voxels. The dataset comprises 20 training cases and 10 test cases and lung masks are provided as additional data.
+
+\textbf{AbdomenCTCT} \citep{xu2016evaluation}: The task with this dataset is to perform inter-patient registration of abdominal CT scans with a resolution of $192\times160\times256$ voxels. This dataset consists of 30 train and 20 test cases with semantic labels for 13 anatomical structures.
+
+\textbf{AbdomenMRCT} \citep{akin2016kirc,linehan2016kirp,erickson2016lihc,clark2013cancer}: This dataset includes 8 train and 8 test cases with intra-patient abdominal MR and CT scans for multimodal registration. It has a resolution of $192\times160\times192$ voxels. This dataset provides four anatomical labels for training, nine anatomical labels for testing, and region of interest (ROI) masks.
+
+\textbf{OASIS} \citep{marcus2007open}: This task deals with the registration of inter-patient T1-weighted brain MRI. It consists of 416 training cases and 39 test cases with a resolution of $160\times192\times224$ voxels. For this dataset, segmentations of 35 anatomical structures are provided.
+
+\textbf{NLST} \citep{national2011national,national2011reduced,clark2013cancer}: This task is to perform intra-patient registration of follow-up longitudinal lung CT scans. The dataset comprises 220 training cases, 30 test cases, and lung masks and the image data has a resolution of $224\times192\times224$ voxels.
+
+\subsection{Automatic hyperparameter selection with validation datasets}
+
+We apply our proposed automatic hyperparameter selection to the validation cases of all tasks. For the datasets without provided semantic labels, we compute MIND features within the feature extraction step using the automatically determined values for radius $r_{\text{MIND}}$ and dilation $d_{\text{MIND}}$. If masks are provided, we make use of them to mask the image data before MIND computation. For the datasets with available semantic labels, we train nnU-Net models on the training data or if available auxiliary data such as AMOS22 for AbdomenMR. These are used in inference mode for the automatic hyperparameter selection procedure.
+
+\begin{table*}[tbh] 
+\scriptsize
+\centering
+\caption{Comparison of results and hyperparameters on the Learn2Reg validation datasets. Similarity of the aligned images is measured by target registration error (TRE) in mm or Dice score in \% of segmentation labels (DSC). Smoothness of the deformation field is indicated by the standard deviation of the logarithmic Jacobian determinant (SDLogJ).}
+\label{tab:valresults}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} lr|c|c|c|c|c|c|c}
+\toprule
+& \multicolumn{1}{c}{}& \multicolumn{1}{c}{\rule{0pt}{50pt}\tabrotate{\textbf{CuRIOUS}}} & \multicolumn{1}{c}{\tabrotate{\textbf{HippocampusMR}}}& \multicolumn{1}{c}{\tabrotate{\textbf{LungCT}}}& 
+\multicolumn{1}{c}{\tabrotate{\textbf{AbdomenCTCT}}}& \multicolumn{1}{c}{\tabrotate{\textbf{AbdomenMRCT}}}& 
+\multicolumn{1}{c}{\tabrotate{\textbf{OASIS}}}& 
+\multicolumn{1}{c}{\tabrotate{\textbf{NLST}}}\\
+\midrule
+\textbf{semantic features available} (else MIND) & & - & \checkmark & - & \checkmark & \checkmark & \checkmark & - \\
+%\midrule
+%\multicolumn{2}{l|}{\textbf{image volume categorisation (lrg./sm.)}}& lrg. & sm. & lrg. & lrg. & lrg. & lrg. & lrg. \\
+%\midrule
+\textbf{similarity metric for evaluation} & & TRE & DSC & TRE & DSC & DSC & DSC & TRE \\
+%\midrule
+\midrule
+\textbf{initial} & TRE or DSC & $7.02_{\pm 6.13}$ & $48_{\pm 12}$ & $14.64_{\pm 6.08}$ & $18_{\pm 3}$ & $37_{\pm 16}$ & $52_{\pm 5}$ & $9.70_{\pm 2.32}$ \\
+% &   & $\pm 6.13$ & $\pm 12$ & $\pm 6.08$ & $\pm 3$ & $\pm 16$ & $\pm 5$ & $\pm 2.32$ \\
+%\midrule
+\midrule
+\textbf{best results}  
+& TRE or DSC & $2.12$ & $81.09$ & $2.00$ & $70.48$ & $78.64$ & $83.96$ & $1.17$ \\
+ \cline{2-9}
+% SDLogJ & 0.17 & 0.03 & 0.13 & 0.05 & 0.07 & 0.04 & 0.12 \\
+%&runtime & $0.85$ & $0.71$ & $0.50$ & $0.85$ & $0.95$ & $0.71$ & $0.64$ \\
+&runtime (s) & $2.65$ & $0.4$ & $5.50$ & $1.53$ & $1.45$ & $2.29$ & $3.01$ \\
+\midrule
+\textbf{selected best} 
+%& nn\_mult & $-$ & $2$ & $-$ & $10$ & $2$ & $2$ & $-$ \\
+%\cline{2-9}
+\textbf{hyperparameters} 
+& $disp\_hw$ & $-$ & $3$ & $-$ & $4$ & $6$ & $2$ & $-$ \\
+& $grid\_sp$ & $5$ & $2$ & $3$ & $4$ & $5$ & $2$ & $4$ \\
+& $convex\_mind\_r$ & $2$ & $-$ & $3$ & $-$ & $-$ & $-$ & $2$ \\
+& $convex\_mind\_d$ & $3$ & $-$ & $2$ & $-$ & $-$ & $-$ & $2$ \\
+\cline{2-9}
+& $adam\_mind\_r$ & $2$ & $-$ & $1$ & $-$ & $-$ & $-$ & $1$ \\
+& $adam\_mind\_d$ & $2$ & $-$ & $2$ & $-$ & $-$ & $-$ & $2$ \\
+& $adam\_grid\_sp$ & $3$ & $2$ & $2$ & $3$ & $3$ & $2$ & $2$ \\
+& $gauss\_\sigma$ & $2.2$ & $1.3$ & $2.5$ & $1.0$ & $1.0$ & $1.3$ & $1.3$ \\
+& $\lambda$ & $1.0$ & $1.6$ & $0.6$ & $0.6$ & $1.6$ & $1.6$ & $1.2$ \\
+& $iters$ & $60$ & $60$ & $60$ & $80$ & $60$ & $60$ & $60$ \\
+& $iters\_smooth$ & $1$ & $0$ & $3$ & $0$ & $0$ & $1$ & $3$ \\
+
+
+%\begin{table*}[tbh] 
+%\scriptsize
+%\centering
+%\caption{Comparison of results and hyperparameters on the Learn2Reg validation datasets. Similarity of the aligned images is measured by target registration error (TRE) in mm or Dice score in \% of segmentation labels (DSC). Smoothness of the deformation field is indicated by the standard deviation of the logarithmic Jacobian determinant (SDLogJ).}
+%\label{tab:valresults}
+%\begin{tabular}{l r|c|c|c|c|c|c|c}
+%\toprule
+%& \multicolumn{1}{c}{}& \multicolumn{1}{c}{\rule{0pt}{50pt}\tabrotate{\textbf{CuRIOUS}}} & \multicolumn{1}{c}{\tabrotate{\textbf{HippocampusMR}}}& \multicolumn{1}{c}{\tabrotate{\textbf{LungCT}}}& 
+%\multicolumn{1}{c}{\tabrotate{\textbf{AbdomenCTCT}}}& \multicolumn{1}{c}{\tabrotate{\textbf{AbdomenMRCT}}}& 
+%\multicolumn{1}{c}{\tabrotate{\textbf{OASIS}}}& 
+%\multicolumn{1}{c}{\tabrotate{\textbf{NLST}}}\\
+%\midrule
+%\midrule
+%\multicolumn{2}{l|}{\textbf{semantic features available}}& - & \checkmark & - & \checkmark & \checkmark & \checkmark & - \\
+%\midrule
+%\multicolumn{2}{l|}{\textbf{image volume categorisation (lrg./sm.)}}& lrg. & sm. & lrg. & lrg. & lrg. & lrg. & lrg. \\
+%\midrule
+%\multicolumn{2}{l|}{\textbf{similarity metric for evaluation}}& TRE & DSC & TRE & DSC & DSC & DSC & TRE \\
+%\midrule
+%\midrule
+%\textbf{initial} & TRE or DSC & $7.02$ & $57$ & $14.64$ & $26$ & $31$ & $57$ & $9.70$ \\
+%&   & $\pm 6.13$ & $\pm 12$ & $\pm 6.08$ & $\pm 7$ & $\pm 16$ & $\pm 5$ & $\pm 2.32$ \\
+%\midrule
+%\midrule
+%\textbf{MIND features}  & TRE or DSC & $1.53$ & $74$ & $2.05$ & $41$ & $82$ & $73$ & $1.05$ \\
+%(m) &   & $\pm 1.00$ & $\pm 6$ & $\pm 0.75$ & $\pm 10 $ & $\pm 6$ & $\pm 3$ &$\pm 0.42$  \\
+% \cline{2-9}
+%& SDLogJ & $0.27$ & $0.06$ & $0.06$ & $0.09$ & $0.11$ & $0.03$ & $0.04$ \\
+%&   & $\pm 0.01$ & $\pm 0.01$ & $\pm 0.01$ & $\pm 0.01$ & $\pm 0.01$ & $\pm 0.00$ & $\pm 0.01$ \\
+%\midrule
+%\textbf{nnU-Net features}  & TRE or DSC & - & $82$ & - & $68$ & $50$ & $82$ & - \\
+% (n) &   & - & $\pm 3$ & - & $\pm 4 $ & $\pm 21$ & $\pm 2$ & - \\
+% \cline{2-9}
+%& SDLogJ & - & $0.03$ & - & $0.05$ & $0.31$ & $0.04$ & - \\
+%&   & - & $\pm 0.00$ & - & $\pm 0.01$ & $\pm 0.07$ & $\pm 0.00$ & - \\
+%%\midrule
+%%\textbf{rigid} (winner of m and n) & TRE or DSC & $2.26$ &  & $13.94$ & $0.26$ & $0.34$ & $0.57$ & $8.31$ \\
+%%(r) &   & $\pm 1.00$ & $\pm $ & $\pm 5.35$ & $\pm 0.06$ & $\pm 0.21$ & $\pm 0.05$ & $\pm 1.79$ \\
+%\midrule
+%\midrule
+%\textbf{selected feature type} &  & m & n & m & n & m & n & m \\
+%\midrule
+%\textbf{selected best} & $grid\_sp$ & 6 & 4 & 4 & 6 & 6 & 6 & 6\\
+%\textbf{hyperparameters} & $disp\_hwd$ & 6 & 2 & 6 & 6 & 6 & 4 & 4 \\
+%& $lambda$ & 1.0 & 1.0 & 0.75 & 1.25 & 0.75 & 1.25 & 0.75 \\
+%& $n\_adam$ & 80  & 80 & 60 & 60 & 40 & 40 & 80 \\
+%& $iters\_smooth$ & / & 3 & 3 & / & 5 & 3 & 3 \\
+
+%\midrule
+%\midrule
+%\textbf{worst result} & TRE or DSC & $4.70$ & $0.78$ & $9.94$ & $0.58$ & $0.47$ & $0.79$ & $4.21$ \\
+%(for selected feature type) &   & $\pm 5.00$ & $\pm 0.03$ & $\pm 7.17$ & $\pm 0.07$ & $\pm 0.37$ & $\pm 0.02$ & $\pm 2.26$ \\
+% \cline{2-9}
+%& SDLogJ & $0.28$ & $0.03$ & $0.10$ & $0.05$ & $0.14$ & $0.04$ & $0.06$ \\
+%&   & $\pm 0.01$ & $\pm 0.00$ & $\pm 0.03$ & $\pm 0.01$ & $\pm 0.01$ & $\pm 0.00$ & $\pm 0.01$ \\
+%\cline{2-9}
+% & $grid\_sp$ & 2 & 6 & 2 & 2 & 2 & 4 & 2\\
+% & $disp\_hwd$ & 2 & 8 & 2 & 2 & 2 & 8 & 2 \\
+%& $lambda$ & 0.75 & 1.0 & 0.75 & 1.25 & 0.75 & 1.25 & 0.75 \\
+%& $n\_adam$ & 40 & 40 & 40 & 40 & 40 & 100 & 40 \\
+%& $iters\_smooth$ & / & 5 & / & 5 & / & 5 & / \\
+%\midrule
+%\textbf{median result} & TRE or DSC & $2.23$ & $0.82$ & $2.19$ & $0.68$ & $0.81$ & $0.83$ & $1.06$ \\
+%(for selected feature type) &   & $\pm 2.07$ & $\pm 0.03$ & $\pm 0.74$ & $\pm 0.04$ & $\pm 0.10$ & $\pm 0.02$ & $\pm 0.33$ \\
+% \cline{2-9}
+%& SDLogJ & $0.24$ & $0.04$ & $0.05$ & $0.05$ & $0.13$ & $0.05$ & $0.03$ \\
+%&   & $\pm 0.01$ & $\pm 0.00$ & $\pm 0.10$ & $\pm 0.01$ & $\pm 0.02$ & $\pm 0.00$ & $\pm 0.01$ \\
+%\cline{2-9}
+% & $grid\_sp$ & 4 & 4 & 4 & 4 & 4 & 2 & 4\\
+% & $disp\_hwd$ & 8 & 6 & 6 & 8 & 8 & 2 & 6 \\
+%& $lambda$ & 1.25 & 0.75 & 1.0 & 1.25 & 1.0 & 0.75 & 0.75 \\
+%& $n\_adam$ & 100 & 60 & 100 & 100 & 100 & 80 & 100 \\
+%& $iters\_smooth$ & 5 & 3 & 5 & / & / & 3 & 5 \\
+
+\bottomrule
+\end{tabular*}
+\end{table*}
+
+\begin{figure*}
+    \centering
+    \includegraphics[width=1\textwidth]{\tmiPath/figures/distribution_combined.png}
+    \caption{Distribution of performances for "Convex" for tasks with nnU-Net features (left) and MIND features (right) with respect to smoothness (SDlogJ lower=better) and accuracy (Dice score, higher=better and Target Registration Error, lower=better) over all explored hyperparameters. Large circles mark task specific optimum based on significance ranking and Squares indicate the overall best setting (nnU-Net: $grid\_sp=3$, $disp\_hw=6$ and MIND: $mind\_r=2$, $mind\_d=2$, $grid\_sp=5$, $disp\_hw=5$) - demonstrating that our ranking approximately finds the optimal point after which diminishing improvements in accuracy lead to undesirable complexity of transformations.   Note that for AbdomenCTCT, NLST and LungCT those choices nearly overlap whereas other tasks can additionally benefit from their specific choice. Furthermore, all results can be substantially improved through the second step: Adam optimisation.}
+    %\caption{Distribution of performances for "Convex" on four tasks with nnU-Net features with respect to Dice score (accuracy, higher=better) and Smoothness (stdJ lower=better) over all explored hyperparameters. Large circles mark task specific optimum based on significance ranking and Squares indicate the overall best setting $grid\_sp=3$ and $disp\_hw=6$ - demonstrating that our ranking approximately finds the optimal point after which diminishing improvements in accuracy lead to undesirable complexity of transformations.   Note that for AbdomenCTCT those choices nearly overlap whereas other tasks can additionally benefit from their specific choice. Furthermore, all results can be substantially improved through the second step: Adam optimisation.}
+    \label{fig:distribution_performance_plot}
+\end{figure*}
+
+%\begin{figure*}[tbh]
+%\centering
+%\includegraphics[width=0.8\textwidth]{boxplots_sc.pdf}
+%\caption{Comparison of ranking scores of the hyperparameter combinations investigated during the process of automatic hyperparameter selection. For every task, the hyperparameter combination $(grid\_sp, disp\_hwd, lambda, n\_adam, iters\_smooth)$ that leads to the best, the median, and the worst ranking score is indicated next to the boxplot respectively.} 
+%\label{fig:boxplots}
+%\end{figure*}
+
+
+In Table~\ref{tab:valresults}, we present the results for the Learn2Reg validation datasets and the hyperparameters selected by our method. The accuracy of the aligned image pairs is measured by the target registration error (TRE) or the Dice score (DSC) depending on the provided annotations. Smoothness of the deformation field is indicated by the standard deviation of the logarithmic Jacobian determinant. For every task, we report the results obtained by the best hyperparameter combination using MIND features or if available nnU-Net features. We also indicate the selected feature type and selected hyperparameters. In Fig.~\ref{fig:distribution_performance_plot}, we demonstrate the range of accuracy and smoothness values obtained through the hyperparameter combinations investigated during automatic parameter selection. %As comparison to the results for the respective best hyperparameter combination, we additionally present the results for the worst and median performing hyperparameter combinations. 
+
+The runtime of the hyperparameter selection process is approximately 30 minutes for \emph{Convex} and 1.5 hours for \emph{Adam}. If semantic features are to be considered one has to add approximately 4 hours of training time for the nnU-Net model.
+
+%Registration of the CuRIOUS dataset was the only task for which rigid alignment outperformed deformable alignment with instance optimisation. 
+
+
+
+\begin{table*}
+    \centering
+\begin{tabular}{ccc}
+\begin{minipage}[h]{0.3\textwidth}
+\scriptsize
+
+     \caption{CuRIOUS}
+     \label{tab:test_task1}
+        \begin{tabular}{c}
+        
+        \hspace{-12pt}\includegraphics[height = 6cm]{\tmiPath/figures/CuRIOUS_complete.pdf}\\
+		% \includegraphics[height=2cm]{CuRIOUS_fixed.png} &
+		% \includegraphics[height=2cm]{CuRIOUS_moving.png}\\
+		% Fixed (MR) & Moving (US)\\
+		% \includegraphics[height=2cm]{CuRIOUS_init.png} &
+		% \includegraphics[height=2cm]{CuRIOUS_warped.png}\\
+		% Initial & Warped\\
+        
+        \end{tabular}
+		\begin{tabular}{r|cccc}
+        \toprule
+        % \multicolumn{5}{c}{\small\textbf{CuRIOUS}}\\
+        % x\midrule
+         \multicolumn{1}{c}{\rule{0pt}{25pt}}&  \multicolumn{1}{c}{\tabrotate{$\mathrm{TRE}$} }& \multicolumn{1}{c}{\tabrotate{$\mathrm{TRE30}$}} & \multicolumn{1}{c}{\tabrotate{$\mathrm{SDlogJ}$}} & \multicolumn{1}{c}{\tabrotate{$\mathrm{time}$}}\\
+          \midrule
+         initial    & $6.38$            & $12.00$           & $-$               & $-$               \\
+          \midrule
+         ours       & $3.06$            & $\mathbf{4.85}$   & $0.16$            & $3.50$            \\
+         \midrule
+         corrField  & $\mathbf{2.84}$   & $5.29$            & $\mathbf{0.00}$   & $\mathbf{2.70}$   \\
+         \midrule
+         PDD-Net    & $3.08$            & $6.28$            & $\mathbf{0.00}$   & $8.21$            \\
+         \midrule
+         NiftyReg   & $4.09$            & $7.85$            & $\mathbf{0.00}$   & $23.1$            \\
+         \midrule
+         LapIRN     & $5.67 $           & $11.1$            & $\mathbf{0.00}$   & $34.8$            \\
+        \bottomrule
+        \end{tabular}
+
+\end{minipage}
+&
+\begin{minipage}[h]{0.35\textwidth}
+\scriptsize
+    \centering
+
+     \caption{HippocampusMR}
+     \label{tab:test_task2}
+        \begin{tabular}{c}
+        
+        \hspace{-2pt}\includegraphics[height = 6cm]{\tmiPath/figures/HippocampusMR_complete.pdf}\\
+		% \includegraphics[height=2cm]{HippocampusMR_fixed.png} &
+		% \includegraphics[height=2cm]{HippocampusMR_moving.png}\\
+		% Fixed (MR) & Moving (MR)\\
+		% \includegraphics[height=2cm]{HippocampusMR_init.png} &
+		% \includegraphics[height=2cm]{HippocampusMR_warped.png}\\
+		% Initial & Warped\\
+  % &\\
+\end{tabular}
+		\begin{tabular}{r|ccccc}
+        \toprule
+        %\multicolumn{6}{c}{\small\textbf{HippocampusMR}}\\
+        %\midrule
+         \multicolumn{1}{c}{\rule{0pt}{25pt}}&  
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{DSC}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{DSC30}$ }}& 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{HD95}$ }}& 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{SDlogJ}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{time}$}}\\
+          \midrule
+         initial    & $55$          & $36$          & $3.91$            & $-$               & $-$               \\
+          \midrule
+         ours       & $85$          & $84$          & $1.60$            & $\mathbf{0.04}$   & $\mathbf{0.48}$   \\
+         \midrule
+         LapIRN     & $\mathbf{88}$ & $\mathbf{86}$ & $\mathbf{1.30}$   & $0.05$            & $1.03$            \\
+         \midrule
+         MEVIS      & $85$          & $84$          & $1.55$            & $0.05$            & $0.59$            \\
+         \midrule
+         IWM        & $79$          & $76$          & $2.20$            & $0.08$            & $0.80$            \\
+         \midrule
+         Estienne   & $85$          & $84$          & $1.51$            & $0.09$            & $1.46$            \\
+        \bottomrule
+        \end{tabular}
+
+\end{minipage}
+&
+\begin{minipage}[h]{0.3\textwidth}
+\scriptsize
+    \centering
+
+     \caption{LungCT}
+     \label{tab:test_task3}
+\begin{tabular}{c}
+        
+        \hspace{-12pt}\includegraphics[height = 6cm]{\tmiPath/figures/LungCT_complete.pdf}\\
+		% \includegraphics[height=2cm]{LungCT_fixed.png} &
+		% \includegraphics[height=2cm]{LungCT_moving.png}\\
+		% Fixed (CT) & Moving (CT)\\
+		% \includegraphics[height=2cm]{LungCT_init_masked.png} &
+		% \includegraphics[height=2cm]{LungCT_warped_masked.png}\\
+		% Initial & Warped\\
+  % &\\
+\end{tabular}
+		\begin{tabular}{r|cccc}
+        \toprule
+        % \multicolumn{5}{c}{\small\textbf{LungCT}}\\
+        % \midrule
+         \multicolumn{1}{c}{\rule{0pt}{25pt}}&  \multicolumn{1}{c}{\tabrotate{$\mathrm{TRE}$} }& \multicolumn{1}{c}{\tabrotate{$\mathrm{TRE30}$}} & \multicolumn{1}{c}{\tabrotate{$\mathrm{SDlogJ}$}} & \multicolumn{1}{c}{\tabrotate{$\mathrm{time}$}}\\
+          \midrule
+         initial    & $10.2$            & $16.8$            & $-$               & $-$               \\
+          \midrule
+         ours       & $1.84$            & $2.66$            & $0.06$            & $\mathbf{1.82}$   \\
+         \midrule
+         corrField  & $1.75$            & $\mathbf{2.48}$   & $0.05$            & $2.91$            \\
+         \midrule
+         MEVIS      &$\mathbf{1.68}$    & $2.70$            & $0.06$            & $\mathbf{1.82}$   \\
+         \midrule
+         LapIRN     & $1.98$            & $2.95$            & $0.06$            & $10.3$            \\
+         \midrule
+         PDD-Net    & $2.46$            & $3.81$            & $\mathbf{0.04}$   & $4.22$            \\
+        \bottomrule
+        \end{tabular}
+
+\end{minipage}
+\end{tabular}
+\end{table*}
+
+%\begin{figure*}[htp]
+%    \centering
+%    \subfigure{\includegraphics[width=0.4\textwidth]{LaTeX/distribution_performance_plot.pdf}}
+%    \subfigure{\includegraphics[width=0.4\textwidth]{LaTeX/distribution_performance_plot_tre.pdf}}
+%    \caption{Distribution of performances for "Convex" on four tasks with nnU-Net features with respect to Dice score (accuracy, higher=better) and Smoothness (stdJ lower=better) over all explored hyperparameters. Large circles mark task specific optimum based on significance ranking and Squares indicate the overall best setting nn\_mult=2 grid\_sp=3disp\_hw=6 - demonstrating that our ranking approximately finds the optimal point after which diminishing improvements in accuracy lead to undesirable complexity of transformations.   Note that for AbdomenCTCT those choices nearly overlap whereas other tasks can additionally benefit from their specific choice. Furthermore, all results can be substantially improved through the second step: Adam optimisation. }
+%    \label{fig:distribution_performance_plot_label}
+%\end{figure*}
+
+
+\begin{table*}
+\centering
+\begin{tabular}{ccc}
+\begin{minipage}[t]{0.3\textwidth}
+\scriptsize
+    \centering
+
+     \caption{AbdomenCTCT}
+     \label{tab:test_task4}
+     \begin{tabular}{c}
+        
+        \hspace{-6pt}\includegraphics[height = 6cm]{\tmiPath/figures/AbdomenCTCT_complete.pdf}\\
+		% \includegraphics[height=2cm]{AbdomenCTCT_fixed.png} &
+		% \includegraphics[height=2cm]{AbdomenCTCT_moving.png}\\
+		% Fixed (CT) & Moving (CT)\\
+		% \includegraphics[height=2cm]{AbdomenCTCT_init.png} &
+		% \includegraphics[height=2cm]{AbdomenCTCT_warped.png}\\
+		% Initial & Warped\\
+  % &\\
+\end{tabular}
+		\begin{tabular}{r|ccccc}
+        \toprule
+        %\multicolumn{6}{c}{\small\textbf{AbdomenCTCT}}\\
+        %\midrule
+         \multicolumn{1}{c}{\rule{0pt}{25pt}}&  
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{DSC}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{DSC30}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{HD95}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{SDlogJ}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{time}$}}\\
+          \midrule
+         initial    & $29$           & $25$             & $21.8$            & $-$               & $-$               \\
+          \midrule
+         ours       & $\mathbf{80}$  & $\mathbf{61}$    & $\mathbf{6.92}$   & $\mathbf{0.09}$   & $3.70$            \\
+         \midrule
+         LapIRN     & $69$           & $47$             & $10.2$            & $0.12$            & $3.80$            \\
+         \midrule
+         Estienne   & $71$           & $51$             & $9.45$            & $0.18$            & $8.23$            \\
+         \midrule
+         MEVIS      & $52$           & $24$             & $16.1$            & $0.14$            & $\mathbf{3.49}$   \\
+         \midrule
+         corrField  & $51$           & $24$             & $15.0$            & $0.28$            & $5.40$            \\
+        \bottomrule
+        \end{tabular}
+\end{minipage}
+&
+\begin{minipage}[t]{0.35\textwidth}
+\scriptsize
+    \centering
+
+     \caption{AbdomenMRCT}
+     \label{tab:test_task5}
+\begin{tabular}{c}
+        
+        \hspace{-2pt}\includegraphics[height = 6cm]{\tmiPath/figures/AbdomenMRCT_complete.pdf}\\
+		% \includegraphics[height=2cm]{AbdomenMRCT_fixed.png} &
+		% \includegraphics[height=2cm]{AbdomenMRCT_moving.png}\\
+		% Fixed (MR) & Moving (CT)\\
+		% \includegraphics[height=2cm]{AbdomenMRCT_init.png} &
+		% \includegraphics[height=2cm]{AbdomenMRCT_warped.png}\\
+		% Initial & Warped\\
+  % &\\
+\end{tabular}
+		\begin{tabular}{r|ccccc}
+        \toprule
+        %\multicolumn{6}{c}{\small\textbf{AbdomenMRCT}}\\
+        %\midrule
+         \multicolumn{1}{c}{\rule{0pt}{25pt}}&  
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{DSC}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{DSC9}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{HD95}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{SDlogJ}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{time}$}}\\
+          \midrule
+         initial        & $37$          & $23$          & $42.1$            & $-$               & $-$               \\
+          \midrule
+         ours           & $85$          & $\mathbf{76}$ & $\mathbf{9.39}$   & $0.10$            & $\mathbf{1.30}$   \\
+         \midrule
+         corrField      & $84$          & $\mathbf{76}$ & $15.7$            & $0.10$            & $2.13$            \\
+         \midrule
+         LapIRN         & $84$          & $72$          & $15.1$            & $0.12$            & $1.50$            \\
+         \midrule
+         PIMed          & $\mathbf{86}$ & $71$          & $14.3$            & $\mathbf{0.07}$   & $59.22$           \\
+         \midrule
+         MEVIS          & $78$          & $68$          & $20.7$            & $0.15$            & $14.73$           \\
+        \bottomrule
+        \end{tabular}
+
+\end{minipage}
+&
+\begin{minipage}[t]{0.3\textwidth}
+\scriptsize
+    \centering
+
+     \caption{OASIS}
+     \label{tab:test_task6}
+\begin{tabular}{c}
+        
+        \hspace{-9pt}\includegraphics[height = 6cm]{\tmiPath/figures/OASIS_complete.pdf}\\
+		% \includegraphics[height=2cm]{OASIS_fixed.png} &
+		% \includegraphics[height=2cm]{OASIS_moving.png}\\
+		% Fixed (MR) & Moving (MR)\\
+		% \includegraphics[height=2cm]{OASIS_init.png} &
+		% \includegraphics[height=2cm]{OASIS_warped.png}\\
+		% Initial & Warped\\
+  % &\\
+\end{tabular}
+		\begin{tabular}{r|ccccc}
+        \toprule
+        %\multicolumn{6}{c}{\small\textbf{OASIS}}\\
+        %\midrule
+         \multicolumn{1}{c}{\rule{0pt}{25pt}}&  
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{DSC}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{DSC30}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{HD95}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{SDlogJ}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{time}$}}\\
+          \midrule
+         initial    & $56$          &   $27$            & $3.86$            & $-$               &   $-$             \\
+          \midrule
+         ours       & $\mathbf{82}$ &   $62$            & $1.71$            & $0.08$            &   $3.10$          \\
+         \midrule
+         LapIRN     & $\mathbf{82}$ &   $\mathbf{66}$   & $\mathbf{1.67}$   & $0.07$            &   $\mathbf{1.21}$ \\
+         \midrule
+         IWM        & $79$          &   $61$            & $1.84$            & $\mathbf{0.05}$   &   $2.55$          \\
+         \midrule
+         Driver     & $80$          &   $62$            & $1.77$            & $0.08$            &   $2.02$          \\
+         \midrule
+         PIMed      & $78$          &   $58$            & $1.86$            & $0.06$            &   $3.47$          \\
+        \bottomrule
+        \end{tabular}
+
+\end{minipage}
+\end{tabular}
+\end{table*}
+
+
+
+\begin{table}
+
+\begin{minipage}[t]{0.45\textwidth}
+\scriptsize
+    \centering
+
+     \caption{NLST}
+     \label{tab:test_task7}
+\begin{tabular}{c}
+        
+        \hspace{0pt}\includegraphics[height = 6cm]{\tmiPath/figures/NLST_complete.pdf}\\
+		% \includegraphics[height=2cm]{NLST_fixed.png} &
+		% \includegraphics[height=2cm]{NLST_moving.png}\\
+		% Fixed (MR) & Moving (MR)\\
+		% \includegraphics[height=2cm]{NLST_init.png} &
+		% \includegraphics[height=2cm]{NLST_warped.png}\\
+		% Initial & Warped\\
+  % &\\
+\end{tabular}
+		\begin{tabular}{r|cccc}
+        \toprule
+        %\multicolumn{5}{c}{\small\textbf{NLST}}\\
+        %\midrule
+         \multicolumn{1}{c}{\rule{0pt}{25pt}}&  
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{TREkp}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{TRElm}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{SDlogJ}$}} & 
+         \multicolumn{1}{c}{\tabrotate{$\mathrm{time}$}}\\
+          \midrule
+         initial    & $9.76$            & $10.2$            & $-$               & $-$               \\
+          \midrule
+         ours       & $1.03$            & $2.22$            & $0.03$            & $\mathbf{5.83}$   \\
+         \midrule
+         xi         & $\mathbf{0.79}$   & $\mathbf{1.70}$   & $0.05$            & $8.91$            \\
+         \midrule
+         TS\_UKE    & $0.84$            & $1.76$            & $0.04$            & $24.7$            \\
+         \midrule
+         MEVIS      & $1.07$            & $2.04$            & $\mathbf{0.02}$   & $13.8$            \\
+         \midrule
+         LapIRN     & $0.81$            & $1.67$            & $0.04$            & $-$               \\
+        \bottomrule
+        \end{tabular}
+
+\end{minipage}
+\end{table}
+
+\subsection{Evaluation on test datasets}
+
+We use the hyperparameters determined by our automatic hyperparameter selection strategy via the validation datasets to apply ConvexAdam on the Learn2Reg test datasets of all tasks. In Table~\ref{tab:test_task1}~to~\ref{tab:test_task7}, we report the obtained quantitative results averaged over all test-set cases and show qualitative results for one example image pair respectively. We present the results for all evaluation metrics that have been considered for the Learn2Reg challenge submission evaluation and compare our method to the \textbf{four highest-ranked teams} for each task (Learn2Reg-2022 for NLST; Learn2Reg-2020\&2021 for all other tasks). Specifically, we compare ourselves to \textit{corrField}\citep{hansen2021graphregnet,heinrich2015estimating}, \textit{PDD-Net} \citep{heinrich2019closing,heinrich2020highly}, \textit{NiftyReg} \citep{modat2014global},  \textit{LapIRN} \citep{mok2020large,mok2021conditional}, \textit{MEVIS} \citep{hager2020variable,hering2021fraunhofer}, \textit{Estienne} \citep{estienne2020adeep,estienne2020bdeep}, \textit{IWM} \citep{hering2022learn2reg}, \textit{PIMed} \citep{hering2022learn2reg}, \textit{Driver} \citep{lv2022joint}, \textit{xi} \citep{jia2022u}, and \textit{TS\_UKE} \citep{ehrhardt2015variational,werner2014estimation}. For the datasets with provided keypoints (kp) or landmarks (lm), the target registration error (TRE) indicates the Euclidean distance between corresponding keypoints or landmarks in millimetres. To assess robustness, the 30th percentile in TRE is considered (TRE30). If label data is available, the Dice score (DSC) measures the overlap of segmentations. In this regard, to evaluate robustness, we also report the 30th percentile in Dice similarity across all considered labels and cases (DSC30). The 95th percentile of the Hausdorff distance (HD95) gives the maximum Euclidean distance of labelled surfaces in millimetres. The standard deviation of the logarithmic Jacobian determinant (SDlogJ) is a measurement for the smoothness, and therefore plausibility, of the deformation fields. Runtime is measured on the same hardware with Xeon Silver 4210R (CPU) and Quadro RTX 8000 (GPU). The test-set results are presented in Table~\ref{tab:test_task1}-\ref{tab:test_task7}. Dice scores are given in $\%$, TRE values and Hausdorff distances are given in millimetres, and runtime is given in seconds.
+
+The results for \textbf{CuRIOUS} (Table~\ref{tab:test_task1}) show the potential of our method to align multimodal brain scans, outperforming all comparison methods in terms of robust TRE30. Since most other approaches opted for an affine transform, the deformation field produced by ConvexAdam for this task is less smooth. %, as indicated by the comparatively high value of the standard deviation of the logarithmic Jacobian determinant.
+%  with large initial misalignment and partially missing correspondences 
+
+%Figures: Example images for fixed MR and moving US image and corresponding overlay of images before and and after registration with ConvexAdam. Table: Quantitative results averaged over entire testset for ConvexAdam (ours) and comparison methods.
+
+On the other hand, aligning the dataset of \textbf{HippocampusMR}  (Table~\ref{tab:test_task2}) with our method leads to smoother deformations than all reported comparison methods. The proposed method performs faster image registration, but the Dice scores are only the second highest among all top-performing methods.
+%Figures: Example images for fixed and moving image and corresponding overlay of fixed image with semantic label data before and and after registration with ConvexAdam. Table: Quantitative results averaged over entire testset for ConvexAdam (ours) and comparison methods.
+
+For the task of \textbf{LungCT} (Table~\ref{tab:test_task3}), the results of ConvexAdam show a registration performance that is more precise than all comparison methods with respect to the TRE except for \textit{corrField} and \textit{MEVIS}. The results for the SDlogJ are comparable for all top five methods and the runtime of our method shares the fasted runtime of all methods with \textit{MEVIS}.
+%Figures: Example images for fixed inspiration and moving expiration image and corresponding masked overlay of images before and and after registration with ConvexAdam. Table: Quantitative results averaged over entire testset for ConvexAdam (ours) and comparison methods.
+
+The inter-patient and monomodal abdominal registration task \textbf{AbdomenCTCT} (Table~\ref{tab:test_task4}) is solved by ConvexAdam best among all benchmark methods with regard to all evaluated metrics (on par on time). The improvement over the best non-DL method \textit{corrField} by 29\% points Dice overlap is particularly large. 
+%Figures: Example images for fixed and moving image and corresponding overlay of fixed image with semantic label data before and and after registration with ConvexAdam. Table: Quantitative results averaged over entire testset for ConvexAdam (ours) and comparison methods.
+
+ For the other abdominal task \textbf{AbdomenMRCT} (Table~\ref{tab:test_task5}) of intra-patient multimodal abdominal registration, our method reaches the overall highest Dice scores (DSC9) and lowest Hausdorff distance placing it ahead of \textit{corrField} and \textit{LapIRN}. While the value for SDlogJ is comparable to most methods, ConvexAdam can achieve the best runtime, which is 40$\times$ faster than the top-performing \textit{PIMed} (for DSC).
+%Figures: Example images for fixed MR and moving CT image and corresponding overlay of images with semantic label data before and and after registration with ConvexAdam. Table: Quantitative results averaged over entire testset for ConvexAdam (ours) and comparison methods. DSC9 is a special metric that evaluates on nine additional anatomical labels to assess label bias.
+
+The results for \textbf{OASIS} (Table~\ref{tab:test_task6}) show that our method performs consistently across all metrics yielding overall the second highest average rank after \textit{LapIRN}.% well compared to \textit{LapIRN}, \textit{IWM}, and \textit{Driver} regarding the Dice score, the Hausdorff distance, and the runtime.
+%Figures: Example images for fixed and moving image and corresponding overlay of semantic label data before and and after registration with ConvexAdam. Table: Quantitative results averaged over entire testset for ConvexAdam (ours) and comparison methods.
+
+The lung registration task \textbf{NLST} (Table~\ref{tab:test_task7}) new to Learn2Reg 2022 is evaluated with TREs for keypoints (TREkp) and landmarks (TRElm). The results of ConvexAdam are on par with \textit{MEVIS} which was most accurate for the previous LungCT task and best in terms of runtime. Yet two new methods (\textit{xi} and \textit{TS\_UKE}) that were specifically designed only for this task outperform them in terms of TRE values. %, although representing a clear improvement over the initial values, could not be ranked within the three top-performing methods. ConvexAdam demonstrates its strength in terms of runtime.
+
+
+Table~\ref{tab:ranking} shows the overall rank scores of comparison methods that were submitted to at least four tasks of Learn2Reg-2020\&2021. The reported scores are obtained by running the identical ranking procedure introduced in \citep{hering2022learn2reg}. This includes tests for statistical significance (Wilcoxon rank-sum tests with significance level p=0.05) between all pairwise comparisons of different methods on each metric. With self-configuring ConvexAdam, we reach two top rankings, three second places and one third among multi-task registration approaches and are able to outperform all other comparison methods with regard to the overall rank score.
+
+\begin{table}[tbh] 
+\scriptsize
+\centering
+\caption{Rank scores of methods that were submitted to at least four Learn2Reg-2020\&2021 tasks.}
+\label{tab:ranking}
+\begin{tabular}{l|cccccc|c}
+\toprule
+\multicolumn{1}{c}{} & \multicolumn{1}{c}{\rule{0pt}{50pt}\tabrotate{\textbf{CuRIOUS}}} & \multicolumn{1}{c}{\tabrotate{\textbf{HippocampusMR}}}& \multicolumn{1}{c}{\tabrotate{\textbf{LungCT}}}& 
+\multicolumn{1}{c}{\tabrotate{\textbf{AbdomenCTCT}}}& \multicolumn{1}{c}{\tabrotate{\textbf{AbdomenMRCT}}}& 
+\multicolumn{1}{c}{\tabrotate{\textbf{OASIS}}}& 
+\multicolumn{1}{c}{\tabrotate{\textbf{overall}}}\\
+\midrule
+ours        & $0.67$          & $0.79$          & $0.83$          & $\mathbf{0.95}$ & $\mathbf{0.66}$ & $0.79$          & $\mathbf{0.78}$ \\
+\midrule
+LapIRN      & $0.46$          & $\mathbf{0.93}$ & $0.71$          & $0.84$          & $0.58$          & $\mathbf{0.92}$ & $0.74$          \\
+\midrule
+corrField   & $\mathbf{0.87}$ & $0.34$          & $\mathbf{0.87}$ & $0.49$          & $0.64$          & $0.47$          & $0.61$          \\
+\midrule
+MEVIS       & $0.43$          & $0.76$          & $0.77$          & $0.58$          & $0.52$          & $0.53$          & $0.60$          \\
+\midrule
+NiftyReg    & $0.62$          & $0.37$          & $0.49$          & $0.40$          & $0.60$          & $0.37$          & $0.48$          \\
+\midrule
+PIMed       & $-$             & $-$             & $0.49$          & $0.62$          & $0.59$          & $0.73$          & $0.45$          \\
+\midrule
+PDD-Net     & $0.82$          & $0.58$          & $0.57$          & $0.33$          & $-$             & $-$             & $0.45$          \\
+
+
+
+%alt
+%ours & $0.70$ & $0.79$ & $0.80$ & $0.95$ & $0.71$ & $0.81$ & $0.79$\\
+%\midrule
+%LapIRN & $0.49$ & $0.93$ & $0.75$ & $0.83$ & $0.78$ & $0.92$ & $0.78$\\
+%\midrule
+%corrField & $0.86$ & $0.34$ & $0.87$ & $0.49$ & $0.82$ & $0.45$ & $0.64$\\
+%\midrule
+%MEVIS & $0.43$ & $0.76$ & $0.79$ & $0.58$ & $0.69$ & $0.52$ & $0.63$\\
+%\midrule
+%NiftyReg & $0.57$ & $0.37$ & $0.51$ & $0.40$ & $0.56$ & $0.36$ & $0.46$\\
+%\midrule
+%PIMed& $-$ & $-$ & $0.55$ & $0.61$ & $0.75$ & $0.73$ & $0.66$\\
+%\midrule
+%PDD-Net& $0.79$ & $0.58$ & $0.62$ & $0.33$ & $-$ & $-$ & $0.58$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\section{Discussion}
+%Our proposed method shows high performance for all investigated registration tasks. With ConvexAdam and empirically determined hyperparameters, we were able to achieve the overall first place of the Learn2Reg challenge 2020\&2021. In this work, we introduce this method and propose an automatic hyperparameter selection strategy to prevent elaborate manual search. The automatic hyperparameter selection strategy leads to top-ranked results across all tasks.
+
+%Compared to other image registration methods \citep{mok2021conditional,hoopes2021hypermorph}, we do not select the hyperparameters required for our method in a learning-based way. While we had relied only on empirical and task-specific hyperparameter choices for our Learn2Reg submission, we here use the proposed automatic procedure. Our hyperparameter selection strategy can be considered as a mixture of rule-based and grid search based procedures and involves the validation of several configurations to achieve the reported results. The options for the individual hyperparameters could be easily adjusted, e.g. if a more refined search is preferred or if knowledge about the deformations to be expected is provided. Our method uses a conventional non-differentiable convex optimisation for image feature alignment that converges fast and does not require a large training dataset like needed for deep learning based alignment. Therefore it is possible to apply the proposed hyperparameter selection strategy on a small set of validation data without causing extensive (training) times or parameter intensive models and transfer the determined hyperparameters for registration of unseen test data. However, as can be observed for AbdomenMRCT, too small a validation dataset can lead to suboptimal results on the testdataset due to poor generalisation.
+
+%We propose to use nnU-Net generated segmentations or MIND features as input for the correlation layer that precedes the iterative coupled convex optimisation. In general, any meaningful feature extraction approaches would be conceivable. Nonetheless, the introduced approaches have clear advantages: Hand-crafted MIND features could be computed for any medical image data, regardless of whether annotations or further additional data are provided. MIND features do not require separate training of a feature extraction or segmentation network, do not focus on certain anatomical foreground structures, allow multimodal input data, and lead to an image registration framework that belongs to the category of unsupervised image registration methods. On the other hand, learned semantic image features such as nnU-Net features entail a supervised training process and thereby the precondition that annotations are available. Though once trained models exist, this type of image features have the potential to yield a registration pipeline that often performs even better than with extraction of MIND features.
+
+Our proposed method shows high performance for all investigated registration tasks. It can align image pairs from challenging datasets, e.g.~including image pairs with large initial displacements, multimodal datasets, data without annotated training cases, and image data that requires the alignment of very small anatomical structures.
+
+An automatic hyperparameter selection is proposed to prevent elaborate manual hyperparameter search. This self-configuring strategy leads to top-ranked results across all tasks. Compared to other image registration methods \citep{mok2021conditional,hoopes2021hypermorph}, the hyperparameters required for the presented method are not selected in a learning-based way. Our hyperparameter selection strategy involves the validation of several configurations to achieve the reported results. The options for the individual hyperparameters could be easily adjusted, e.g.~if a more refined search is preferred or if knowledge about the deformations to be expected is provided. Our method uses a conventional non-differentiable dual optimisation for image feature alignment that converges fast and unlike end-to-end deep learning-based methods does not require a large training dataset. Therefore, it is possible to apply the proposed hyperparameter selection strategy on a small set of validation data without causing extensive (training) times or parameter-intensive models and transfer the determined hyperparameters for registration of unseen test data. However, as can be observed for AbdomenMRCT, too small a validation dataset can lead to slightly suboptimal results on the test dataset.% due to poor generalisation.
+
+We propose to use nnU-Net generated segmentations or MIND features as input for the correlation layer that precedes the iterative coupled convex optimisation. In general, any meaningful feature extraction approaches would be conceivable, e.g. features from self-supervised contrastive learning. Nonetheless, the introduced approaches have clear advantages: Hand-crafted MIND features could be computed for any medical image data, independent of whether annotations or further additional data are provided. MIND features do not require separate training of a feature extraction or segmentation network, do not focus on certain anatomical foreground structures, allow multimodal input data, and lead to an image registration framework that belongs to the category of unsupervised image registration methods. On the other hand, learned semantic image features such as nnU-Net features entail a supervised training process and thereby the precondition that annotations are available. Though once trained models exist, this type of image features have the potential to yield a registration pipeline that often performs even better than with extraction of MIND features. With the advent of more comprehensive (foundational) whole-body CT segmentation models \citep{wasserthal2022totalsegmentator}
+ combined with domain generalisation techniques \citep{ouyang2022causality} some limitations mentioned above can be overcome.
+
+The evaluation of the diverse L2R datasets lets us draw several general conclusions on the choice of hyperparameters in our proposed setting: 1) A large maximum displacement range, the product of displacement half-width and grid-spacing in the \emph{Convex} part are beneficial to capture deformations of varying difficulty. The recommendation is to choose settings to lead to at least 20 voxels in each direction, e.g. to set both aforementioned parameters to 5; 2) Tasks using MIND-features benefit from larger values for the hyperparameters for feature extraction (radius = dilation = 3) for \emph{Convex}, which can be reduced for \emph{Adam}; 3) the grid-spacing for \emph{Adam} should be linked to the B-spline smoothing of the transformation model and hence a smaller spacing has to come with a stronger regularisation to compensate the increased flexibility; 4) Exploring \emph{Adam} at full resolution (grid-spacing = 1) can lead to a slight improvement in accuracy, but at the cost of reduced smoothness and a much higher inference runtime (approx. 10 seconds); 5) The remaining parameters considered in this work: $\lambda$ weight, iteration count and number of smoothing steps are rather insensitive. Usually, 60 iterations for \emph{Adam} are enough for convergence, but 80 bring a small gain; a moderate number of smoothing steps 2-3 are advisable for post-processing as they improve smoothness with almost no loss in accuracy.
+
+\section{Conclusion}
+%\textcolor{red}{TODO}
+
+%The overall results demonstrate that our method is capable to overcome challenges in the field of medical image registration, such as alignment of multimodal, inter-patent, or strongly deformed image pairs. A particular benefit of ConvexAdam is the fast runtime and especially the universal applicability across all tasks.
+
+The results demonstrate that our method is capable of overcoming challenges in the field of medical image registration, such as the alignment of multimodal, inter-patient, or strongly deformed image pairs while being versatile and requiring no additional user interaction to find optimal settings. Since our choice of a self-configuring ConvexAdam for the automatic hyperparameter selection process combines a two-step randomised search for computationally very efficient dual optimisation a very large number of $100\times75\times16$ parameter choices can be evaluated in less than 2 hours for an unseen task. Together with the particular benefit of our method which has a very fast inference time that ranges from $0.48\,\text{s}$ to $5.83\,\text{s}$ per image pair, the computational effort remains manageable even for larger sized validation datasets. Across all of the Learn2Reg challenge tasks, the method is capable of achieving high-ranked registration results and can thus be considered a very strong baseline compared to end-to-end trainable networks that need to be adapted to each new problem.

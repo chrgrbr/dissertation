@@ -1,0 +1,207 @@
+% begin{abstract}
+% Due to the high variability in medical images, task-specific solutions have often prevailed in the field of Deep Learning Image Registration (DLIR). Contrary to classical approaches, these are hardly transferable to other tasks or datasets. To overcome these limitations we propose to exploit easy-to-acquire anatomical segmentations, which provide strong semantic features as a common representation across different datasets and image modalities. We, therefore, present a new module for  medical image registration based on generalised label encodings that can be applied to arbitrary label maps. We demonstrate the generalisability of our approach by employing the module trained on skeletal and pulmonary vascular structures to the registration of abdominal segmentations, yielding an average increase in Dice scores of 24\% and compare their encoding qualities to classical Euclidean Distance Maps. Furthermore, we leverage the modular design to assess the generalisability of convolutional and vision-transformer based registration architectures. Source code and trained models are released on GitHub.
+
+\section{Introduction}
+
+In recent years, Deep Learning Image Registration (DLIR) has become increasingly popular as it performs comparably in terms of accuracy to well-tuned optimisation-based registration methods while being much faster in inference. However, one drawback of DLIR methods is that their performance is highly dependent on the training data used, resulting in very task-specific solutions that do not generalise well to unseen domains. In contrast, conventional registration algorithms such as Elastix \citep{klein2010Elastix} or NiftyReg \citep{Modat2010Nifty} can be applied to a variety of different tasks, although suitable hyperparameters must be found for a good solution.
+One of the reasons why such generalised methods have not yet entered the DLIR domain is the high variability of medical image data for registration problems (inter- and intra-patient, single- and multimodal, anatomical scope), which results in a small number of relevant datasets and the development of specialized solutions. Furthermore, this heterogeneity leads to the difficult choice of image features, metrics and losses suitable for registration. 
+
+In this work, we propose a new approach to generalised medical image registration. Instead of dealing with the high variability of registration-related tasks and data, we explore the possibility of decoupling semantic feature generation and learning-based image registration. Our work is mainly motivated by two aspects: First, the fact that the use of semantic segmentations together with regularisation can increase the accuracy of DLIR methods, especially for inter-patient registration tasks \citep{L2R}. For example, in the multi-task registration challenge Learn2Reg, best results were obtained when semantic information has been included during training, either directly as additional input features or indirectly through the application of segmentation-dependent metrics, such as the Dice loss \citep{L2R}. Second, advances in deep learning methods in recent years for image segmentation greatly facilitate the synthesis of anatomical labels. Robust and easy-to-use pre-trained tools, such as the TotalSegmentator \citep{TotalSeg}, a variety of nnUNet \citep{nnUnet} models or models from the MONAI Model Zoo \citep{Cardoso2022MONAI} enable the simple, fast and straightforward generation of segmentations for a wide range of anatomical structures from a variety of image domains.
+Consequently, the question arises whether semantic segmentations can serve as a key building block to developing generalised registration methods beyond single dataset boundaries, effectively transforming the task of image registration into the task of shape matching. 
+
+Contrary to the common approach for registration algorithms based on joint learning of suitable features and deformation modules, we exploit the precomputed segmentations as strong semantic features for the prediction of deformation fields. 
+Directly registering label maps as opposed to grey-valued image data results in great flexibility: Registration across domain gaps, such as various medical image systems, is possible without any adaptation to the method. Other advantages include the effortless incorporation of advances in segmentation algorithms and the fact that, since our method does not rely directly on easily identifiable image data, it is privacy-preserving by design.
+%Possible applications are, for example, the otherwise very challenging registration of ultrasound to CT or MRI scans for intraoperative navigation. Furthermore, due to the difficult deanonymization of anatomical segmentations, a registration method that does not require the direct use of image data can be used in a privacy-preserving manner.
+
+\subsection*{Related Work}
+Shape matching and image registration are two closely related and integral tasks in computer vision and image processing and have been addressed using both classical iterative and deep learning methods. One approach is the minimization of Distance Functions (DF) to measure the alignment of geometric shapes \citep{Paragios2003ShapeReg}, including Signed Distance Maps and Euclidean Distance Maps (EDMs).   Segmentations of organs or other anatomical structures are one of the most common semantic annotations in medical image data. In addition to their direct clinical use for volume, shape, and location analysis, they also offer the possibility of introducing semantic knowledge into medical image processing methods. In Machine Learning (ML), this includes the employment of label-based metrics such as the Dice Loss. On the other hand, anatomical information can also guide the learning process. In the domain of image registration,  Hu et al. \citep{Hu2018WeaklySupervisedMRUS} leverage a variety of annotations, including segmentations, as weak supervision to overcome the domain gap between ultrasound and MRI images. However, this non-generalised method is restricted to anatomies and image modalities previously seen in training. Other approaches preprocess medical information to facilitate their usage in learning-based methods, including the encoding of anatomical shapes with distance transforms. Popular approaches for semantic segmentations include  loss functions relying on EDMs or the introduction of auxiliary tasks to boost model performances \citep{Ma2020Sep}. 
+
+EDMs have also been employed sporadically in the field of image registration. Chen et al. use distance transforms in combination with mutual information to improve the registration in areas with homogeneous intensities in brain MRIs \citep{Chen2011DistanceMRI} and Canalini et al. leverage the euclidean distance transform for interoperative registration of 3D ultrasound \citep{canalini_registration_2019_US}. While these works highlight the principle suitability of EDMs for image registration, both rely on conventional registration algorithms. 
+
+Augmentation and synthesis of training data is an integral part of Deep Learning methods. This is even more true in the field of medical image analysis, where training data remains scarce due to privacy concerns and high annotation costs. However, there are also approaches where the synthesis of training data exceeds the purpose of extending a real dataset. One example of this in the field of image registration is SynthMorph \citep{hoffmann2022synthmorph}, which uses synthesized images with arbitrary shapes to develop a contrast-agnostic registration network. A Voxelmorph architecture is trained using both strongly augmented dense label maps as well as unrealistic shapes, enforcing the matching of structures based on shapes rather than image features. In terms of leveraging segmentations to achieve generalisability, we follow a similar strategy. However, instead of inferring on real grey-valued image data, we seek to predict motion completely relying on segmentation maps. %While this technique is successful for generalising between different MRI sequences, its application to gray-valued images does not translate to label-bases registration.
+
+\subsection*{Contributions}
+In this work, we aim to investigate the possibility of using automatically generated semantic segmentations to develop a generalisable deep learning registration method. This approach requires two components: 1) a common, robust encoding of arbitrary label maps that is independent of particular datasets and anatomical regions and 2) a module to register the encoded label maps to each other. 
+
+We propose a novel learning-based adaptation layer for label map generalisation and evaluate its performance against Multilabel Euclidean Distance Maps. Furthermore, we investigate the effect of two spatial transformer registration modules, including a Swin Transformer architecture. To the best of our knowledge, this is both the first approach to develop a generalised deep learning registration method and the first application of a registration model fully trained with CT data on MRI scans.
+
+In addition, source code and trained models have been released on GitHub\footnote{\url{https://github.com/multimodallearning/GenRegShapes/}}.
+
+%in the case that this conference contribution is accepted, we will release the source code and the trained models.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{\miuaPath/figures/module.pdf}
+    \caption{Generalized Registration Pipeline. One or more suitable segmentation methods predict congruent sets of anatomical labels on input fixed and moving scans. These are then fed into the proposed Adaptation Layer, which extracts features independently of the type and number of generated semantic structures. Subsequently, the generalised single-channel encodings are concatenated and subject to a two-step registration module, predicting a dense displacement field to be used to warp input segmentations or image.}
+    \label{fig:module}
+\end{figure}
+
+\section{Methods}
+The main concept of our method is a decoupling between the individual instances of a segmentation map and subsequent label-agnostic deformable image registration. The method can be trained on arbitrary pairs of segmentations as long as each pair of fixed and moving images have congruent label definitions, which allows the use of data from a variety of different datasets with manually annotated or automatically generated segmentations. 
+Consequently, segmentations derived from arbitrary image data, anatomical regions and various segmentation models can also be used during inference, so that the trained model has no explicit domain gap with respect to unseen datasets. An overview of our pipeline is shown in Fig. \ref{fig:module}.
+
+Our method is composed of two building blocks: First, segmentation maps have to be encoded in a generalised manner to prevent overfitting to particular anatomies in training data. We achieve this by a) utilizing Multilabel Euclidian Distance maps and b) a novel learning-based Label Adaptation Module. Second, the encoded label maps are subject to a registration method. We employ both a simple convolution neural network-based registration module and a variant utilizing a hierarchical shifted-window vision transformer.
+
+\subsection{Encoded Label Maps} 
+\subsubsection*{Multilabel Euclidean Distance Maps}
+Given the binarized label image $I \in \{0,1\}^n$, we elect to calculate a Euclidean Distance Map (EDM). For every label image element $x_i$ we assign 
+\begin{equation*}
+y_i = \begin{cases}
+\sqrt{\sum_i^n(x_i-b_i)^2} &\text{if } x_i = 1\\
+0, & \text{otherwise}
+\end{cases},
+\end{equation*}
+where $b_i$ represents the background element ($i = 0$) with the smallest euclidean distance to input point $x_i$.
+
+We expand this technique to multilabel segmentations $\bm{S}$ with labels $l = \{1,...,L\}$ so that
+\begin{equation*}
+    \text{MEDM}(\bm{S}) = \sum_j^L \frac{1}{\lambda}\biggl(\lambda- ELU\bigl(\text{EDM}(\lambda - \bm{S}_j)\bigr)\biggr).
+\end{equation*}
+Here, $ELU$ denotes the element-wise Exponential Linear Unit \citep{Clevert2015Nov} and $\lambda$ denotes the distance to structure boundaries affected by the $ELU$. We design the MLEMs to emphasize borders to facilitate their use for registration methods by decreasing the values of voxels inside of structures.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{\miuaPath/figures/adapt_layer.pdf}
+    \caption{Proposed Adaptation Module. Operations with dimension manipulations and convolutional layers are highlighted in green and ocher respectively. }
+    \label{fig:adaptlayer}
+\end{figure}
+
+\subsubsection*{Adaptation Module}
+The purpose of the proposed Adaptation Module is to enable feature learning explicitly on individual segmentations. Therefore, we follow three objectives: 1) Decoupling of segmentation instances, 2) Composing agnostic feature learning  and 3) Recoupling of features.
+First, batch and channel dimensions of one-hot-encoded segmentation maps $S\in \{0, 1\}$ with dimensions [B$\times$L$\times$H$\times$W$\times$D] are joined into one dimension, resulting in a tensor of shape [B$\cdot$L$\times$1$\times$H$\times$W$\times$D]. Therefore, subsequent convolutions are performed on a single channel and cannot establish a connection between segmentation instances, effectively separating feature learning for individual anatomical structures. This is necessary to prevent the learning of specific labels from the training dataset and to enable the application to previously unseen structures. 
+We employ 3 blocks composed of $3\times3\times3$ convolutions (of which the first one has a stride of 2) with output channel dimensions of (16,32,32), Instance Normalisation and a ReLU activation function. 
+The initial separation of batch (cases) and channels (segmentations) is reversed by splitting the initial batch and channels back into their two respective dimensions. By collecting the maximum feature map response along segmentation instance dimension, the tensor is condensed to the shape [B$\times$1$\times\frac{H}{2}\times\frac{W}{2}\times\frac{D}{2}$]. Subsequent convolutions and bilinear upsampling restore spatial input shapes. 
+Since the second convolutional block can access the convolved and pooled segmentations of all labels, it can in principle leverage the spatial relationship of encoded individual labels.
+Finally, we employ a $1\times1\times1$ convolution to change output channel dimensions, yielding the final encoded segmentations of shape [B$\times$1$\times\frac{H}{2}\times\frac{W}{2}\times\frac{D}{2}$]. An overview of the proposed Adaptation Module is shown in Fig. \ref{fig:adaptlayer}.
+
+
+\subsection{Registration Models}
+Since our proposed method can be seen as a feature encoder, we are not restricted to a specific registration model. We, therefore, employ two variants of registration networks composed of a two-stream feature encoder and a spatial transformation module. To account for fine-grained registration results, both networks can be employed in a two-stage manner. 
+
+\subsubsection*{CNN-Reg}
+We design CNN-Reg by employing a two-stream feature-encoding architecture with shared weights for both input tensors consisting of six encoder blocks, where each block is composed of a 3D convolution, Instance Normalisation and ReLU. The final feature dimension is successively built up to a total of 64 channels, whereas the spatial dimension is halved. In the registration part of the model, fixed and moving features are concatenated and subject to two convolution blocks with decreasing channel dimensions. The resulting 3-channel deformation field is subject to a hyperbolic tangent and multiplied with a factor of $0.25$, which corresponds to displacements for 1/4 of initial image size. Finally, we employ B-Spline regularisation (as a combination of trilinear upsampling and average pooling with kernels of base sizes 3 and 5) twice.
+The two-step architecture allows the prediction of deformations with increased accuracy by accounting for the residual, uncompensated motion. If this setting is chosen, the moving input features are warped with the predicted displacements and again subject to stage one feature extraction layers. We then employ a second registration block with B-Spline regularisation for which we choose the previous parameters.
+
+\subsubsection*{UNETR-Reg}
+We leverage the interoperability of the proposed generalisation module by including SwinUNETR \citep{Hatamizadeh2022SWINUNETR} modules provided by MONAI\footnote{\url{https://docs.monai.io/en/stable/_modules/monai/networks/nets/swin_unetr.html}}. We build upon the two-step CNN-Reg and simply replace the convolutional registration layers with SwinUNETR blocks. Since we train the networks with variable spatial image dimensions, we set the SwinUNETR input image size to $64\times64\times64$ and resample all encoded label maps to $192\times192\times192$ voxels before feeding them to the registration module.
+
+
+\section{Experiments}
+\subsection{Datasets}
+\label{sec:datasets}
+We aim to train our models with varying anatomical shapes. Therefore, we construct two datasets with semi- or fully automated labels (TS-Skeletal and VIS-Vascular), leveraging the broad range of predictable classes from the popular TotalSegmentator tool and dataset. For evaluation, we utilize two publicly available datasets (AbdomenCTCT \citep{L2R}, AMOS \citep{AMOS}) from established challenges, which both only share two labels (aorta and vena cava inferior) with one of the training datasets.
+3D renders of used data are shown in Figure \ref{fig:datasets}.
+
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{\miuaPath/figures/Datasets.pdf}
+    \caption{3D visualisations of training and test datasets. Both L2R-CT and AMOS-MR feature disjoint sets compared to the training datasets, with the exception of the Vena Cava Inferior and Aorta.}
+    \label{fig:datasets}
+\end{figure}
+
+
+\paragraph{TS-Skeletal}
+We use semi-automatic segmentations for a total of 28 skeletal structures from the TotalSegmentator dataset \citep{TotalSeg}. First, we extract all images containing segmentations for ribs (bilateral, rib 2 - 11) and vertebrae (T2 - L3). After visual inspection and discarding of scans with implausible or overlapping segmentations, we select 33 remaining cases for dataset construction. Based on the proposed segmentations, label maps have been cropped to $256\times160\times256$ voxels.  We utilize Convert3D command line tool\footnote{\url{http://www.itksnap.org/pmwiki/pmwiki.php?n=Convert3D.Convert3D}} (\texttt{c3d -align-landmarks}) for rigid alignment of label maps.
+
+\paragraph{VIS-Vascular}
+We use the TotalSegmentator tool \citep{TotalSeg} to predict segmentations on 51 contrast-enhanced CT scans of the Anatomy 3 Visceral Silver Corpus Dataset \citep{AnatomyDataset} and choose 9 cardiovascular and lung structures which share no overlap with TS-Skeletal (Aorta, Vena Cava Inferior, Pulmonary Artery, Heart, Lung lobes 1-5), emphasizing functional and structural differences as well as spatial distances. Analogous to TS-Skeletal, segmentation maps are cropped to a uniform shape of $256\times192\times288$ voxels and aligned rigidly using Convert3D.
+
+\paragraph{L2R-CT}
+We choose the Learn2Reg Challenge AbdomenCTCT dataset \footnote{\url{https://learn2reg.grand-challenge.org/Datasets/}} to evaluate the registration accuracy of the proposed method. The data includes a total of 30 affine pre-registered CT scans ($192\times160\times256$) and manual segmentations for 13 labels ($\color{red}{\smblksquare}$ aorta, $\color{orange}{\smblksquare}$ inferior vena cava, $\color{green}{\smblksquare}$ spleen, $\color{cyan}{\smblksquare}$ left / $\color{blue}{\smblksquare}$ right kidney, $\color{magenta}{\smblksquare}$ gallbladder, $\color{yellow}{\smblksquare}$ esophagus, $\color{brown}{\smblksquare}$ liver, $\color{pink}{\smblksquare}$ pancreas, $\color{lime}{\smblksquare}$ stomach,  $\color{purple}{\smblksquare}$ left / $\color{teal}{\smblksquare}$  right adrenal glands and $\color{violet}{\smblksquare}$ portal and splenic vein). We apply the proposed validation and registration split (20 training, 10 validation, 45 registration pairs) and train a nnUNet for 300 epochs on all training scans and predict segmentations for all validation cases. 
+
+\paragraph{AMOS-MR}
+Furthermore, we evaluate the proposed method on publicly available MRI scans of the AMOS 2022 challenge\footnote{\url{https://amos22.grand-challenge.org/}} \citep{AMOS}, highlighting the multimodal applicability of the proposed segmentation registration approach. The selected subset comprises 40 affine pre-registered  MRI scans with spatial dimensions of $256\times160\times256$ and abdominal segmentations ($\color{red}{\smblksquare}$ aorta, $\color{orange}{\smblksquare}$ inferior vena cava,  $\color{green}{\smblksquare}$ spleen, $\color{cyan}{\smblksquare}$ left / $\color{blue}{\smblksquare}$ right kidney, $\color{magenta}{\smblksquare}$ gallbladder, $\color{yellow}{\smblksquare}$ esophagus, $\color{brown}{\smblksquare}$ liver, $\color{lime}{\smblksquare}$  stomach, $\color{pink}{\smblksquare}$ pancreas, $\color{purple}{\smblksquare}$ left / $\color{teal}{\smblksquare}$  right adrenal glands and $\color{gray}{\smblksquare}$ duodenum). Following the approach of L2R-CT, we train another nnUNet for 300 epochs on 32 training cases for the generation of predicted segmentations and choose the remaining 8 cases for testing, yielding a total of 28 registration pairs. We assess the quality of nnUNet predictions and achieve an average Dice overlap of 82\% regarding all labels, with large structures (such as liver, spleen, stomach and kidneys) reaching Dice scores above 90\% and small structures (such as adrenal glands) around 60\%.
+
+
+
+\subsection{Training and Evaluation}
+We train all networks in 3 stages of each 2000 iterations each using Adam with a learning rate of 0.001 and mixed precision to accelerate training. In the second half of each stage, we employ the registration network in a two-step manner for higher accuracy predictions and increase the strength of random affine augmentations throughout all stages. In each iteration, one (i.e. batch size = 1) one-hot encoded label map from either training dataset is drawn randomly, downsampled by a factor of 2 using average pooling, encoded by MEDM ($\lambda$ = 7) or the proposed Adaptation Module and processed by the registration network. We employ Soft Dice loss on warped input labels. To facilitate the convergence of the Adaptation Module, we use the EDM-pretrained registration network as a starting point. 
+
+We evaluate our method for each combination of architecture (CNN-Reg, UNETR-Reg) and label generalisation method (MEDM, learned Adaptation Module) on both test datasets (L2R-CT, AMOS-MR) independently using a 32 GB Tesla V100-SXM3 GPU. For each test case, a corresponding label map is predicted and generalised. Moving ground-truth annotations are warped with the deformation field output by the registration module, which takes about 190 ms (CNN-Reg) or 450 ms (UNETR-Reg) respectively. Inference of the Adaptation Layer takes about 50 ms. The quality of registration is measured in terms of volumetric alignment, surface distances and deformity of registration by calculation of Dice coefficients, the 95th percentile of Hausdorff Distances and the standard deviation of logarithmized Jacobian determinants respectively. We chose to include vascular labels $\color{red}{\smblksquare}$ aorta and $\color{orange}{\smblksquare}$ inferior vena cava, which exist both in Vis-Vascular and testing datasets, to investigate a possible bias towards previously seen anatomic shapes. 
+
+\section{Results and Discussion}
+%Falls noch Zeit ist:
+% Evlauation mit  Registrierung von L2R -> AMOS!!
+% Label Bias Experiment
+% Mini-Ablation-Study mit Ergebnissen ohne Vena Cava + Aorta in Labels 
+
+
+\begin{table}[t]
+    \centering
+        \caption{Registration results for each combination of model and label encoding on the \textbf{L2R-CT} dataset shown in dice overlap percentages, 95th percentile of Hausdorff distance (HD95) and deformity of registration as standard deviation of Jacobian deteminants (JD, lower is better). We report dice averages over all labels and shared anatomic labels with one training set ($\color{red}{\smblksquare}$,$\color{orange}{\smblksquare}$) separately. Color Encodings for individual labels are described in Sec. \ref{sec:datasets}.}
+    \begin{tabular}{ll|cc|ccccccccccc|cc|ccc} 
+
+Model & Enc.  & $\color{red}{\smblksquare}$ & $\color{orange}{\smblksquare}$ & $\color{green}{\smblksquare}$ & $\color{blue}{\smblksquare}$ & $\color{cyan}{\smblksquare}$ & $\color{magenta}{\smblksquare}$ & $\color{yellow}{\smblksquare}$ & $\color{brown}{\smblksquare}$ & $\color{lime}{\smblksquare}$ & $\color{pink}{\smblksquare}$ & $\color{purple}{\smblksquare}$ & $\color{teal}{\smblksquare}$ & $\color{violet}{\smblksquare}$& avg(2) & avg(all) & HD95 & JD \\
+\hline
+initial &&33&36&42&34&35&2&23&62&24&15&8&8&5& 34.5&25.1$\pm$13&20.1&-\\ 
+\hline
+CNN & MEDM & 39&38&67&52&56&4&23&83&46&23&11&10&12& 38.1&35.6$\pm$10&16.0&0.006\\ 
+& Adapt. & 40&46&70&68&73&11&33&79&44&33&19&23&13&42.9&\textbf{42.4}$\pm$\textbf{12}&14.7&0.007&\\
+\hline
+UNETR & MEDM & 38&39&64&46&60&4&21&80&49&18&9&7&9&38.4&34.2$\pm$11&21.2&0.031\\ 
+& Adapt. & 46&49&66&72&79&17&43&81&47&33&24&29&24& 47.5& \textbf{47.0}$\pm$\textbf{14} &23.3&0.022\\ 
+
+\end{tabular}
+    \label{tab:AbdomenCTCT}
+\end{table}
+
+
+Quantitative results (Tab. \ref{tab:AbdomenCTCT} and Tab. \ref{tab:AMOS}) show that all combinations of models and label encoders succeed in aligning anatomical shapes in out-of-training-domain datasets. Best Dice scores of 47\% (L2R-CT) and 54.2\% (AMOS) are achieved by employing UNETR and the proposed Adaptation Layer.
+In comparison between Multilabel Euclidean Distance Maps, the Adaptation Module holds the advantage throughout nearly all individual labels, leading to an average increase of 8 (CNN-Reg) and 14 (UNETR-Reg) percentage points. Especially the alignment of small structures ($\color{pink}{\smblksquare}$,$\color{purple}{\smblksquare}$,$\color{teal}{\smblksquare}$) improves considerably by Dice scores of 8\% to 22\%. MEDMs do not seem to be able to encode anatomies with small diameters well, as those may not benefit as much from the proposed boundary emphasis technique. Another explanation is that the learned Adaptation layer is to some extent able to compensate for the lower quality of predicted segmentations of small structures for registration. For large structures such as the liver and spleen, which are already well aligned by rigid pre-registration, similar results are obtained for both coding variants.
+
+
+A possible label bias of ($\color{red}{\smblksquare}$,$\color{orange}{\smblksquare}$) is not reflected in the corresponding dice scores, as they do not show excessive improvements compared to the other labels in either data set, which strengthens the assumption of strong generalisation.
+
+When employing the learned adaptation layer, better dice scores can be obtained by the Swin Transformer registration model UNETR-Reg (7\%-16\%), while the average dice score even deteriorates when using MEDM. In this setting, Vision Transformers benefit even more strongly from the learnable Adaptation Layer. In both variants, however, the warped labels show significantly higher Hausdorff distances, which partly exceed the initial values. This is accompanied by a decrease in deformation smoothness by a factor of 3-5, suggesting the need for a stronger regularization.
+
+\begin{table}[t]
+%Table Reihenfolge
+%Aorta
+%Vena Cava Inferior
+%spleen
+%right kidney
+%left kidney
+%gall bladder
+%esophagus
+%liver
+%tomach
+%pancreas
+%left adrenal gland
+%ight adrenal gland
+%duodenum /portal and splenic vein
+    \centering
+        \caption{Registration results for each combination of model and label encoding on the \textbf{AMOS-MR} dataset shown in dice overlap percentages, 95th percentile of Hausdorff distance (HD95) and deformity of registration as the standard deviation of Jacobian determinants (JD, lower is better). We report dice averages over all labels and shared anatomic labels with one training set ($\color{red}{\smblksquare}$,$\color{orange}{\smblksquare}$) separately. Colour Encodings for individual labels are described in Sec. \ref{sec:datasets}. }
+    \begin{tabular}{ll|cc|ccccccccccc|cc|ccc} 
+Model & Enc. & $\color{red}{\smblksquare}$ & $\color{orange}{\smblksquare}$ & $\color{green}{\smblksquare}$ & $\color{blue}{\smblksquare}$ & $\color{cyan}{\smblksquare}$ & $\color{magenta}{\smblksquare}$ & $\color{yellow}{\smblksquare}$ & $\color{brown}{\smblksquare}$ & $\color{lime}{\smblksquare}$ & $\color{pink}{\smblksquare}$ & $\color{purple}{\smblksquare}$ & $\color{teal}{\smblksquare}$ & $\color{gray}{\smblksquare}$& avg(2) & avg(all) & HD95 & JD \\
+\hline
+initial &&21&30&50&52&51&12&8&71&37&38&10&11&20&25.7&31.6$\pm$11 & 19.0& -\\ 
+\hline
+CNN & MEDM & 34&37&74&69&69&23&15&89&52&42&9&8&27&35.7&42.2$\pm$09 & 15.2 & 0.006\\ 
+& Adapt. & 46&54&79&78&75&41&33&88&58&56&19&18&32&49.9&\textbf{52.1}$\pm$\textbf{11}&12.9&0.006\\
+\hline
+UNETR & MEDM & 33&40&69&68&65&16&11&84&50&35&3&8&22& 36.3 & 38.6$\pm$10&21.7&0.032 \\ 
+& Adapt. & 50&56&83&75&81&35&35&84&68&59&19&26&34&53.1&\textbf{54.2}$\pm$\textbf{14}&27.3&0.026\\ 
+
+\end{tabular}
+    \label{tab:AMOS}
+\end{table}
+
+
+We further explore the possibility of refining the deformation field with Adam instance optimisation (similar to \citep{siebert2021convexadam}). This boosts average dice scores to 56\% and 61\% for L2R-CT and AMOS-MR respectively, without leveraging any image-domain data, highlighting the possibility to employ our method as a coarse pre-registration. 
+
+Since we are following the L2R Challenge data split we are able to compare our results with the SOTA. Our models succeed to outperform both supervised and unsupervised Voxelmorph variants, which achieve average Dice scores of 35.5\% and 43.85\% respectively \citep{Siebert2021ArchitectureMatters}. When using instance optimisation, our method trails only by 10\% behind the upper baseline of 66.2\% set by the label-supervised LapIRN\footnote{\url{https://learn2reg.grand-challenge.org/evaluation/54c99fe5-9afb-48df-8b75-6e758248be6a/}} \citep{Mok2020LapIRN}, which leveraged the target domain for training the registration network. Considering both the generalised design of our method and the fact that our models were trained not using any of the L2R data, the competitiveness of our results is very promising.
+
+
+Figure \ref{fig:examples} shows example visual results of predicted labels, encoded segmentations, and registration results. Compared to the MEDMs, the features generated by the proposed Adaptation Module do not show a uniform response at the segmentation edges, but a locally different weighting of nearby structures. Although the warped moving labels align reasonably well with the anatomy of the fixed scans it can further be improved by subsequent instance optimisation finetuning. Since label adaptation and registration can only access label information, the spatial extent of predicted deformation is restricted. Image contents outside these boundaries, such as skin and fat tissue, cannot be registered with our method by design. However, since in most scenarios of medical image registration, an alignment of target structures is desired, this drawback can be mitigated by selecting appropriate and high-quality input segmentations. %due to the rigorous decoupling of features and registration of our method. 
+
+%Noch Vorteile: -multimodal möglich (wenn segmentation netzwerke), + privacy preserving registration, + decoupling ermöglicht das einfache verwenden von besseren segmentierungen
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{\miuaPath/figures/examples.pdf}
+    \caption{Exemplary visual results. Randomly chosen a) L2R-CT scans with b) nnUNet predicted labels are encoded with c) Multilabel Euclidean Distance Maps or d) the trained Adaptation Module. Rows show the fixed and moving input images respectively. Column e) shows the overlaid warped moving labels on the fixed input scan in top and warped labels and moving scan after subsequent instance optimisation finetuning in bottom position.}
+    \label{fig:examples}
+\end{figure}
+
+\section{Conclusion and Outlook}
+The novel approach to generalised deformable Deep Learning Image Registration successfully aligns previously unseen label structures, by transforming the registration task into a shape-matching task and leveraging segmentations as strong semantic features without the constraints of being restricted to specific training datasets. A proposed Label Adaptation Module outperforms classical Euclidean Distance encodings by a large margin, especially for small structures.  We assess its versatility and effectiveness with both a convolutional and a Vision Transformer registration module and subsequent instance optimisation refinement on inter-patient abdominal datasets. Future work could address its incorporation into further existing deformable image pipelines, training with large amounts of synthetical data and investigating the registration accuracy with regard to variable extends of anatomical segmentations. We hope that this work can promote research in the area of generalised image registration, which has been scarcely explored so far.

@@ -306,3 +306,5 @@ TSWLatexianTemp*
 build/*
 
 .DS_Store
+
+misc/

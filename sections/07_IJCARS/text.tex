@@ -1,0 +1,263 @@
+
+
+% \abstract{\textbf{Purpose:}
+% This study aims to address the challenging estimation of trajectories from freehand ultrasound examinations by means of registration of automatically generated surface points. Current approaches to inter-sweep point cloud registration can be improved by incorporating heatmap predictions, but practical challenges such as label-sparsity or only partially overlapping coverage of target structures arise when applying realistic examination conditions.
+
+% \textbf{Methods:} 
+% We propose a pipeline comprising three stages: (1) Utilizing a Free Point Transformer for coarse pre-registration, (2) Introducing HeatReg for further refinement using support point clouds, and (3) Employing instance optimization to enhance predicted displacements. Key techniques include expanding point sets with support points derived from prior knowledge and leverage of gradient keypoints. We evaluate our method on a large set of 42 forearm ultrasound sweeps with optical ground-truth tracking and investigate multiple ablations.
+
+% \textbf{Results:}
+% The proposed pipeline effectively registers free-hand intra-patient ultrasound sweeps. Combining Free Point Transformer with support-point enhanced HeatReg outperforms the FPT baseline by a mean directed surface distance of 0.96 mm (40\%). Subsequent refinement using Adam instance optimization and DiVRoC further improves registration accuracy and trajectory estimation.
+
+ 
+% \textbf{Conclusion:} 
+% The proposed techniques enable and improve the application of point cloud registration as a basis for freehand ultrasound reconstruction. Our results demonstrate\replace{}{significant} theoretical and practical advantages of heatmap incorporation and multi-stage model predictions.}
+
+\section{Introduction}\label{sec1}
+
+\subsection{Motivation}
+Medical ultrasound (US) as an imaging modality is characterized by its flexibility and versatility, both as a portable and cost-effective examination method and in a wide range of medical applications, from vascular and obstetrics to the examination of bone surfaces. The latter is an effective and low-radiation alternative to X-rays and is employed for fracture diagnosis of distal forearm fractures in children and adolescents. Easy-to-acquire freehand ultrasound sweeps offer the possibility of interoperative control scans and non-clinical follow-up examinations by the family doctor or paediatrician. 
+
+In recent years, the development of handheld and cost-effective scanners, often in combination with inertial measurement units (IMUs), has further reduced the barriers to application and emphasized their disruptive capabilities in the field of medical imaging.  
+Disadvantages, however, are the challenging dynamic interpretation of the images during the scan, especially by inexperienced users. In the case of freehand examinations, stored videos can only be analyzed retrospectively to a limited extent, as the examination context (exact position, angle and movement) is not apparent from the raw image data. One way to increase this interpretability is to rely on three-dimensional ultrasound images, which represents a volumetric image of the examined structure and also enables multimodal evaluation. While native three-dimensional US devices are expensive and have a limited field of view, another option is algorithmic volume reconstruction from image and sensor data. However, due to the low signal-to-noise ratio and the variability in the representation of structures, registration based on grey values alone is difficult~\citep{che2017ultrasound}, but can be facilitated by using additional information such as anatomical segmentations or IMU data. Access to volumetric anatomical representations is particularly useful for follow-up examinations and interoperative control images. In this scenario, new sweeps lacking positional data are registered on reference images previously recorded under controlled (tracked) conditions, for example preoperatively or at the start of therapy. The registration of point clouds from sweep to image then enables the reconstruction of the target anatomy. In this paper, we demonstrate the successful application in the realistic environment of reference-based distal forearm ultrasound reconstruction using automatically generated point clouds from bone surfaces.
+
+
+\subsection{Related Work}
+\boldparagraph{Volumetric Reconstruction}
+Volumetric reconstruction from 2D ultrasound sweeps has been previously addressed in \citep{el2023trackerless} by means of intensity-based optical flow estimation for subsequent frames in a sequence. For linear probe trajectories,~\citep{prevost20183d} demonstrate the usability of convolutional neural networks to estimate out-of-plane motion, which can be linked to speckle decorrelation~\citep{chen1997determination}. While this approach can work without external trackers it is prone to ambiguities for difficult to interpret anatomical regions and error accumulation leading to a temporal drift. A fully deep learning-based solution that includes the input from multiple inertial sensors was proposed in \citep{luo2023multi}, which reduced drift at the cost of being susceptible to subtle domain shifts in acquisition setup and increased the risk of failure in unexpected scenarios. 
+\boldparagraph{Pointcloud Registation} Removing the reliance on appearance-based image features and transferring the input domain into surface point cloud representation would enable unleashing the potential of highly accurate recent 3D point cloud registration techniques. \citep{hansen2021deep} demonstrated that even complex medical alignment tasks can be successfully addressed using keypoint graphs without any visual features. \citep{shen2021accurate} released a large-scale pulmonary vessel tree dataset of paired patient data with significant deformations due to breathing and proposed a combination of graph neural network \citep{wu2020pointpwc} with an optimal transport solver to accurately estimate motion. \citep{bigalke2023denoised} showed that advanced domain adaption can help bridge the gap between simulated ground truth and real-world point clouds. Compared to registration methods that estimate deformation between images in a fixed grid structure, point cloud-based registration methods offer speed advantages due to their data-efficient application and inherent cross-modality applicability. However, the choice of suitable points is not trivial and depends on the application. One option, made possible by rapid advances in the field of automatic image segmentation in terms of robustness and accuracy using deep learning, is the use of surface points that can be obtained from semantic structure segmentations. Baum et al. use a PointNet-based Free Point Transformer (FPT) to register the prostate on transrectal ultrasound images with magnetic resonance images \citep{baum2021real}. In an earlier work \citep{hansen2021deep}, we combined this approach with the idea of heatmap prediction. In contrast to direct regression, the final displacement for each point is not predicted directly but is formed by a weighted sum of soft correspondences represented by the k nearest neighbours of each point. Analogous to heatmaps on regular grids, the weights correspond to the probabilities of the correct predictions and can improve the optimisation process due to the improved gradient flow. Sun et al. leverage heatmap integrals for human pose estimation \citep{sun2018integral}, while in the field of volumetric medical image registration, \citep{heinrich2022voxelmorphplusplus} use dense heatmap regression on keypoint-self-supervision to improve robustness for large deformations. However, since keypoint heatmap regression requires the prediction to be a linear combination of candidates, one has to take countermeasures for occluded or incomplete sets. One technique is to enrich the point cloud with support points to provide appropriate soft-correspondences~\citep{hermes2022support}. Similar to voxel-based registration, point cloud registration results can further be refined by instance optimisation. The predicted deformation is subject to a subsequent optimisation with respect to a suitable metric, for example, the Chamfer distance \citep{shen2021accurate} or the unsupervised DiVRoC loss~\citep{heinrich2023chasing}.
+
+\subsection{Contribution}
+In our previous work \citep{hansen2024displacement}, we proposed HeatReg, a k-Nearest-Neighbors heatmap regressor that extended FPT using semi-automatically generated surface points for multi-label slice-to-volume registration. We evaluated the method using synthetic sweeps on a US MRI dataset and found that first, the adaptation using indirect regression significantly increased the registration accuracy and second, label diversity of the segmented structures is an important factor for registration success. Although the evaluation using synthetic sweeps allows a certain flexibility, it can only be considered as a proxy for realistic application, since actual scanning conditions can only be modeled to a limited extent.
+
+In this work, we investigate the applicability of HeatReg in a more challenging and realistic environment. We register ultrasound sweeps of the distal forearm with different trajectories on the same person using automatically generated radius segmentations. Compared to our previous work, two challenges arise in particular: One, trajectories of the sweeps cover different areas of the bone, resulting in non-overlapping and partial point clouds which limits the application of heatmap regression, and two, being restricted to a single surface structure.
+
+To overcome these difficulties, we introduce new methods to transfer point-cloud-based ultrasound registration to a realistic setting, namely i) a two-stage pipeline for subsequent coarse and fine predictions, ii) cohort support-point clouds suitable for kNN correspondences and iii) additional instance optimization. We further release source code, trained models and additional visualisations on GitHub\footnote{\url{https://github.com/MDL-UzL/HeatReg}}.
+
+
+\begin{figure*}
+    \centering
+    \includegraphics[width=1\linewidth]{\ijcarsPath/figures/img_Pipeline.pdf}
+    \caption{Proposed Registration Pipeline. Stage 1 (left): A Free Point Transformer \citep{baum2021real} is employed to register bone surface point clouds. Stage 2 (right): A kNN-based HeatReg processes an augmented fixed and stage 1 predicted point cloud to estimate accurate displacements. Final predictions can be further refined by subsequent instance optimisation.}
+    \label{fig:pipeline}
+\end{figure*}
+
+\section{Data}
+\boldparagraph{US3R Dataset}
+We introduce the in-house US3R dataset (\textbf{U}ltra\textbf{S}ound \textbf{3}D \textbf{R}econstruction), which consists of combined ultrasound videos, scanner-integrated IMU data and visually tracked position data of 63 sweeps from a total of 21 subjects. All recordings were performed with a Clarius L7 HD3 (Clarius Mobile Health, Canada) and tracked using a custom printed scanner cap with passive markers and an NDI Hybrid Polaris Spectra (Northern Digital Inc, Canada). Before each study day, the IMU was calibrated temporally and spatially with a phantom-based surface-matching technique~\citep{phantom} and the corresponding tracked position data. 
+The subjects were asked to place their left forearm on the examination table in a comfortable position and to refrain from movements during examinations. 
+One examiner traversed the probe in the lateral direction, starting at the humeroradial joint with visibility of the humerus capitulum, in 3 different trajectories (straight dorsal, C-shape dorsal and S-shape dorsal). Recordings were validated w.r.t sweep trajectories and ultrasound images and, if necessary, repeated.
+All 21 subjects (15 male, 6 female, age 32.0±5.5 years, body mass index 25.0±4.8) stated that they had no pre-existing medical conditions or physiological restrictions with the examined arm. Consent for processing and anonymized publication was obtained.
+All ultrasound images were recorded at a constant frame rate of 24 fps and have a size of 800x611 pixels with a pixel spacing of \SI{62.4}{\micro\metre}. The length of a sweep varies between 67 and 279 frames ($157\pm42$), 2.8 and 11.6 seconds ($6.5\pm1.75$) and a length of 11.6 to 17.3 cm ($14.7\pm1.6$). 9 DOF IMU data (linear acceleration, angular velocity, magnetic flux density), scanner temperature and visually tracked position were recorded at a rate of 54 fps, 24 fps and 60 fps, respectively. Before each study recording, the scanner was cooled down, as the inaccuracy of the IMU sensors increased significantly with high scanner temperature. 
+
+\boldparagraph{Data Preprocessing}
+To evaluate the presented method to register ultrasound sweeps with different trajectories with partially overlapping anatomy, we choose the ``straight dorsal'' sweep as reference and the C- and S-shape dorsal as source data, resulting in a total of 63 sweeps (21 reference, 42 moving). Image, IMU and tracking data were synchronized and registered to the same spatial origin.
+All 3 sweeps of a subject were truncated spatially w.r.t. common start and end points on the forearm. 
+The trajectory of the reference sweeps is determined using visual tracking. Since previous experiments have shown that the acceleration sensors of the IMU are heavily affected by noise, we determine the initial trajectories of the source sweeps leveraging tracked translation. We define initialized sweeps \textit{7dof} optimized w.r.t. global translation, global rotation and scaling in sweep direction and denote the tracked ground truth and IMU rotation transformations as $\mathbf{T}_{GT}$ and $\mathbf{T}_{7dof}$ respectively. 
+Finally, to simplify subsequent processing, we subsample the sequences to 64 frames each.
+
+With this setting, we simulate the situation described above: A pre-treatment ultrasound sweep of the anatomy recorded under tracked conditions serves as a reference to register a follow-up or inter-operative scan without knowledge of exact position data.
+\begin{figure*}
+    \centering
+    \includegraphics[width=1\linewidth]{\ijcarsPath/figures/img_HeatRegNet.pdf}
+    \caption{HeatReg. A novel kNN module computes directed distances of each fixed point the $k$ nearest moving neighbors (top), while a shared MLP extracts global features of both point clouds. A Point Transformer processes the concatenated global features, fixed point coordinates and candidate coordinates to softmax-normalized displacement weights regarding all $k$ neighbors.}
+    \label{fig:heat-reg-schema}
+\end{figure*}
+
+\section{Methods}
+In this paper, we propose a multi-stage pipeline for point cloud registration of anatomical surfaces in ultrasound sweeps. First, we leverage the speed and global capture range of the Free Point Transformer. The result of this coarse pre-registration is then further refined using the HeatReg we introduced in \citep{hansen2024displacement},  with the help of cohort-based support point clouds. Finally, instance optimization based on Chamfer distances or the recent DiVRoC loss can be used to further refine the predicted displacements. An overview of the pipeline is shown in Fig \ref{fig:pipeline}.
+
+
+\subsection{Point Cloud Registration}
+We aim to find the alignment between two finite point sets $\mathbf{P}_m \in \mathbb{R}^{N_m \times 3}$ and $\mathbf{P}_f \in \mathbb{R}^{N_f \times 3}$ containing $N_m$ and $N_f$ points respectively. We define 
+\begin{equation}
+    \mathbf{D}^* = \arg\min  \,\mathcal{M}(\mathbf{P}_m + \mathbf{D}, \mathbf{P}_f), 
+\end{equation}
+with $\mathbf{D}^* \in \mathbb{R}^{N_m \times 3}$ as the optimal displacements where $\mathcal{M}$ is a suitable metric with respect to the availability of exact correspondences between $\mathbf{P}_m$ and $\mathbf{P}_f$. 
+
+\boldparagraph{Free Point Transformer}
+To solve the problem of point cloud registration, Baum et al. proposed a Free Point Transformer (FPT) \citep{baum2021real} composed of two sequential modules: First, a \textit{Global Feature Extractor} employs a shared PointNet \citep{qi2017pointnet} to extract feature vectors $f_m$, $gf_f$ from $\mathbf{P}_m$ and $\mathbf{P}_f$. Global features and 3D coordinates from $\mathbf{P}_m$ are concatenated and input into the \textit{Point Transformer Module}, a six-layered Multi Layer Perceptron (MLP) with ReLU and linear activations to output independent displacement vectors for each point in $\mathbf{P}_m$. Therefore, the point transformer is only conditioned on the global features and each point is accessed individually, rendering the transformation  'model-free' and alleviating the need for explicit regularisation regarding smoothness or spatial coherent movement.
+
+
+\boldparagraph{HeatReg}
+While the FPT formulates displacement vectors for direct regression, HeatReg employs heatmaps to leverage neighbourhood information within $\mathbf{P}_f$. \\
+We adapt the architecture by inserting a kNN module to select the k nearest neighbours $p_j \in \mathbf{P}_f$ for each point $p_i \in \mathbf{P}_m$. The directed distances between each point and its neighbours $\mathbf{c}_j^i = (p_j - p_i)$ represent the set of possible candidates $\mathbf{C} \in \mathbb{R}^{N_m \times k \times 3}$. The Point Transformer MLP, denoted $\mathbf{PT}$, processes the concatenated global features, fixed point cloud $\mathbf{P}_f$ and the respective candidates and outputs a scalar field of dimensions $N_f \times k$. A final softmax normalization ensures a convex combination of candidates, i.e. $\mathbf{W} = \mathbf{PT}(f_f,f_m,\mathbf{P}_f,\mathbf{C})$ with $\mathbf{W} \in (0,1)^{N_m \times k \times 1}$. Displacements are aggregated from the sum of candidates and weights 
+\begin{equation}
+    \mathbf{D} = \sum_{i=1}^{k}\mathbf{C}_{\{i\}} \cdot \mathbf{W}_{\{i\}},
+\end{equation}
+where $\mathbf{C}_{\{i\}} \in \mathbb{R}^{N_m \times 3}$ and $\mathbf{W}_{\{i\}} \in (0,1)^{N_m \times 1}$ denote the $i$th candidate subset of $\mathbf{C}$ and $\mathbf{W}$, respectively. In contrast to classical Gaussian-based heatmaps, the temperature is implicitly learned based on the softmax operation on the final network predictions. Since the introduction of neighbour relationship regarding $\mathbf{P}_m$ does not introduce any communication between points from $\mathbf{P}_f$ in the Point Transformer, the model-free paradigm remains unaffected. 
+
+We implement both PointNet and Point Transformer with blocks of convolutional layers with a kernel size of 1, group normalization and ReLu as activation functions. For the former, we employ 5 blocks with output channel dimensions of 24, 24, 24, 48 and 384, with subsequent max-pooling, while for the latter we apply 3 blocks with output channels of size 384, 192, 1 and omit both final group normalization and activation. Fig. \ref{fig:heat-reg-schema} shows a schematic overview of the HeatReg.
+
+
+\subsection{Keypoint Generation}
+Compared to previous work that investigated multimodal point cloud registration based on labels of different anatomical structures, several problems arise in the context of forearm ultrasound sweep registration: Firstly, the amount of automatically detectable structures in the ultrasound image on bone surfaces is limited, and secondly, the variability of freehand sweeps leads to only partially overlapping field of views that weaken neighbourhood-based heatmap regression. In such areas, the lack of possible correspondences leads to collapsing predictions expressed by spatial aggregation of transformed points. To counteract this, we introduce support point clouds to enrich the reference point cloud with meaningful points from cohort knowledge. Furthermore, we investigate the application of point clouds from gradient images for instance optimization. An overview of the generated keypoints is depicted in Fig \ref{fig:point_clouds}.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=1\linewidth]{\ijcarsPath/figures/img_Support_points.pdf}
+    \caption{Overview of leveraged data: a) US image with nnUNet bone surface prediction (orange) and sampled surface points (green), b) bone surface point cloud $\mathbf{P}^{base}$ (blue), generated mesh and combined mesh surface points $\mathbf{P}^{surf}$ (indigo) with cohort-support-points $\mathbf{P}^{supp}$ (teal), c) gradient keypoints (green) and d) gradient keypoint point cloud $\mathbf{P}^{grad}$.}
+    \label{fig:point_clouds}
+\end{figure}
+
+\boldparagraph{Bone Surface}
+We employ a pre-trained 2D nnUNet \citep{isensee2021nnu} to automatically generate segmentations of radius in each US frame, from which $n$ keypoints are sampled from the surface distributed over the image width. Aggregated over all frames, this forms the base point cloud $\mathbf{P}^{base}$. 
+
+
+
+\boldparagraph{Support Keypoints}
+To increase the coverage of the reference sweep, the respective point cloud can be expanded with prior anatomical knowledge by finding suitable points from our training dataset in non-overlapping areas between fixed and moving points. First, additional points $\mathbf{P}^{surf}$ are sampled from a surface mesh based on $\mathbf{P}_f^{base}$. Then, we extract a set of points sampled from all moving sweeps and apply the ground truth transformation, i.e. $\tilde{\mathbf{P}}_f^{supp} = \mathbf{P}_m^{surf}\circ \mathbf{T}_{gt}$. To prevent information leakage, we restrict this technique to training set sweeps. We recover $\mathbf{P}^{supp}$ by filtering $\tilde{\mathbf{P}}_f^{supp}$ discarding a) all points not present in the convex hull of the mesh constructed from $\mathbf{P}_f^{base}$  and b) all points with a higher elevation than the closest point $p_i \in \mathbf{P}_f^{base}$.  We implement this strategy by creating another mesh spanned by $\mathbf{P}_f^{base}$ and the respective unit vectors.
+
+
+\boldparagraph{Gradient Keypoints}
+To further aid the registration process beyond using single-label surface points, we leverage the descriptive capabilities of image gradients. First, we calculate the normalized image gradient for each pixel in the frame and select all points that a) have a gradient $> \tau$ and b) are not within the upper 0.5 cm of the ultrasound image, to be added to the candidate set $\tilde{\mathbf{P}}^{grad}$. The latter condition is intended to exclude points that belong to the skin layers which shift with the probe during the sweep. The possible keypoints are subjected to a non-maximum-suppression and a farthest-point sampling. This process is repeated recursively with a decrementing $\tau$ until the desired number of keypoints in $\mathbf{P}^{grad}$ is reached.
+
+\subsection{Instance Optimisation}
+The predicted point cloud can serve as a starting point for subsequent instance optimization. First, a dense displacement field is initialized with zeros. In each iteration, after applying a B-spline model, this displacement field is sampled at all points from $\mathbf{P}_m$. We utilize Adam\citep{kingma2014adam} to optimize the Chamfer Loss between predicted and fixed point cloud for a fixed number of iterations. 
+
+We further leverage gradient keypoints by employing DiVRoC \citep{heinrich2023chasing}, which employs differential forwarding splatting of keypoints into an accumulator tensor, which is subsequently smoothed by a Gaussian kernel. For registering two point clouds the rasterised fixed and warped moving keypoints are compared by their L1 distance.
+
+
+\section{Experiments}
+
+\subsection{Implementation Details}
+All methods and experiments were implemented using PyTorch 2.2.0 and all models were trained using a single RTX 2080 Ti. We perform linear subsampling on each sequence to 64 frames each by selecting nearly equidistant frames. We chose to extract 32 surface keypoints per frame, resulting in a total of 2048 points for $\mathbf{P}^{base}$ and sample 2048 and 1024 points from mesh and support points for $\mathbf{P}^{supp}$ respectively. For $\mathbf{P}^{grad}$, we select 1024 keypoints per frame. 
+
+We pursue a leave-one-out cross-validation with 19 training, 1 validation and 1 testing case. The choice of hyperparameters was based on a single fold. All FPT models are trained for 5000 epochs with a mini-batch of 4 for approx. 8 minutes, with Adam optimizer and a learning rate of 10\textsuperscript{-4}, which is decreased by 0.1 after \(\frac{2}{3}\)rd of training epochs and employ random rotations to combat overfitting. We train all HeatReg models for 3000 epochs and a mini-batch size of 4 with stochastic gradient descent with a learning rate of 0.1, which is reduced by 0.1 after 2000 epochs, and perform early stopping with regard to the validation loss. With regard to the size of the point clouds and the extent of the displacements, we implement the kNN module to gather $k$=64 nearest neighbours with a stride of 4, effectively increasing the scope of the heatmap prediction. Adam instance optimization is performed for 50 iterations with a learning rate of 0.01, a displacement field with the shape 19$\times$19$\times$19 and a B-Spline kernel size of 5. Since we start the registration with the rotational IMU data, we regularise transformations for all registration models to translational displacements. We supervise all model training using predictions transformed with tracked trajectories $\mathbf{T}_{GT}$ and employ smoothed L1 Loss \citep{girshick2015fast} ($\beta$ =1) with equal weighting on predicted displacements both with and without translational regularisation.
+
+\subsection{Ablations \& Experiments}
+\boldparagraph{Freehand Sweep Registration}
+We evaluate the potential of the proposed method in the scenario of freehand sweep registration between ``straight dorsal'' as fixed and ``C-shape''/``S-shape''  as moving sweeps respectively, by investigating performance in each part of the pipeline:
+\begin{enumerate}
+    \item \textit{7dof}: Optimised global rotation and scale w.r.t. ground truth trajectories $\mathbf{T}_{GT}$.
+    \item \textit{Adam}: Adam instance optimization on initial (7dof) fixed and moving clouds.
+    \item \textit{FPT}: The Free Point Transformer \citep{baum2021real} serves both as part of the pipeline and baseline for our method.
+    \item \textit{FPT+Adam}: Adam instance optimization on FPT predictions.
+    \item \textit{FPT+HR}: HeatReg with augmented fixed cloud and FPT-predictions as input.
+    \item \textit{FPT+HR+Adam}: Additional Adam instance refinement on FPT+HR predictions.
+    \item \textit{FPT+HR+DiVRoC}: Additional DiVRoC instance optimisation performed on surface $\mathbf{P}^{base}$ and gradient keypoints $\mathbf{P}^{grad}$.
+\end{enumerate}
+
+\boldparagraph{Fully overlapping point clouds} 
+To assess the theoretical potential of the registration methods without the influence of partially overlapping subsets, we analyze the entire registration pipeline by registering moving point clouds $\mathbf{P}_{m}$ to their respective ground truth $\mathbf{P}_{m}\circ \mathbf{T}_{GT}$. \\
+
+\boldparagraph{Support Points} We analyze the effectiveness of the cohort-based support points (\textit{Cohort}) and compare them with multiple alternatives during HeatReg training:
+\begin{enumerate}
+    \item \textit{None}: No augmentation of the fixed point cloud.
+    \item \textit{Random}: 1024 randomly drawn support points with coordinates inside the fixed point cloud bounding box.
+    \item \textit{Grid}: 1024 support points arranged on a fixed grid inside the fixed point cloud bounding box.
+\end{enumerate}
+
+\boldparagraph{Evaluation} We evaluate our approach by calculating the directed surface distance (DSD), which represents the average distance  between each point of the transformed point cloud and its nearest neighbour in the fixed point cloud. We further report metrics computed with the ground truth trajectories of moving sweeps, which enables the assessment of direct point correspondences (Target Registration Errors, TRE*), sweep trajectory recovery (translational pose error, E\textsubscript{T}*) and additional surface metrics (Average symmetric surface distance, ASSD* and 95th percentile of Hausforff Distances, HD95*). Statistical significance of best-performing method against all other approaches is evaluated using the Wilcoxon signed rank test with $p>0.05$.
+
+
+\begin{table}[t]
+    \caption{Freehand Sweep Registration. We report the mean Directed Surface Distance (DSD) between fixed and warped point clouds, target registration error (TRE*), average symmetric surface distance (ASSD*), and 95th percentile of Hausdorff Distances (HD95*), as well as the translational pose error (E\textsubscript{T}*) and inference runtime. Metrics appended with * refer to evaluation with tracked trajectories. Methods denoted with \textsuperscript{\textdagger} use gradient keypoints in addition to surface keypoints. Significant results (compared to FPT+HR+DiVRoC\textsuperscript{\textdagger}, $p<0.05$) are labelled with \textdaggerdbl, while best results are shown in bold.}
+    \label{tab:final}%
+    \begin{tabular}{lcccccc}
+    \toprule
+     & DSD  & TRE* & ASSD*  & HD95*  & E\textsubscript{T}*  & Runtime \\
+    Method & [mm] & [mm] & [mm] & [mm] & [mm] & [ms] \\
+    \midrule
+7dof & $6.00_{\pm 2.08\ddagger}$ & $12.49_{\pm 3.88\ddagger}$ & $7.24_{\pm 3.02\ddagger}$ & $16.52_{\pm 5.88\ddagger}$ & $13.31_{\pm 4.19\ddagger}$ & - \\
+Adam & $4.22_{\pm 2.00\ddagger}$ & $17.24_{\pm 4.77\ddagger}$ & $4.75_{\pm 2.37\ddagger}$ & $13.33_{\pm 6.35\ddagger}$ & $18.00_{\pm 4.83\ddagger}$ & 175 \\
+FPT & $2.37_{\pm 0.52\ddagger}$ & $6.67_{\pm 2.54\ddagger}$ & $2.04_{\pm 0.61\ddagger}$ & $4.62_{\pm 1.93\ddagger}$ & $7.24_{\pm 3.01\ddagger}$ & 2 \\
+FPT+Adam & $1.48_{\pm 0.42\ddagger}$ & $8.40_{\pm 3.49\ddagger}$ & $1.38_{\pm 0.46\ddagger}$ & $3.36_{\pm 2.61\ddagger}$ & $9.21_{\pm 3.96\ddagger}$ & 161 \\
+FPT+HR & $1.64_{\pm 0.40\ddagger}$ & $5.85_{\pm 2.37\ddagger}$ & $1.36_{\pm 0.38\ddagger}$ & $3.16_{\pm 1.51\ddagger}$ & $6.47_{\pm 2.74}$ & 21 \\
+FPT+HR+Adam & $1.41_{\pm 0.43\ddagger}$ & $7.46_{\pm 2.99\ddagger}$ & $1.37_{\pm 0.43\ddagger}$ & $3.28_{\pm 2.78\ddagger}$ & $8.28_{\pm 3.35\ddagger}$ & 192 \\
+FPT+HR+DiVRoC\textsuperscript{\textdagger} & $\mathbf{1.29_{\pm 0.38}}$ & $\mathbf{5.20_{\pm 2.15}}$ & $\mathbf{1.13_{\pm 0.21}}$ & $\mathbf{2.59_{\pm 0.80}}$ & $\mathbf{6.14_{\pm 2.66}}$ & 880 \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{\ijcarsPath/figures/img_main_boxplot.png}
+    \caption{Boxplot of Directed Surface Distances in mm for all methods. Blue, orange and green bars represent registrations with C-shape and S-shape trajectories, as well as the mean results, respectively.}
+    \label{fig:boxplot}
+\end{figure}
+
+
+
+
+\section{Results}
+Registration results in Tab. \ref{tab:final} demonstrate the effectiveness of the proposed pipeline in the realistic scenario of different free-hand sweeps. Without any instance optimization, the combination of FPT and support-point enhanced HeatReg outperforms the FPT baseline by a mean directed surface distance (DSD) of 0.96 mm or 40\%. This improvement is further increased by 0.23 mm when applying Adam instance refinement but is accompanied by a reduction in the metrics relating to the target trajectory. Concerning the chamfer distance between predicted and fixed point clouds as an optimisation objective, this trend is to be expected. 
+Direct instance optimization with 7dof initialized point clouds leads to deterioration in all metrics, especially in trajectory pose error. 
+Average symmetric surface distances (ASSD) and 95th percentile of Hausdorff distances (HD95) decrease by more than 27\% for all refinements based on FPT predictions, with little difference between them. On the other hand, box plots depicted in Fig. \ref{fig:boxplot} show an increase of accuracy by application of HeatReg, while Adam instance optimization reinforces the robustness of the registration, effectively strengthening the argument for subsequent application of both methods. 
+There is no major difference between the results of C- and S-shaped sweeps, and a larger variance in movements of the S-trajectory is not reflected in the initial or registered surface distances.
+
+
+Considering the sole use of points from a single surface, these results exceed initial expectations. Nevertheless, the value of adding additional information is apparent.  Applying DiVRoC to easy-to-acquire gradient points after an FPT+HR initialisation leads to significant improvements in all metrics, with the exception of the translational error E\textsubscript{T}*.  
+
+Qualitative DSD-encoded registration results are depicted in Fig. \ref{fig:chamfer_plots}. The initial FPT registration already shows a significant improvement over the 7dof initialization but still exhibits small misalignments, especially at the structure edges. Subsequent applications of HeatReg and gradient-point-based instance optimisation are able to refine the alignment. The images emphasise the difficult nature of recording standardised ultrasound trajectories: Although the examination protocol specified a defined starting point (c.f. upper edge of the point clouds), the sweeps do not align exactly at this point either. Possible reasons for this could be image acquisition at a shifted angle or movement of the subject.
+
+
+
+\begin{figure}[t]
+    \centering
+        \includegraphics[width=1\linewidth]{\ijcarsPath/figures/img_chamfer_plots.png}
+    \caption{Point-wise directed surface distances between reference point cloud (left) and moving sweep, after FPT registration, after combined FPT and HeatReg registration and with subsequent instance optimisation. Point clouds and distances have been oversampled on generated meshes for visualization.}
+    \label{fig:chamfer_plots}
+\end{figure}
+
+The theoretical performance of the proposed pipeline is presented in Tab \ref{tab:ablation_toy}. The input of target and moving point clouds also shows that the subsequent application of the training-based HeatReg has a positive effect on the registration accuracy in all metrics, which cannot be achieved by instance optimisation alone. With subsequent Adam instance optimisation, the results can be increased significantly $(p>0.05)$.
+
+
+\begin{table}[t]
+    \caption{Fully Overlapping Point Cloud Ablation Experiment. We report target registration error (TRE*), average symmetric surface distance (ASSD*), 95th percentile of Hausdorff Distances (HD95*) between warped and target point clouds, as well as the translational pose error (E\textsubscript{T}*). Significant results (compared to FPT+HR+Adam, $p<0.05$) are labelled with \textdaggerdbl, while best results are shown in bold.}
+    \centering
+    \label{tab:ablation_toy}%
+    \begin{tabular}{lcccc}
+    \toprule
+     & TRE*  & ASSD*  & HD95*  & E\textsubscript{T}*  \\
+    Method & [mm] & [mm] & [mm] & [mm] \\
+    \midrule
+7dof & $12.49_{\pm 3.88\ddagger}$ & $7.24_{\pm 3.02\ddagger}$ & $16.52_{\pm 5.88\ddagger}$ & $13.31_{\pm 4.19\ddagger}$ \\
+Adam & $16.27_{\pm 5.53\ddagger}$ & $4.32_{\pm 2.55\ddagger}$ & $12.44_{\pm 6.95\ddagger}$ & $17.10_{\pm 5.61\ddagger}$ \\
+FPT & $3.26_{\pm 0.99\ddagger}$ & $1.54_{\pm 0.39\ddagger}$ & $3.32_{\pm 1.17\ddagger}$ & $3.89_{\pm 1.33\ddagger}$ \\
+FPT+Adam & $2.97_{\pm 1.26\ddagger}$ & $0.92_{\pm 0.17\ddagger}$ & $1.91_{\pm 0.50\ddagger}$ & $4.06_{\pm 1.74\ddagger}$ \\
+FPT+HR & $2.41_{\pm 0.74\ddagger}$ & $0.98_{\pm 0.17\ddagger}$ & $2.06_{\pm 0.58\ddagger}$ & $3.29_{\pm 1.32\ddagger}$ \\
+FPT+HR+Adam & $\mathbf{1.71_{\pm 0.67}}$ & $\mathbf{0.74_{\pm 0.10}}$ & $\mathbf{1.56_{\pm 0.25}}$ & $\mathbf{2.88_{\pm 1.19}}$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+Our methods are able to reduce the translational error from 13.31 to 6.14 mm (or 2.88mm in the ablation experiment). With regards to the challenging nature of the task, estimating the movement of a traversing ultrasound scanner around a forearm based on surface point clouds of a single tube-like structure, the results are remarkable.  We suspect that our models leverage anatomical features which are rarely noticeable during visual inspection of surface point clouds. A comparison of trajectories is shown in Fig. \ref{fig:sweep_reconstructions}. As indicated by quantitative results, estimated trajectories align well with the tracked ground truth. Challenging cases (c.f. Fig. \ref{fig:sweep_reconstructions}, right) show jitter-like artefacts between consecutive frames, indicating possible improvements from temporal regularisation of predictions.
+
+
+\begin{table}[t]
+    \centering
+    \caption{Support Keypoints Comparison. We report the directed Surface Distance (DSD) between fixed and warped point clouds, as well as target registration error (TRE*), average symmetric surface distance (ASSD*), and 95th percentile of Hausdorff Distances (HD95*) between warped and target point clouds. Metrics appended with * refer to evaluation with tracked trajectories. Significant results (compared to Cohort, $p<0.05$) are labelled with \textdaggerdbl, while best results are shown in bold.}\label{tab:support_points}%
+    \begin{tabular}{lcccc}
+    \toprule
+     & DSD & TRE* & ASSD*  & HD95* \\
+    Method & [mm] & [mm] & [mm] & [mm] \\
+    \midrule
+None & $2.49_{\pm 0.65\ddagger}$ & $8.24_{\pm 3.04\ddagger}$ & $2.14_{\pm 0.58\ddagger}$ & $5.13_{\pm 1.76\ddagger}$ \\
+Grid & $1.74_{\pm 0.41\ddagger}$ & $6.35_{\pm 2.42}$ & $1.50_{\pm 0.36\ddagger}$ & $3.37_{\pm 1.42\ddagger}$ \\
+Random & $1.69_{\pm 0.36}$ & $6.12_{\pm 2.25}$ & $1.48_{\pm 0.29\ddagger}$ & $3.30_{\pm 1.02}$ \\
+Cohort & $\mathbf{1.64_{\pm 0.40}}$ & $\mathbf{5.85_{\pm 2.37}}$ & $\mathbf{1.36_{\pm 0.38}}$ & $\mathbf{3.16_{\pm 1.51}}$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+Finally, we validate the choice of support points by comparing the different augmentation strategies. The results in Tab. \ref{tab:support_points} show that the cohort-based support points achieve a significant advantage regarding the ASSD* metric and the highest accuracy across all metrics. However, employing random or grid support points still leads to improvements and might be a valid choice in registration scenarios with limited training samples or high-variance cohorts.
+
+
+The accuracy gained by the additional execution of the HeatReg can be favourably traded off against the slightly higher inference time of 19 ms. Particularly in the scenario of registering follow-up sweeps, in which the trajectory calculation does not have to be instantaneous, a final instance optimisation is justified.
+
+
+
+\section{Conclusion}
+In this work, we present an effective solution for the application of HeatReg in the challenging but realistic setting of ultrasound sweep registration based on automatically generated point clouds from bone surfaces and demonstrate its applicability even with varying coverage of the target structure. We attribute the success of the registration to the sequential application of Free Point Transformer and HeatReg as well as to the expansion of point clouds to compensate for the complex deformations of freehand sweeps. 
+
+We report improvements at every point in our pipeline and, with these adjustments, our method is able to reduce the initial surface distance by more than 76\%. The estimation of the trajectory from a single surface label is challenging, but can, although not completely solved, be significantly improved by the additional application of instance optimisation. The inclusion of gradient keypoints as an additional source of information to alleviate the dependency on a single segmented surface leads to improved results throughout all metrics.
+
+Future work should investigate the application on different other anatomies, the direct fusion of IMU data into the prediction model and the introduction of heatmap predictions into other point cloud registration methods.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{\ijcarsPath/figures/img_results_sweeps.png}
+    \caption{Trajectories of best (left), median (mid) and worst (right) reconstructed sweeps in terms of translational error. Ground truth, 7dof initialisation and DiVRoC results are shown in black, blue and green respectively.}
+    \label{fig:sweep_reconstructions}
+\end{figure}

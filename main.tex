@@ -15,25 +15,47 @@
 \addbibresource{bib/preprints_first_author.bib}
 \addbibresource{bib/preprints_co_author.bib}
 
-\newcommand*{\deepstaplePath}{sections/03_deepstaple}
-\input{\deepstaplePath/includes}
-\input{\deepstaplePath/defines}
-\addbibresource{\deepstaplePath/refs.bib}
 
-\newcommand*{\xedgeconvPath}{sections/04_xedgeconv}
-\input{\xedgeconvPath/includes}
-\input{\xedgeconvPath/defines}
-\addbibresource{\xedgeconvPath/refs.bib}
+\newcommand*{\miuaPath}{sections/03_MIUA24}
+\input{\miuaPath/includes}
+\input{\miuaPath/defines}
+\addbibresource{\miuaPath/refs.bib}
 
-\newcommand*{\acFocusPath}{sections/05_acquisitionfocus}
-\input{\acFocusPath/includes}
-\input{\acFocusPath/defines}
-\addbibresource{\acFocusPath/refs.bib}
+\newcommand*{\bvmPath}{sections/04_BVM25}
+\input{\bvmPath/includes}
+\input{\bvmPath/defines}
+\addbibresource{\bvmPath/refs.bib}
 
-\newcommand*{\dgttaPath}{sections/06_dgtta}
-\input{\dgttaPath/includes}
-\input{\dgttaPath/defines}
-\addbibresource{\dgttaPath/refs.bib}
+\newcommand*{\wbirPath}{sections/05_WBIR24}
+\input{\wbirPath/includes}
+\input{\wbirPath/defines}
+\addbibresource{\wbirPath/refs.bib}
+
+\newcommand*{\tmiPath}{sections/06_TMI}
+\input{\tmiPath/includes}
+\input{\tmiPath/defines}
+\addbibresource{\tmiPath/refs.bib}
+
+
+\newcommand*{\ijcarsPath}{sections/07_IJCARS}
+\input{\ijcarsPath/includes}
+\input{\ijcarsPath/defines}
+\addbibresource{\ijcarsPath/refs.bib}
+
+% \newcommand*{\xedgeconvPath}{sections/04_xedgeconv}
+% \input{\xedgeconvPath/includes}
+% \input{\xedgeconvPath/defines}
+% \addbibresource{\xedgeconvPath/refs.bib}
+
+% \newcommand*{\acFocusPath}{sections/05_acquisitionfocus}
+% \input{\acFocusPath/includes}
+% \input{\acFocusPath/defines}
+% \addbibresource{\acFocusPath/refs.bib}
+
+% \newcommand*{\dgttaPath}{sections/06_dgtta}
+% \input{\dgttaPath/includes}
+% \input{\dgttaPath/defines}
+% \addbibresource{\dgttaPath/refs.bib}
 
 \input{final_includes}
 
@@ -62,51 +84,79 @@
     \pagenumbering{arabic}
 
     %%% Chapters
-    \chapter{Introduction} % 12 pages
+    \chapter{Introduction} % X pages
         \label{chap:introduction}
         \input{sections/01_introduction/text}
 
-    \chapter{Background} % 22 pages
+    \chapter{Background} % X pages
         \label{chap:background}
         \input{sections/02_background/text}
 
     \addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
-    \chapter{Generalizing Learning-based Data Acquisition}
-        \label{chap:acquisitionfocus}
-        \ifthenelse{\boolean{RENDER_CHAPTERS}}{
-            \input{sections/05_acquisitionfocus/text}
-        }{}
 
-    \chapter{Generalizing Augmentation-based Training and Test-time Adaptation}
-        \label{chap:dgtta}
-        \ifthenelse{\boolean{RENDER_CHAPTERS}}{
-            \input{sections/06_dgtta/text}
-        }{}
+    \chapter{Generalised 3D Medical Image Registration with Learned Shape Encodings}
+    \label{chap:MIUA24}
+    \ifthenelse{\boolean{RENDER_CHAPTERS}}{
+        \input{sections/03_MIUA24/text}
+    }{}
 
-    \chapter{Generalizing Sample Weighting and Aggregation Schemes}
-        \label{chap:deepstaple}
-        \ifthenelse{\boolean{RENDER_CHAPTERS}}{
-            \input{sections/03_deepstaple/text}
-        }{}
 
-    \chapter{Generalizing Equivariant Kernel Architectures}
-        \label{chap:xedgeconv}
-        \ifthenelse{\boolean{RENDER_CHAPTERS}}{
-            \input{sections/04_xedgeconv/text}
-        }{}
+    \chapter{Robust Statistical Shape Modelling with Implicit Neural Representations}
+    \label{chap:BVM25}
+    \ifthenelse{\boolean{RENDER_CHAPTERS}}{
+        \input{sections/04_BVM25/text}
+    }{}
+
+    \chapter{SINA: Sharp Implicit Neural Atlases by Joint Optimisation of Representation and Deformation}
+    \label{chap:WBIR24}
+    \ifthenelse{\boolean{RENDER_CHAPTERS}}{
+        \input{sections/05_WBIR24/text}
+    }{}
+
+
+    \chapter{convexAdam: Self-Configuring Dual-Optimisation-Based 3D Multitask Medical Image Registration}
+    \label{chap:TMI}
+    \ifthenelse{\boolean{RENDER_CHAPTERS}}{
+        \input{sections/06_TMI/text}
+    }{}
+
+    \chapter{3D Freehand Ultrasound Reconstruction by Reference-Based Point Cloud Registration}
+    \label{chap:IJCARS}
+    \ifthenelse{\boolean{RENDER_CHAPTERS}}{
+        \input{sections/07_IJCARS/text}
+    }{}
+
+    % \chapter{Generalizing Learning-based Data Acquisition}
+    %     \label{chap:acquisitionfocus}
+    %     \ifthenelse{\boolean{RENDER_CHAPTERS}}{
+    %         \input{sections/05_acquisitionfocus/text}
+    %     }{}
+
+    % \chapter{XX}
+    %     \label{chap:dgtta}
+    %     \ifthenelse{\boolean{RENDER_CHAPTERS}}{
+    %         \input{sections/06_dgtta/text}
+    %     }{}
+
+
+    % \chapter{Generalizing Equivariant Kernel Architectures}
+    %     \label{chap:xedgeconv}
+    %     \ifthenelse{\boolean{RENDER_CHAPTERS}}{
+    %         \input{sections/04_xedgeconv/text}
+    %     }{}
 
 
     \addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
 
     \chapter{Summary}
         \label{chap:summary}
-        \input{sections/7_summary} % 16 pages
-    % p++31
+        \input{sections/7_summary} % 16 page
 
     \printbibliography[heading=bibintoc]
 
-
     \addchap{List of publications}
+
+    \addchap{Merits}
 
     \begin{refsection}[bib/journals_first_author]
         \nocite{*}
@@ -123,30 +173,30 @@
         \printbibliography[title={Abstracts as first author}, heading=subbibliography, keyword=abstracts_first_author]
     \end{refsection}
 
-    % \begin{refsection}[bib/journals_co_author]
-    %     \nocite{*}
-    %     \printbibliography[title={Journal articles as co-author}, heading=subbibliography, keyword=journals_co_author]
-    % \end{refsection}
+    \begin{refsection}[bib/journals_co_author]
+        \nocite{*}
+        \printbibliography[title={Journal articles as co-author}, heading=subbibliography, keyword=journals_co_author]
+    \end{refsection}
 
     \begin{refsection}[bib/proceedings_co_author]
         \nocite{*}
         \printbibliography[title={Conference papers as co-author}, heading=subbibliography, keyword=proceedings_co_author]
     \end{refsection}
 
-    % \begin{refsection}[bib/abstracts_co_author]
-    %     \nocite{*}
-    %     \printbibliography[title={Abstracts as co-author}, heading=subbibliography, keyword=abstracts_co_author]
-    % \end{refsection}
-
-    \begin{refsection}[bib/preprints_first_author]
+    \begin{refsection}[bib/abstracts_co_author]
         \nocite{*}
-        \printbibliography[title={Preprints as first author}, heading=subbibliography, keyword=preprints_first_author]
+        \printbibliography[title={Abstracts as co-author}, heading=subbibliography, keyword=abstracts_co_author]
     \end{refsection}
 
-    % \begin{refsection}[bib/preprints_co_author]
+    % \begin{refsection}[bib/preprints_first_author]
     %     \nocite{*}
-    %     \printbibliography[title={Preprints as co-author}, heading=subbibliography, keyword=preprints_co_author]
+    %     \printbibliography[title={Preprints as first author}, heading=subbibliography, keyword=preprints_first_author]
     % \end{refsection}
+
+    \begin{refsection}[bib/preprints_co_author]
+        \nocite{*}
+        \printbibliography[title={Preprints as co-author}, heading=subbibliography, keyword=preprints_co_author]
+    \end{refsection}
 
     \addchap{Abbreviations}
         \input{acronyms}

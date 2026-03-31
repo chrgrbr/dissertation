@@ -1,0 +1,139 @@
+% \begin{abstract}
+%     We present a frameworkfor multi-label statistical shape modelling using implicit neural representations (INRs). By training a generalised INR alongside instance-specific latent codes to model individual shapes as continuous signed distance maps, the approach captures complex anatomical variations without relying on fixed landmarks. We further propose to employ the shape model for regularisation to obtain robust reconstructions of corrupted or incomplete data. Experiments on 2D chest X-ray segmentations demonstrate that this regularisation facilitates reconstructions under flawed data conditions, achieving high-fidelity segmentations. Conceptual examples highlight topological advantages of INR-based shape models over conventional point distribution models.
+%     \end{abstract}
+
+
+\section{Introduction}
+Statistical shape models (SSM)~\citep{cootes1995active} are an established method for the probabilistic description of anatomical structures. In addition to their use for direct quantitative population analysis, they also provide a comprehensible basis for the inclusion of statistical information as priors for various tasks in the field of medical informatics, such as semantic segmentation or shape completion. SSMs are typically modelled with point distribution models (PDM) \citep{cootes1995active} based on corresponding landmarks across a dataset. While the sparseness of points has advantages with regard to representation compactness, it is limited in terms of capturing topographical changes. Furthermore, the determination of corresponding landmarks is not trivial and is the subject of ongoing research using both classical and deep learning methods~\citep{adams2023point2ssm}. After PDM construction, principal component analysis (PCA) is often used to determine the direction and strength of variation modes. 
+
+The use of Implicit Neural Representations (INRs), which represent data as continuous functions that can be queried at arbitrary points, has gained popularity in recent years. While INRs were usually limited to individual instances, there are several approaches to generalise them across a population, e.g., by modulating instance-specific layers~\citep{kim2023generalizable}. During training, a hypernetwork modulating these layers and patient-specific latent codes are jointly optimised alongside population-shared INR weights. Discrete shapes can be learned in an auto-decoder approach represented by spatially smooth signed distance functions (SDF)~\citep{park2019deepsdf}. Applications include the reconstruction of vertebrae shapes from sparse inputs~\citep{amiranashvili2022learning} and the construction of conditioned fetal brain atlas~\citep{dannecker2024cina}. The latter could also show a correlation of patient-specific attributes with principal components of the optimised latent code. Raju et al. use a combination of CNNs and an implicit SDF shape decoder trained on meshes to generate anatomically plausible segmentations~\citep{raju2022deep}. Similar to our work, a statistical shape model of the target structure is defined by the optimised latent space and can be accessed with the means of PCA. However, current research in the field of implicit SSMs has been limited to single structures and under the assumption of complete and uncorrupted input data at test time. 
+
+%\paragraph{Contributions}
+Our main contributions are threefold: First, we investigate the conceptual advantages of non-linear INR-SSMs and, second, we construct multi-label implicit statistical shape models without any direct correspondence using segmentation maps. Finally, we introduce a novel probabilistic regularisation technique to address corrupted input data. Code and interactive examples are available at GitHub\footnote{\url{https://github.com/multimodallearning/INR-SSM}}.
+
+
+
+
+
+\section{Materials and methods}
+\label{3633-mm}
+Our method consists of three components: Constructing the shape model, fitting an unseen sample and shape regularisation employing a low-rank PCA (Fig.~\ref{3633-schema}).
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{\bvmPath/figures/3633-schema_pruned.pdf}
+    \caption{
+    Proposed self-regularising INR-SSM: a) A modulation-based generalised INR and patient-specific latent codes are jointly optimised. b) New samples are fitted using the frozen INR by optimising a new latent vector $\boldsymbol{z}$. c) A PCA is performed on the trained latent codes to obtain a low-rank approximation $\boldsymbol{\tilde{z}}$ of $\boldsymbol{z}$, that is fed into the frozen INR to obtain a robust reconstruction.
+    }
+    \label{3633-schema}
+\end{figure}
+
+\paragraph{Shape INR}
+An SSM can be constructed by employing a principal component analysis (PCA) on a set of shape parametrisations with $n$ parameters to obtain eigenvalues $\lambda_{1},\dots,\lambda_{n}\in\mathbb{R}$ and eigenvectors $\boldsymbol{v}_{1},\dots,\boldsymbol{v}_{n}\in\mathbb{R}^{n}$.
+Shapes can then be modelled based on the mean shape $\boldsymbol{\overline{s}}$ and a linear combination of $k\leq n$ eigenvectors $\boldsymbol{v}_{1},\dots,\boldsymbol{v}_{k}$ with the largest corresponding eigenvalues $\lambda_{1},\dots,\lambda_{k}$:
+
+\begin{align}
+    \label{3633-eq:pca_usual}
+    \boldsymbol{\overline{s}} + \sum_{j=1}^{k} b_{j}\boldsymbol{v}_{j}.
+\end{align}
+For a typical PDM approach, the shapes are parametrised by defining corresponding points across the shape's surface. Instead, we propose to learn the parametrisation through a generalised INR, which aims to reconstruct a multi-label segmentation $\boldsymbol{s}_{i}$ based on a $n$-dimensional latent code $\boldsymbol{z}_{i}\in\mathbb{R}^{n}$. Since segmentations are binary and INRs represent continuous function, we do not directly predict the segmentations as output from the network, but the signed distance maps (SDMs) of these segmentations. The segmentations can be easily obtained from the SDMs with the Heaviside step function $\boldsymbol{1}_{{\ge 0}}$.
+
+For the generalisable INR, we combine a multi-layer perceptron (MLP) $g_{\theta}$, that maps coordinates $(x,y)\in\mathbb{R}^{2}$ to the corresponding SDM values, and a modulation hypernetwork $h_{\varphi}$, that adapts the parameters $\theta$ based on instance-specific latent codes $\boldsymbol{z}_{1}, \boldsymbol{z}_{2},\dots\in\mathbb{R}^{n}$, into a single network $f_{\theta,\varphi}$, such that $f_{\theta,\varphi}(x,y,\boldsymbol{z}_{i}) = g_{h_{\varphi}(\theta,\boldsymbol{z}_{i})}(x,y)$. The shared parameters $\theta,\varphi$ are optimised alongside the latent codes, such that the network reconstructs the SDM of the associated segmentation $\boldsymbol{s}_{i}$ for each latent code $\boldsymbol{z}_{i}$. For a reconstruction loss $\mathcal{L}$ the optimisation target is given by
+\begin{align}
+    \label{3633-eq:loss}
+    \sum_{i}\mathcal{L}(\text{SDM}(\boldsymbol{s}_{i}), f_{\theta,\varphi}(x,y,\boldsymbol{z}_{i})) \to \min.
+\end{align}
+Following \citep{dannecker2024cina}, the generalisation capability of $f_{\theta,\varphi}$ is realised by feeding the latent codes $\boldsymbol{z}_{i}$ into the hypernetwork $h_{\varphi}$, predicting scale and shift parameters for the linear layers of $g_{\theta}$ with a single linear layer each (Fig.~\ref{3633-schema}a).
+
+The reconstruction loss $\mathcal{L}$ in Eq.~\ref{3633-eq:loss} is chosen such that the SDM reconstruction is penalised for differences between the resulting segmentation $\boldsymbol{1}_{\ge 0}(f_{\theta,\varphi}(x,y,\boldsymbol{z}_{i}))$ and ground truth segmentations $\boldsymbol{s}_{i}$. To obtain these resulting segmentations from the predicted SDM in a differentiable manner, the Heaviside step function $\boldsymbol{1}_{\ge 0}$ is approximated with a hyperbolic function. 
+
+After training of $f_{\theta,\varphi}$, a principal component analysis can be performed on the learned latent codes $\boldsymbol{z}_{1}, \boldsymbol{z}_{2}, \dots$ of the training data to obtain $n$ eigenvectors with corresponding eigenvalues, with $n$ being the size of the latent codes (Fig.~\ref{3633-schema}c). Equivalent to Equation~\ref{3633-eq:pca_usual}, we model possible instances by inputting a linear combination of the eigenvalues into the trained network $f_{\theta,\varphi}$:
+\begin{align}
+    \label{3633-eq:latent_ssm}
+    f_{\theta,\varphi}(x,y,\boldsymbol{\overline{z}}+\sum_{j=1}^{k} b_{j}\boldsymbol{v}_{j}),
+\end{align}
+where $\boldsymbol{\overline{z}}$ is the mean latent code and the parameter $k\leq n$ defines how many eigenvectors are considered for variation.
+Applying $f_{\theta,\varphi}$ after forming a linear combination of eigenvectors allows for non-linear deformations when varying the factors $b_{j}$.
+
+\paragraph{Fitting a new sample \& k-Regularisation}
+The use of a generalisable INR intrinsically incorporates a fitting algorithm (Fig.~\ref{3633-schema}b): An unseen individual sample $\boldsymbol{s}$ can be fitted by learning a latent code $\boldsymbol{z}$ for the frozen network $f_{\theta,\varphi}$ with the same loss function. 
+This way we gain the closest shape to $\boldsymbol{s}$ that can be represented by the model, i.e. $\boldsymbol{1}_{\ge 0}(f_{\theta,\varphi}(x,y,\boldsymbol{z}))$. 
+We propose $k$-Regularisation with the PCA-based shape model (Fig.~\ref{3633-schema}c) to regularise the reconstruction $\boldsymbol{z}$, especially for incomplete or corrupted inputs. For this, the residual $\boldsymbol{z}-\boldsymbol{\overline{z}}$ is projected onto the span of $k<n$ eigenvectors, resulting in a low-rank approximation $\boldsymbol{\tilde{z}}$ of the latent code $\boldsymbol{z}$. For $k=0$, the approximation $\boldsymbol{\tilde{z}}$ equals the mean latent code $\boldsymbol{\overline{z}}$, and for $k=n$ we retain the original latent code $\boldsymbol{\tilde{z}}=\boldsymbol{z}$. We then gain a regularised fitted shape as $\boldsymbol{1}_{\ge 0}(f_{\theta,\varphi}(x,y,\boldsymbol{\tilde{z}}))$.
+
+
+
+
+\paragraph{Dataset and implementation details}
+
+We evaluate our method on the JSRT dataset, which comprises $247$ X-ray scans with a total of $188$ landmarks of the heart, lungs and claviculae \citep{JSRT, jsrt_landmarks1}. We preprocess the data by creating multilabel segmentation maps from landmarks in a frame of $256\!\times\!256$ pixels and select $160$ and $87$ samples for shape model training and evaluation respectively. To assess the robustness of reconstructions, we corrupt the data by removing segmentations in a randomly drawn $80\!\times\!80$ square (\emph{Corrupted}) or for the entire right lung (\emph{Incomplete}), as shown in the left column of Figure~\ref{3633-shape-completion}.  
+For the generalised INR, we use a $5$-layer MLP with sinusoidal activation functions~\citep{sitzmann2020implicit} and a hidden dimension of $128$. To account for all $5$ classes of the dataset, the first and last layers are modelled to process label-specific SDMs as individual channels. We employ a latent code of size $n=14$ and chose to modulate the second, third, and fourth layer by employing MLPs accounting for scale and shift parameters, similar to \citep{dannecker2024cina}, resulting in around $100$k trainable parameters. Latent codes are initialised with $z \sim \cal{N}$$(0,10^{-3})$. We use Adam to optimise both latent codes (with a warm-up period for $500$ epochs) and $f_{\theta,\varphi}$ for a total of $2000$ epochs with a learning rate of $10^{-3}$ for training and fitting new samples. The model achieves mean training Dice scores and 95th percentile of Hausdorff Distances (HD) of 97\% and 0.80mm respectively.
+
+
+
+\section{Results}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{\bvmPath/figures/3633-toy_example_streched.pdf}
+    \caption{Topological advantages of INR-SSMs shown for examples of partial ring structures (left) and disc-to-ring transition (right). Rows show excerpts of training data (red), and reconstructions based on scaled first eigenvector $\boldsymbol{v_0}$ for INR-SSM (green) and PDM-SSM (blue).}
+    \label{3633-toy-example}
+\end{figure}
+
+
+First, we demonstrate the advantages of our nonlinear and segmentation-based shape model compared to a linear PDM-based SSM by training the shape model on two different arbitrarily created datasets (Fig.~\ref{3633-toy-example}): 1. Partial ring structures, that are a simple, but nonlinear deformation of each other, and 2. discs and rings that are topologically different and cannot be represented by the same set of keypoints. Compared to a PDM-based SSM as described in Sec. \ref{3633-mm}, the statistical latent code can already capture the main transformation by scaling only the first eigenvector in both scenarios.
+
+\begin{table}[t]
+    \caption{Dice scores (DSC) and 95th percentile of Hausdorff-Distances (HD) in mm regarding all investigated scenarios. Results include reconstruction with the mean learned latent code ($k=0$), un-regularised fitting ($k=n=14$) and best-performing $k$-Regularisation per task.}
+
+    \label{3633-tab-results}
+    \begin{tabular*}{\textwidth}{c@{\extracolsep\fill}ccccccccccc}
+        \hline
+        & \multicolumn{2}{c}{Original} & \multicolumn{3}{c}{Corrupted} & \multicolumn{4}{c}{Incomplete} & & \\
+        \hline
+        corruption-aware & - & - & \checkmark & $\times$ & $\times$ & \checkmark & \checkmark & $\times$ & $\times$ & & \\
+ 
+        $k$ & 0 ($\boldsymbol{\tilde{z}}=\boldsymbol{\overline{z}}$) & 14 ($\boldsymbol{\tilde{z}}=\boldsymbol{z}$) & 14 & 6 & 14 & 6 & 14 & 2 & 14 & & \\
+        \hline
+
+        % DICE
+        \multirow[c]{2}{*}{DSC $\uparrow$} 
+        & $65.6$ & $87.8$ & $86.5$ & $77.5$ & $70.6$ & $84.4$ & $88.1$ & $67.4$ & $58.7$ & & \\
+        & ${}^{\pm12.0}$ & ${}^{\pm5.6}$ & ${}^{\pm6.7}$ & ${}^{\pm7.5}$ & ${}^{\pm8.3}$ & ${}^{\pm5.7}$ & ${}^{\pm5.6}$ & ${}^{\pm10.5}$ & ${}^{\pm6.1}$ & & \\
+
+        % HD95
+        \multirow[c]{2}{*}{HD $\downarrow$} 
+        & $9.5$ & $3.6$ & $4.1$ & $7.5$ & $\infty$ & $4.7$ & $4.0$ & $8.9$ & $13.7$ & & \\
+        & ${}^{\pm3.1}$ & ${}^{\pm1.6}$ & ${}^{\pm1.9}$ & ${}^{\pm2.4}$ & & ${}^{\pm1.6}$ & ${}^{\pm1.7}$ & ${}^{\pm2.7}$ & ${}^{\pm3.0}$ & & \\
+        \hline
+    \end{tabular*}
+\end{table}
+
+We further evaluate the performance of the Statistical Shape Model and regularisation in three scenarios: Fitting (1) original, (2) corrupted and (3) incomplete out-of-training samples. For (2) and (3), we investigate both corruption-agnostic and -aware fitting. For the latter, we assume knowledge over the corrupted area and optimise the latent code with a loss computed for non-corrupted image parts, thus only using uncorrupted and available information.
+
+\begin{figure}
+        \centering
+		\includegraphics[width=0.8\linewidth]{\bvmPath/figures/3633-dice_plot.pdf}	
+		\caption{Impact of $k$-Regularisation as Dice Scores for different values of $k$ in all investigated scenarios. Solid and dashed lines indicate corruption-aware and corruption-agnostic fitting respectively. The results for $k=0$ and $k=n=14$ correspond to $\boldsymbol{\tilde{z}}=\boldsymbol{\overline{z}}$ and $\boldsymbol{\tilde{z}}=\boldsymbol{z}$ respectively.}
+	\label{3633-k-PCA}
+\end{figure}
+
+
+
+
+%\paragraph{Statistical Shape Model \& $k$-Regularisation}
+
+On the JSRT dataset (Tab.~\ref{3633-tab-results}, Fig.~\ref{3633-k-PCA}), our approach is able to reconstruct test segmentations to a mean Dice of $87.8\%$ and HD of $3.6$mm, which is close to a correspondence-bound PDM-SSM model with $n=14$ eigenvectors (Dice: $91.2\%$, HD: $2.70$mm). Shapes can be reasonably well recovered with corruption ($86.8\%$) and incomplete inputs ($82.7\%$) if the fitting loss is altered accordingly. The complex task of corruption-agnostic optimisation highly benefits from the proposed probabilistic $k$-Regularisation. The highest reconstruction metrics can be achieved by limiting the reconstruction to the first $6$ and $2$ eigenvectors respectively. When only evaluating the reconstruction of the missing lung, maximum accuracy is already achieved with only $k=6$ eigenvectors (Fig.~\ref{3633-k-PCA}). These effects are also visible in the qualitative examples shown in Figure \ref{3633-shape-completion}, where the regularisation preserves the tapered shape of the lower lung region.
+
+
+\begin{figure}
+    \centering
+	\includegraphics[width=0.9\textwidth]{\bvmPath/figures//3633-vis_results_pruned.pdf}	
+	\caption{Qualitative reconstruction results with mean (black) and right lung (blue) Dice scores (DSC) and 95th percentile of Hausdorff distances (HD) in mm for selected cases. Reconstructions with the highest Dice values are highlighted with black boxes.}
+	\label{3633-shape-completion}
+\end{figure}
+
+
+
+\section{Discussion}
+Our method is able to fit new samples to the learned multi-label shape model without the need for corresponding keypoints, but reconstruction quality is highly sensitive to corrupted or missing information. We demonstrated that this can be mitigated with PCA-based $k$-Regularisation. While it has little effect on corruption-aware fitting, it provides an effective method of regularisation when this information is missing. 
+The similarity in reconstruction accuracy between INR and PDM-SSM is particularly noteworthy, considering that the segmentations were directly obtained from the keypoints. Further improvements might be achieved by advanced INR generalisation techniques. Our conceptual experiments demonstrate the advantages of INR-based SSMs; however, future work should include broader application-based comparisons and datasets where their topological properties offer clear benefits.

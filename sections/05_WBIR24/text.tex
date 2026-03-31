@@ -1,0 +1,257 @@
+% \begin{abstract}
+%     Medical image atlases simplify the analysis of large-scale datasets and are used for various applications, such as population analysis or probabilistic segmentation. They are often synthesized by minimising geometric distances. This formulation allows for fuzzy atlases, resulting in reduced interpretability and flexibility. Furthermore, most atlas generation methods are limited in terms of large anatomical variations and non-aligned data. 
+%     We propose SINA (Sharp Implicit Neural Atlases), a novel framework for medical image atlas synthesis, leveraging the joint optimisation of data representation and registration. By iteratively refining sample-to-atlas registrations and modelling the atlas as a continuous function in an Implicit Neural Representation, we demonstrate the possibility of achieving atlas sharpness while maintaining data fidelity. Our approach is evaluated on 2D and 3D datasets of varying complexity against popular atlas synthesis methods. Our method ranks first regarding the synthesis of a complex chest X-ray atlas,  second in the easier task of pre-aligned MRI images, and is capable of handling high-resolution abdominal CTs while composing representative and sharp atlases. Source code and trained models are published on \href{https://github.com/multimodallearning/SharpImplicitNeuralAtlas}{GitHub}.
+    
+
+\section{Introduction}
+The creation of medical image atlases (or templates) is a central task in the field of medical informatics to simplify the analysis of large amounts of data. In addition to their role as an educational tool, they form the basis for image-based population studies, enable probabilistic atlas-based segmentation, and serve as a data-driven reference model for different anatomies of various imaging modalities. An atlas combines information from both geometry and appearance across a large number of images of a population. In order to aggregate this information, it must be brought into spatial correspondence, linking the methodology for creating an atlas to the field of medical image registration~\cite{Joshi2004UnbiasedDA}. An optimal template is often regarded as a minimization of the geometric distance to all images in a dataset. This definition is implicitly accompanied by the demand, or at least acceptance, of a fuzzy atlas. On the other hand, image registration methods benefit from sharp structures providing correspondences and the delineation of objects. While the necessity of sharpness for template synthesis is still a subject of discussion, a blurry template comes with the disadvantage of reduced interpretability. 
+
+Technical and methodological innovations in the field of image registration, such as the use of convolutional networks, have simultaneously advanced methods for atlas generation. Recently, Implicit Neural Representations (INRs), which approximate data-inherent continuous functions of individual instances in network weights, have gained popularity. A key feature is the abandonment of regular grid structures, providing flexibility in querying the network on arbitrary sizes. Especially in the field of computer vision, INRs demonstrate their ability to learn scenes as neural radiance fields (NeRF) from image and video data using known camera positions~\cite{mildenhall2021nerf}.  To mitigate the problem of inaccurate or missing poses, the joint optimisation of NeRF and camera positions was proposed with BARF~\cite{lin2021barf}. In this method, inconsistent observations are correlated or registered by additionally learning corresponding camera positions. Since the goal of obtaining a coherent representation is achieved through registration, this idea can be linked to our approach of atlas synthesis. Furthermore, by leveraging the continuous properties of INRs, an atlas can be trained and inferred involving sub-pixel accuracy.
+
+In this work, we propose the simple joint optimisation of INR and transformation parameters to synthesize a sharp and easily interpretable dataset representation.
+
+
+
+
+\subsection{Related Work}
+
+The classical approach for \textbf{Medical Image Atlas Synthesis} is to average the displacement vectors of registrations on a manually selected template to obtain a mean shape and intensity~\cite{guimond2000average}. However, a disadvantage of this method is the manual bias that comes with choosing a suitable template, which can be tackled by employing groupwise registration~\cite{Joshi2004UnbiasedDA}. For this step, deep learning-based approaches pose a clear advantage in terms of runtime and computational costs, especially for 3D data, and can be extended with pairwise registration to enhance image alignment~\cite{ding2022aladdin} or include joint learning of registration and segmentation~\cite{sinclair2022atlas}. Dalca et al. propose a CNN-based model to synthesize atlases based on population attributes~\cite{dalca2019learning}. In contrast, Yu et al. learn conditioned deformation fields warping an unconditioned template, effectively encoding population attributes in deformations~\cite{yu2020learning}. However, such approaches are limited by fixed coordinate systems, which makes them inflexible in terms of spatial resolution. Additionally, such models often require rigid pre-alignment and are restricted to small image variations, limiting their application. Determining \textbf{Atlas Quality} is not straightforward and depends on the intended use and the method of atlas synthesis. One pitfall is the comparison of forward- and backward-generated atlases that contain different information. The latter (e.g.~\cite{He2020UnsupervisedEG,Joshi2004UnbiasedDA}) is characterised by the fact that they warp to images in the synthesis templates and thus represent a mean of all warped images. Forward creation methods (e.g.~\cite{dalca2019learning}), on the other hand, warp the images onto the atlas and generate the mean of all warped images, weighted with the required deformation. Evaluating both with the same metrics can distort the comparison. This can be alleviated by employing the atlas as a bridge, i.e. calculating metrics on consecutive forward and backward warped images~\cite{ding2022aladdin}. Another metric used to evaluate templates is \textbf{Atlas Sharpness}~\cite{lorenzen2005unbiased}. Although there is no consensus on whether sharper templates lead to better registration or segmentation results~\cite{ding2022aladdin,Yeo2007sharpness}, the inverse relationship is unlikely. Our method can be loosely linked to the strategy presented by Wu et al., who improve groupwise registration results by explicitly enforcing a sharp mean image using an adaptive spatial weighting strategy~\cite{wu2011sharpmean}. Our approach can further be associated with the concept of \textbf{Metamorphosis}, which models images as a combination of intensity and geometric transforms of a prototype~\cite{bone2020learning,niethammer2011geometric},  often applied to image registration methods~\cite{meng2022enhancing}, and active appearance models~\cite{cootes2001active}. 
+
+\noindent \textbf{INRs} were introduced as a powerful tool for computer vision tasks~\cite{sitzmann2019siren}. They use multiple-layer perceptrons (MLPs) to represent complex data, such as shapes and images, as continuous functions. Traditional INRs with ReLUs as activation functions were limited by spectral bias, but incorporating Fourier features~\cite{tancik2020fourier}, periodic activations~\cite{sitzmann2019siren}, or multi-grid features~\cite{muller2022instant} significantly improved their ability to fit higher frequencies.
+One of the primary advantages of INRs is their ability to offer high levels of detail with relatively low storage requirements, as the information is stored in the weights of the neural network~\cite{park2019deepsdf}. This efficiency is particularly beneficial in applications like 3D scene reconstruction, where high fidelity is necessary but memory is limited. Another significant benefit of INRs is their inherent smoothness and continuous nature, preventing aliasing artefacts common in discrete representations~\cite{mildenhall2021nerf}. This characteristic makes them ideal for tasks requiring high-quality interpolation, such as super-resolution and novel view synthesis.
+Moreover, INRs can naturally handle variable levels of detail, providing fine details when needed and abstracting them when not. Additionally, INRs demonstrate versatility across various domains. They have been successfully applied to represent images, 3D shapes, and even entire scenes. Their ability to generalize across different data types and their flexibility in encoding spatial and temporal dimensions make them a powerful tool in machine learning and computer graphics~\cite{tancik2020fourier}. \textbf{INRs for image registration}~\cite{pmlr-v172-wolterink22a}, which represent deformation fields in MLPs, came recently into focus. In the medical fields, multiple extensions of this idea have been explored, e.g. different activation functions, cycle consistency, cascades~ and the incorporation of prior information and implicit regularisation~\cite{byra2023exploring,van2024deformable,sideri2024sinr}.
+While these methods are typically tailored to individual instances, efforts have been made to generalize INRs for image registration~\cite{zimmer2023towards}. \textbf{Generalized INRs} employed in computer vision are commonly trained to represent a population of images where the INR learns a common representation (template) of the presented images, hence sharing similarities to the atlas creation. The input of such functions usually comprises continuous encoded coordinates and instance-specific information, e.g. latent codes or features~\cite{park2019deepsdf,stolt2023nisf}. Generalization can also be achieved through meta-learning~\cite{chen2022transformers,liu2022nutracker}. Such techniques enable optimisation of a global representation, e.g. template image or shape, that enables faster and improved fitting of unseen data points from the same distribution. 
+
+\textbf{INR Atlas} creation was previously explored in three works; Low et al. ~\cite{low2022_mna} create an atlas to represent shapes of natural objects, while~\cite{chi2023dynamic} and~\cite{dannecker2024cina} pioneered the use of INR atlases in the medical image analysis field. Chi et al.~\cite{chi2023dynamic} use a complex encoder-decoder training strategy with sampling from three separate neural fields for registration and intensity estimation for 4D fetal MRI time series to accelerate the speed of atlas synthesis. In a paper not yet published under peer-review, Dannecker et al.~~\cite{dannecker2024cina} propose a conditional INR encoding both grey value and segmentation atlas based on joint optimisation of latent codes and network weights. During training, this code is infused by scaling and shifting in modulation layers of the INR, while for new subjects, only the patient-specific latent code is optimised. An atlas can then be obtained using a Gaussian regression of these codes, which encodes geometric and intensity variations in the training data.
+
+
+\subsection{Contribution}
+In this paper, we propose Sharp Implicit Neural Atlases (SINA), a simple and comprehensive framework for unsupervised atlas generation using joint optimisation of transformation parameters and INR weights to simultaneously obtain a sharp and expressive medical image atlas and corresponding displacement fields. The resulting atlas is stored implicitly and can be queried on any resolution. The method does not require any pre-alignment and can handle various strengths of deformations. We compare our method against popular atlas synthesis frameworks on two 2D datasets of varying complexity (chest X-ray and brain MRI slices) and demonstrate its extension to 3D abdominal CT data.
+To our knowledge, this is the first work to combine explicit registration and implicit modelling for medical atlas generation. We rely on publicly available data and comparison methods and release code and trained models on GitHub\footnote{\url{https://github.com/multimodallearning/SharpImplicitNeuralAtlas}}.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=1\linewidth]{\wbirPath/figures/img_pipeline.png}
+    \caption{Simple Implicit Neural Atlases (SINA) Framework. 
+   During training,  $N$ displacements for $S$ grid points are subject to a B-spline transformation and are subsequently input into an Implicit Neural Network (INR). The calculated loss between INR outputs and input images is backpropagated to optimise grid displacements per instance and INR weights capturing the underlying intensity atlas. At inference, an implicit template can be obtained by sampling the INR on a regular grid of any resolution.}
+    \label{fig:overview}
+\end{figure}
+\section{Methods}
+
+
+
+
+\subsection{SINA}
+%%%% INITIAL VERSION
+%A medical image atlas should contain both the geometric properties and intensities of the data set. Another desired property is the presence of edges or high image frequencies that facilitate registration between the image and the atlas. Our hypothesis is that the combined use of an implicit representation and explicit learning of displacements fulfills both requirements. This method is inspired by~\cite{lin2021barf} from the field of computer vision, which demonstrated the simultaneous optimisation of homographies of image patches and the fitting of an INR. We transfer the idea to the domain of medical images by replacing the homographic transformations of individual image patches with a deformable  B-spline transformation model on a regular grid~\cite{modat2010fast}. In contrast to natural photographs, medical images usually have a very similar field of view due to their acquisition modalities, which holds true especially for the atlas generation. While patch-based training would have the advantage of incorporating individual image patches into the atlas, this scenario would be only necessary for image compounding and isnot considered here. Nevertheless, a connection can be found between the two options with polyaffine transformations~\cite{taquetpolyaffine}.
+%Given a dataset $\mathcal{Y} = \{y_i\}_{i=1}^{N}$ of $N$ discrete images $y_{i}: \Omega \subset \mathbb{R}^{d} \to \mathbb{R}$ with $d \in \{2,3\}$ we aim to construct a continuous global atlas (or template) $\mathcal{A}: \mathbb{R}^{d} \to \mathbb{R}$. The atlas can be formulated as an INR
+%\begin{equation}
+%    \mathcal{A}(\bm{x}) = f(\bm{x};\varphi), \qquad \qquad \qquad \bm{x} \in \mathbb{R}^{d},
+%\end{equation}
+%where $f$ is a multi-layer-perceptron, specifically a SIREN network, with trainable parameters $\varphi$. In addition to the atlas $\mathcal{A}$, we aim to find a deformation $\bm{u}_{i}$ for each image $y_{i}$ such that
+%\begin{equation}
+%    y_{i}(\bm{x}) \approx \mathcal{A}(\bm{x}+\bm{u}_{i}(\bm{x};\psi_{i})), \qquad \bm{x} \in \Omega.
+%\end{equation}
+%$\bm{u}_{i}:\mathbb{R}^{d} \to \mathbb{R}^{d}$ is a B-spline transformation with learnable control point displacements $\psi_{i}$.
+%The optimisation during training can be expressed as
+%\begin{equation}
+%    \arg\min_{\varphi, \{\psi_{i}\}} \sum_{i=1}^{N} \mathcal{L}_{\text{sim}} (f(\bm{x}+\bm{u}_{i}(\bm{x};\psi_{i})), y_{i}(\bm{x})),
+%\end{equation}
+%where $\mathcal{L}_{\text{sim}}$ denotes a similarity loss, for which we employ SSIM. By propagating the loss to both $\varphi$ and $\psi_{1},\dots,\psi_{N}$, registration and representation are optimized simultaneously. 
+%To mitigate the problem of difficult (or impossible) registrations of images to an unfitted INR and thus to combat the early deterioration of displacements, the learning rate of the displacements optimiser is multiplied by a factor that increases linearly from 0 to 1 up to epoch $e_{warm}$. Since B-spline transforms introduce implicit smoothness of deformations, we omit any additional explicit regularisation. 
+
+
+%%%% NEW VERSION
+A medical image atlas should contain both the geometric properties and intensities of the dataset. Another desired property is the presence of edges or high image frequencies that facilitate registration between the image and the atlas. We hypothesise that combining an implicit representation and explicit learning of displacements fulfils both requirements. This method is inspired by~\cite{lin2021barf} from the field of computer vision, which demonstrated the simultaneous optimisation of homographies of image patches and the fitting of an INR. The main idea is to allow for transformations of the INR input to achieve a consistent implicit representation despite conflicting observations. We transfer this approach to the domain of medical images by replacing the homographic transformations of individual image patches with a deformable B-spline transformation model on a regular grid~\cite{modat2010fast}. In contrast to natural photographs, medical images usually share a similar field of view due to their acquisition modalities, which holds true especially for the atlas generation. While patch-based training would have the advantage of incorporating individual image patches into the atlas, this scenario would be only necessary for image compounding and is not considered here. Nevertheless, a connection can be found between the two options with polyaffine transformations~\cite{taquetpolyaffine}.
+
+We aim to store an atlas or template of a medical image dataset in a single INR, which takes coordinates as an input and outputs grey values. One option to train the network would be to input regular grid coordinates and minimize the loss between each sample and the derived image intensities, leading to an undesirable blurry mean image at the expense of instance fidelity. We suggest to simultaneously optimise network weights and instance-specific grid displacements during training. While the INR captures the underlying intensities of the whole dataset, the displacements encode single dataset images. After training, data samples can be retrieved by querying the network with their respective optimised grids, while a sharp general representation of all data can be generated with a regular grid of arbitrary size. An overview of the proposed method is shown in Fig.~\ref{fig:overview}. 
+
+Given a dataset $\mathcal{Y} = \{y_i\}_{i=1}^{N}$ of $N$ discrete images $y_{i}: \Omega \subset \mathbb{R}^{d} \to \mathbb{R}$ with \mbox{$d \in \{2,3\}$} we aim to construct a continuous global atlas (or template) $\mathcal{A}: \mathbb{R}^{d} \to \mathbb{R}$. The atlas can be formulated as an INR
+\begin{equation}
+    \mathcal{A}(\bm{x}) = f(\bm{x};\varphi), \qquad \bm{x} \in \mathbb{R}^{d},
+\end{equation}
+where $f$ is a multi-layer-perceptron, specifically a SIREN network, with trainable parameters $\varphi$ that gets coordinates $\bm{x}$ as input. In addition to the atlas $\mathcal{A}$, we aim to find a deformation $\bm{u}_{i}:\mathbb{R}^{d} \to \mathbb{R}^{d}$ (defined by parameters $\psi_{i}$) for each image $y_{i}$ such that the deformed atlas
+
+\begin{equation}
+    \mathcal{A}(\bm{x}+\bm{u}_{i}(\bm{x};\psi_{i})), \qquad \bm{x} \in \Omega,
+\end{equation}
+is similar to  $y_{i}(\mathbf{x})$. Since $\mathcal{A}$ is formulated as an INR, we deform the atlas by deforming the input coordinates for the network $f$ instead of deforming the output image itself. This removes the necessity to interpolate the deformed atlas image since we can work on the whole continuous definition area $\mathbb{R}^{d}$ instead of the smaller definition area $\Omega$ of the discretised images.
+The displacement field $\bm{u}_{i}$ is obtained via a B-spline transformation of learnable control point displacements $\psi_{i}$ to ensure smoothness of the field. A regularisation loss can thus be omitted.
+In summary, the optimisation during training can be expressed as
+\begin{equation}
+    \arg\min_{\varphi, \{\psi_{i}\}} \sum_{i=1}^{N} \mathcal{L}_{\text{sim}} (f(\bm{x}+\bm{u}_{i}(\bm{x};\psi_{i});\varphi), y_{i}(\bm{x})),
+\end{equation}
+where $\mathcal{L}_{\text{sim}}$ denotes a similarity loss, for which we employ the structural similarity index measure (SSIM). By propagating the loss to both $\varphi$ and $\psi_{1},\dots,\psi_{N}$, registration and representation are optimized simultaneously.
+To mitigate the problem of difficult (or impossible) registrations of images to an unfitted INR and thus to combat the early deterioration of displacements, the learning rate of the displacements optimiser is multiplied by a factor that increases linearly from 0 to 1 up to epoch $e_{warm}$. 
+
+
+
+
+
+\subsection{Evaluation}
+We assess the fidelity of the atlas following~\cite{ding2022aladdin} in three different domains: In the atlas space, the similarity between the warped atlas and the input image is determined, and in the image space, the warped image is compared with the synthesized atlas. Here, we apply the structural similarity index measure (SSIM) and the peak signal-to-noise ratio (PSNR) to calculate similarity after registration. To limit the influence of edge-related registration artefacts, we mask out a border frame in the size of 20 pixels on both datasets. 
+
+We also examine the results of a combined backward and forward transformation (atlas as a bridge) for a fair comparison between forward and backward-based methods. Here, target registration errors (TRE) and Dice scores (DSC) are computed on keypoints and labels, which have been consecutively propagated from source to atlas and from atlas to target images. Since we only obtain non-diffeomorphic displacement fields for one transformation direction per method, we follow Chen et al.~\cite{chen2008simple} to approximate its inverse with an iterative fixed-point approach based on inverse consistency optimisation. We calculate the TRE for the JSRT dataset between all (over $60000$) possible combinations of source and target images, while Dice scores are evaluated on $N$-1 registration pairs. 
+
+We further evaluate the atlas synthesis methods by assessing the smoothness of deformation fields through the standard deviation of the logarithmic Jacobian determinant (logJacDet) and the sharpness of each template through the mean average gradient magnitude. Additionally, we visualize the template fidelity by assigning the most probable label to each pixel or voxel in an atlas through voting based on its label frequency in warped segmentations. Leveraging the properties of sharp atlases, the registration quality is indicated by the visualised alignment of structures and segmentations. 
+
+
+Analogous to 2D experiments, we investigate the extension of SINA to 3D by assessing its atlas-as-a-bridge performance through Dice scores between initial alignment and propagated labels. For qualitative evaluation, we show a plot of the different views (axial, coronal, sagittal) and a 3D render of majority-voted labels.
+
+
+\subsection{Implementation Details}
+Our methods and experiments are implemented in \emph{PyTorch} 2.2.0 and conducted on a single GeForce RTX 2080. We select to implement the INR as a SIREN~\cite{sitzmann2019siren} with 7 layers of 64 channels each and initialise model parameters with $\omega$=20. Deformations are based on a grid size of $28\times 28$ ($S=784$), corresponding to a total of $1568$ trainable displacement parameters per image. We implement the B-spline transformation as two iterations of average pooling with kernel size $5$ and padding length of $2$, followed by bilinear interpolation. 
+Both displacement and INR optimizers are updated in every minibatch using Adam with the respective learning rates of $10^{-5}$ and $10^{-3}$, based on perceptual SSIM loss (window size of $11$). The results shown are achieved with batch sizes of ($2$,$2$), epochs of ($250$,$2000$), and  $e_{warm}$ = ($300$,$200$) for JSRT and OASIS respectively, resulting in training times of $16$ and $50$ minutes. We find that small batch sizes drastically improve early convergence to a mean shape and thus can accelerate training. All image data was normalised to $[0,1]$ prior to training.
+
+The 3D version of our model employs a SIREN with 10 layers with 256 channels and initialises its weights with $\omega$=35. We train the network with a batch size of 1 for 2000 epochs (approx. 4 hours) using an NVIDIA A100 GPU using the mean squared error as a loss function. Displacements are mapped onto a grid scaled down to a quarter of the image's resolution ($S$=122880).
+
+
+\section{Experiments}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=1\linewidth]{\wbirPath/figures/img_results.png}
+    \caption{Examples of forward and backward atlas registrations for JSRT (left) and OASIS (right) datasets. Learned deformations are applied to the sample image (mid-bottom) to the atlas (top row) and vice versa. Transformation results for warped atlases and warped images are shown in rows two and three, respectively. Mean dataset images are depicted at the bottom outside edges of the figure. Atlases and results are shown for \tikzcircle[our_green, fill=our_green]{1.5pt}~SINA (ours), \tikzcircle[our_orange, fill=our_orange]{1.5pt}~VoxelMorph and \tikzcircle[our_blue, fill=our_blue]{1.5pt}~SimpleElastix.}
+    \label{fig:2dresults}
+\end{figure}
+
+
+
+
+
+\begin{table}[t]
+    \footnotesize
+	\centering
+    \caption{ \label{tab:jsrt-results} JSRT Results. We report SSIM, PSNR, and standard deviation of logarithmized Jacobian determinant for Atlas (comparison of warped atlas and image) and Image space (comparison of warped image with the atlas). Target Registration Error (TRE in mm) and Dice scores (DSC) are computed with propagated annotations through source-to-atlas and atlas-to-target transformations. Atlas synthesis methods are divided into forward (f) or backward (b) models. The row "zerofield" describes results without any deformation and utilises the mean shape between data samples as an atlas.}
+    \vspace{1ex}
+    \begin{tabular}{c|c|ccc|ccc|cc}
+        
+        \toprule
+        & & \multicolumn{3}{c|}{\textbf{Atlas space}} & \multicolumn{3}{c|}{\textbf{Image space}} & \multicolumn{2}{c}{\textbf{Atlas as a bridge}} \\
+        %\cline{3-9}
+        \textbf{Method}& f/b & SSIM $\uparrow$& PSNR $\uparrow$& logJacDet $\downarrow$ & SSIM $\uparrow$& PSNR $\uparrow$& logJacDet $\downarrow$ & TRE $\downarrow$ & DSC $\uparrow$ \\
+        %\midrule
+        \hline
+        zerofield & $-$ & \makecell{$0.70$ \\ $\pm$ $0.07$} & \makecell{$24.46$ \\ $\pm$ $2.32$} & $-$ & \makecell{$0.70$ \\ $\pm$ $0.07$} & \makecell{$24.46$ \\ $\pm$ $2.32$} & $-$ & \makecell{$35.63$ \\ $\pm$ $14.52$}  & \makecell{$45.10$ \\ $\pm$ $14.07$} \\
+        %\hline
+        \cline{3-10}
+        SimpleElastix & f & \makecell{$0.62$ \\ $\pm$ $0.04$} & \makecell{$26.09$ \\ $\pm$ $2.47$} & \makecell{$0.53$ \\ $\pm$ $0.44$} & \makecell{$0.67$ \\ $\pm$ $0.05$} & \makecell{$26.73$ \\ $\pm$ $2.53$} & \makecell{$0.62$ \\ $\pm$ $0.41$} &\makecell{$33.50$ \\ $\pm$ $12.40$} & \makecell{$49.14$ \\ $\pm$ $12.43$} \\
+        %\hline
+        \cline{3-10}
+        VoxelMorph & f & \makecell{$0.71$ \\ $\pm$ $0.07$} & \makecell{$25.00$ \\ $\pm$ $2.25$} & \makecell{$\mathbf{0.02}$ \\ $\pm$ $\mathbf{0.01}$} & \makecell{$0.81$ \\ $\pm$ $0.03$} & \makecell{$25.37$ \\ $\pm$ $2.12$} & \makecell{$\mathbf{0.02}$ \\ $\pm$ $\mathbf{0.01}$} &\makecell{$34.67$ \\ $\pm$ $14.32$} & \makecell{$46.38$ \\ $\pm$ $13.94$} \\
+        %\hline
+        \cline{3-10}
+        SINA (ours) & b & \makecell{$\mathbf{0.85}$ \\ $\pm$ $\mathbf{0.05}$} & \makecell{$\mathbf{30.05}$ \\ $\pm$ $\mathbf{2.40}$} & \makecell{$0.49$ \\ $\pm$ $0.48$} & \makecell{$\mathbf{0.89}$ \\ $\pm$ $\mathbf{0.02}$} & \makecell{$\mathbf{28.43}$ \\ $\pm$ $\mathbf{2.87}$} & \makecell{$0.11$ \\ $\pm$ $0.08$} &\makecell{$\mathbf{21.03}$ \\ $\pm$ $\mathbf{8.61}$} & \makecell{$\mathbf{64.60}$ \\ $\pm$ $\mathbf{11.72}$} \\
+        \bottomrule
+    \end{tabular}
+    
+\end{table}
+
+
+
+
+\subsection{Datasets}
+The \textbf{JSRT} chest X-ray dataset consists of a total of 247 X-ray images with (154) and without (93) pulmonary nodules~\cite{JSRT}. We apply z-normalization and downsample the images to 256×256 pixels during preprocessing. Since the data is already manually cropped to compensate for translation misalignment, a random section of size 224$\times$224 was taken from each image to restore the original difficulty of the registration task. In addition, some images have black rectangles at the edges for anonymity purposes, which introduces further challenges for atlas synthesis. 
+For each image, a total of 166 manually created expert landmarks delineating 5 anatomical structures (left (44) and right lung (50), left (23) and right clavicle (23), heart (26)) are provided~\cite{jsrt_landmarks1,jsrt_landmarks2}. All cropped landmarks are excluded from evaluation. We further leverage landmarks to generate label masks for all 5 structures for Dice score calculation. Recognising the difficulty of lung registration, we also investigate the effectiveness of our method on the simpler 2D \textbf{OASIS} dataset~\cite{hoopes2022learning,marcus2007open}, which contains 414 skull-stripped and pre-aligned MRI images with corresponding segmentations for a total of 24 anatomical structures. We evaluate the entire dataset and refrain from further preprocessing. For 3D, we employ the publicly available Learn2Reg \textbf{AbdomenCTCT}\footnote{\url{https://learn2reg.grand-challenge.org/Datasets/}} dataset~\cite{hering2022learn2reg} comprised of 30 pre-aligned abdominal CT images of shape $192\times160\times256$ and a total of 13 anatomical labels.
+
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{\wbirPath/figures/img_results_lms.png} 
+    \caption{Source (top) to target (bottom) propagated JSRT landmarks. Point colours represent \tikzcircle{1.5pt} ground truth landmarks and landmarks warped with \tikzcircle[our_green, fill=our_green]{1.5pt} SINA (ours) and \mbox{\tikzcircle[our_blue, fill=our_blue]{1.5pt} SimpleITK} as an atlas-as-a-brigde evaluation. The resulting TREs are denoted at the bottom.}
+    \label{fig:lms-propagation}
+\end{figure}
+
+
+\subsection{Baselines} 
+In the interests of reproducibility, we have decided to rely on established and publicly available registration methods with existing instructions. First, we compare SINA against the popular registration framework \textbf{SimpleElastix} and follow their tutorial for groupwise B-spline registration\footnote{\url{https://simpleelastix.readthedocs.io/GroupwiseRegistration.html}}. As the initial results were not satisfactory, we performed a local histogram equalisation using images in the JSRT dataset before registration. Further adjustments did not lead to any improvement. In contrast to the method presented above, SimpleITK constructs a forward atlas in which the registrations of samples are averaged onto the atlas. Analogous to our method, we approximate the inverse displacement field for evaluation purposes.
+We further employ the unconditioned atlas generation variant of \textbf{VoxelMorph}~\cite{dalca2019learning} based on the provided \mbox{script}\footnote{\url{https://github.com/voxelmorph/voxelmorph?\#tutorial}}.
+
+
+
+\begin{table}[t]
+     \footnotesize
+     \centering 
+     \caption{\label{tab:OASIS-results} OASIS Results. We report SSIM, PSNR, and standard deviation of logarithmized Jacobian determinant for Atlas (comparison of warped atlas and image) and Image space (comparison of warped image with the atlas). Dice scores (DSC) are computed with propagated annotations through source-to-atlas and atlas-to-target transformations. Atlas synthesis methods are divided into forward (f) or backward (b) models. The row "zerofield" describes results without any deformation and utilises the mean shape between data samples as an atlas.}
+     \vspace{1ex}
+    \begin{tabular}{c|c|ccc|ccc|c}
+        \toprule
+        & & \multicolumn{3}{c|}{\textbf{Atlas space}} & \multicolumn{3}{c|}{\textbf{Image space}} & \textbf{Atlas as a bridge} \\
+        %\cline{3-9}
+        \textbf{Method}& f/b & SSIM $\uparrow$& PSNR $\uparrow$& logJacDet $\downarrow$ & SSIM $\uparrow$& PSNR $\uparrow$& logJacDet $\downarrow$ & \multicolumn{1}{c}{Dice $\uparrow$} \\
+        \hline
+        zerofield & $-$ & \makecell{$0.51$ \\ $\pm$ $0.04$} & \makecell{$22.88$ \\ $\pm$ $1.03$} & $-$ & \makecell{$0.51$ \\ $\pm$ $0.04$} & \makecell{$22.88$ \\ $\pm$ $1.03$} & $-$ & \makecell{$53.09$ \\ $\pm$ $8.57$}\\
+        %\hline
+        \cline{3-9}
+        SimpleElastix & f & \makecell{$0.69$ \\ $\pm$ $0.04$} & \makecell{$26.26$ \\ $\pm$ $1.02$} & \makecell{$0.12$ \\ $\pm$ $0.07$} & \makecell{$\mathbf{0.79}$ \\ $\pm$ $\mathbf{0.04}$} & \makecell{$\mathbf{29.80}$ \\ $\pm$ $\mathbf{0.75}$} & \makecell{$0.09$ \\ $\pm$ $0.05$} &\makecell{$65.68$ \\ $\pm$ $4.56$}\\
+        %\hline
+        \cline{3-9}
+        VoxelMorph & f & \makecell{$0.66$ \\ $\pm$ $0.05$} & \makecell{$\mathbf{33.67}$ \\ $\pm$ $\mathbf{0.90}$} & \makecell{$\mathbf{0.05}$ \\ $\pm$ $\mathbf{0.00}$} & \makecell{$0.61$ \\ $\pm$ $0.06$} & \makecell{$27.29$ \\ $\pm$ $0.92$} & \makecell{$\mathbf{0.06}$ \\ $\pm$ $\mathbf{0.01}$} &\makecell{$\mathbf{69.54}$ \\ $\pm$ $\mathbf{5.13}$}\\
+        %\hline
+        \cline{3-9}
+        ours & b & \makecell{$\mathbf{0.70}$ \\ $\pm$ $\mathbf{0.04}$} & \makecell{$32.77$ \\ $\pm$ $0.98$} & \makecell{$0.14$ \\ $\pm$ $0.15$} & \makecell{$0.58$ \\ $\pm$ $0.03$} & \makecell{$25.90$ \\ $\pm$ $0.97$} & \makecell{$0.13$ \\ $\pm$ $0.10$} &\makecell{$67.38$ \\ $\pm$ $4.49$}\\
+        \bottomrule
+    \end{tabular}
+    
+\end{table}
+
+
+
+
+
+\section{Results and Discussion}
+
+Table \ref{tab:jsrt-results} shows the quantitative results for atlas fidelity on the JSRT dataset. Our proposed method outperforms all baselines (except for the smoothness of the deformation metric) by a large margin. While the SSIM and PSNR metrics already indicate some differences, the bridge metrics reveal a significant disparity between SINA and the other methods, with a difference in TRE of over 12 mm and approximately 15 percentage points in Dice score. Both SimpleElastix and VoxelMorph were not able to provide the combination of a high-fidelity atlas and accurate transformations required for this transfer task.  Dice and TRE only improved minimally compared to the initial scores.  This impression is confirmed by qualitative results in Fig. \ref{fig:2dresults}.   SINA was the only method able to produce reproducible results for both the warped image and the warped atlas. While the application of SimpleITK leads to unrealistic warped images, the deformations produced by VoxelMorph are extremely small, devaluing its low smoothness metrics.  The visualisations of the contour point transformations in Fig. \ref{fig:lms-propagation} demonstrate the superiority of SINA. In the best case, the SINA and ground truth align nearly perfectly, while in the median case, the transformation appears to capture lung movement but struggles with regard to clavicles and heart. The alignment for SimpleElastix is significantly worse. With very different source and target images and, accordingly, complex displacements, the registration also fails with SINA. 
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=.9\linewidth]{\wbirPath/figures/img_majorityvote.png} 
+    \caption{Atlases and corresponding majority vote segmentations for \tikzcircle[our_green, fill=our_green]{1.5pt}~SINA (ours), \tikzcircle[our_orange, fill=our_orange]{1.5pt}~VoxelMorph and \tikzcircle[our_blue, fill=our_blue]{1.5pt}~SimpleElastix on JSRT (top) and OASIS (bottom).}
+    \label{fig:label-on-atlas}
+\end{figure}
+
+\begin{table}[t]
+    \centering
+    \footnotesize
+    \caption{Sharpness of synthesised templates for all methods regarding averaged gradient magnitude amplified by a factor of 100.}
+    \label{tab:sharpness}
+    \vspace{1ex}
+    \begin{tabular}{c|cc}
+        \toprule
+             & JSRT & OASIS\\
+        \hline
+        mean & $2.43$ & $7.67$\\
+        SimpleElastix & $2.68$ & $9.56$\\
+        VoxelMorph & $4.27$ & $10.35$\\
+        SINA (ours) & $4.12$ & $13.04$\\
+        \bottomrule
+    \end{tabular}  
+\end{table}
+
+
+         
+The results in the OASIS dataset differ to some degree: Here, VoxelMorph performs best in the Dice bridge metric with 69 \%, while SINA follows with a gap of around 2 percentage points, ranking second in most metrics and best in atlas-space SSIM. SimpleElastix also improved by over 12 percentage points compared to the initial Dice. Metrics in the atlas and image space show no clear trend.  The visual results from Fig.~\ref{fig:2dresults} underline the quantitative results. The VoxelMorph atlas is best able to map both transformations. Reported Jacobian determinants highlight that SINA tends to learn slightly stronger and more complex transformations than the other methods.
+
+These findings align closely with the majority vote atlas segmentations shown in Fig.~\ref{fig:label-on-atlas}. Although the differences for OASIS are minimal, SINA stands out for the JSRT data as the only method that produces realistic segmentation maps for all five structures, including the relatively small clavicles. This is particularly impressive, considering no label information was utilized during the atlas synthesis. %This is especially true for the clavicles, as accurately including smaller structures necessitates precise alignments.
+
+As expected, SINA generates visually sharp templates in all experiments. The level of detail is particularly impressive with the JSRT atlas, as bone structures such as ribs or collarbones, as well as the heart, are well delineated. Quantitative results in Table~\ref{tab:sharpness} support these observations. The high gradient amplitude in VoxelMorph does not match the visual results and is probably due to the artifact-like vertical and horizontal lines. 
+The results emphasise the broad applicability of the method presented. While results on the OASIS dataset are comparable with other methods, SINA is the only one that successfully creates a meaningful and representative atlas for chest X-rays. Compared to the other datasets, JSRT has a higher variance in terms of deformation and geometry, which limits or excludes the use of both SimpleElastix and VoxelMorph. 
+Training times for optimal results differ between the 2D datasets at 16 (JSRT) and 50 minutes (OASIS), with the latter achieving $95$\% of the final training losses and $98$\% Dice scores (-$1.62\%$) after just a quarter of the iterations. An elaborated optimisation strategy could further accelerate convergence. 
+
+Our approach can be seamlessly transferred to the generation of 3D templates and produces a sharp atlas even when using high-resolution abdominal CTs. The visual results in Fig.~\ref{fig:3D-VIS} show plausible structures with a high level of detail. In addition to bones, whose registration is comparatively easy to optimise, internal organs such as the liver, kidneys, and spleen can also be delineated. The depiction of fine structures, such as lung fissures, is remarkable. The good alignment of the majority vote segmentations with the depicted structures is an indication of accurately learned transformations. We evaluate the Dice score as a bridge metric and achieve an increase of over 17 percentage points compared to the initial alignment regarding large structures (liver, spleen, and kidneys). 
+
+Although the results of our method produce state-of-the-art results for large and complex deformations, OASIS still trails slightly behind VoxelMorph. The gap might be closed by employing a more complex transformation model and explicit regularisation with regard to accuracy and smoothness. A diffeomorphic adaptation could further improve its image-space fidelity. Other atlas synthesis models are able to construct sub-population templates through model conditioning. This concept could be applied by optimisation of additional appearance latent codes during training.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{\wbirPath/figures/img_results_3d.png}
+    \caption{Generated 3D atlas for the AbdomenCTCT dataset by our method SINA.}
+    \label{fig:3D-VIS}
+\end{figure}
+
+The working principle of the proposed method can best be illustrated by observing the transformation of image-specific features, such as redacted patient info replaced by a black box or, in AbdomenCTCT, scanner-specific properties outside of the body. While conventional methods would probably lose this information by reduction to a common mean, SINA possesses the freedom to recover or hide these elements through deformations, if necessary, beyond image dimensions. We argue that SINA is thus more expressive than common dataset templates, effectively encoding image features through geometric transformations. Our approach could be reformulated as a generalised conditioned INR where the conditions are restricted to spatial deformations, consequently combining registration and representation. We, therefore, challenge the requirements one usually places on medical image atlases: Instead of seeking to minimise geometric distances, we strive for fidelity to individual dataset instances. Following this paradigm, the synthesis of sharp, realistic images would be an aesthetic by-product.
+
+
+
+\section{Conclusion}
+In this work, we presented SINA, a novel technique to synthesize sharp and high-fidelity atlases by joint optimisation of representation and registration. The method does not rely on affinely pre-aligned data and is capable of handling complex deformations to produce realistic and sharp templates and corresponding transformations. Our method is not restricted to two dimensions or a specific choice of INR and can be employed in any image domain. We evaluated SINA with datasets of varying complexity and compared the results against popular atlas synthesis frameworks. Our proposed method outperformed the other approaches for complex chest X-ray data and produces comparable results to the best baseline method for the simpler MRI brain dataset while synthesising the sharpest templates. Finally, we demonstrated SINA's applicability to construct a 3D high-fidelity abdominal CT template with strong delineation of structures.

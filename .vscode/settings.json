@@ -208,5 +208,10 @@
     //   ]
     // }
   ],
-  "workbench.colorTheme": "Solarized Light",
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#4F1F16",
+    "titleBar.activeBackground": "#6E2B1E",
+    "titleBar.activeForeground": "#FDF9F8"
+  },
+  "editor.wordWrap": "on",
 }
