@@ -130,19 +130,21 @@ We evaluate our method for each combination of architecture (CNN-Reg, UNETR-Reg)
 \begin{table}[t]
     \centering
         \caption{Registration results for each combination of model and label encoding on the \textbf{L2R-CT} dataset shown in dice overlap percentages, 95th percentile of Hausdorff distance (HD95) and deformity of registration as standard deviation of Jacobian deteminants (JD, lower is better). We report dice averages over all labels and shared anatomic labels with one training set ($\color{red}{\smblksquare}$,$\color{orange}{\smblksquare}$) separately. Color Encodings for individual labels are described in Sec. \ref{sec:datasets}.}
-    \begin{tabular}{ll|cc|ccccccccccc|cc|ccc} 
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{ll|cc|ccccccccccc|cc|ccc}
 
 Model & Enc.  & $\color{red}{\smblksquare}$ & $\color{orange}{\smblksquare}$ & $\color{green}{\smblksquare}$ & $\color{blue}{\smblksquare}$ & $\color{cyan}{\smblksquare}$ & $\color{magenta}{\smblksquare}$ & $\color{yellow}{\smblksquare}$ & $\color{brown}{\smblksquare}$ & $\color{lime}{\smblksquare}$ & $\color{pink}{\smblksquare}$ & $\color{purple}{\smblksquare}$ & $\color{teal}{\smblksquare}$ & $\color{violet}{\smblksquare}$& avg(2) & avg(all) & HD95 & JD \\
 \hline
-initial &&33&36&42&34&35&2&23&62&24&15&8&8&5& 34.5&25.1$\pm$13&20.1&-\\ 
+initial &&33&36&42&34&35&2&23&62&24&15&8&8&5& 34.5&25.1$\pm$13&20.1&-\\
 \hline
-CNN & MEDM & 39&38&67&52&56&4&23&83&46&23&11&10&12& 38.1&35.6$\pm$10&16.0&0.006\\ 
+CNN & MEDM & 39&38&67&52&56&4&23&83&46&23&11&10&12& 38.1&35.6$\pm$10&16.0&0.006\\
 & Adapt. & 40&46&70&68&73&11&33&79&44&33&19&23&13&42.9&\textbf{42.4}$\pm$\textbf{12}&14.7&0.007&\\
 \hline
-UNETR & MEDM & 38&39&64&46&60&4&21&80&49&18&9&7&9&38.4&34.2$\pm$11&21.2&0.031\\ 
-& Adapt. & 46&49&66&72&79&17&43&81&47&33&24&29&24& 47.5& \textbf{47.0}$\pm$\textbf{14} &23.3&0.022\\ 
+UNETR & MEDM & 38&39&64&46&60&4&21&80&49&18&9&7&9&38.4&34.2$\pm$11&21.2&0.031\\
+& Adapt. & 46&49&66&72&79&17&43&81&47&33&24&29&24& 47.5& \textbf{47.0}$\pm$\textbf{14} &23.3&0.022\\
 
-\end{tabular}
+\end{tabular}%
+    }
     \label{tab:AbdomenCTCT}
 \end{table}
 
@@ -172,18 +174,20 @@ When employing the learned adaptation layer, better dice scores can be obtained 
 %duodenum /portal and splenic vein
     \centering
         \caption{Registration results for each combination of model and label encoding on the \textbf{AMOS-MR} dataset shown in dice overlap percentages, 95th percentile of Hausdorff distance (HD95) and deformity of registration as the standard deviation of Jacobian determinants (JD, lower is better). We report dice averages over all labels and shared anatomic labels with one training set ($\color{red}{\smblksquare}$,$\color{orange}{\smblksquare}$) separately. Colour Encodings for individual labels are described in Sec. \ref{sec:datasets}. }
-    \begin{tabular}{ll|cc|ccccccccccc|cc|ccc} 
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{ll|cc|ccccccccccc|cc|ccc}
 Model & Enc. & $\color{red}{\smblksquare}$ & $\color{orange}{\smblksquare}$ & $\color{green}{\smblksquare}$ & $\color{blue}{\smblksquare}$ & $\color{cyan}{\smblksquare}$ & $\color{magenta}{\smblksquare}$ & $\color{yellow}{\smblksquare}$ & $\color{brown}{\smblksquare}$ & $\color{lime}{\smblksquare}$ & $\color{pink}{\smblksquare}$ & $\color{purple}{\smblksquare}$ & $\color{teal}{\smblksquare}$ & $\color{gray}{\smblksquare}$& avg(2) & avg(all) & HD95 & JD \\
 \hline
-initial &&21&30&50&52&51&12&8&71&37&38&10&11&20&25.7&31.6$\pm$11 & 19.0& -\\ 
+initial &&21&30&50&52&51&12&8&71&37&38&10&11&20&25.7&31.6$\pm$11 & 19.0& -\\
 \hline
-CNN & MEDM & 34&37&74&69&69&23&15&89&52&42&9&8&27&35.7&42.2$\pm$09 & 15.2 & 0.006\\ 
+CNN & MEDM & 34&37&74&69&69&23&15&89&52&42&9&8&27&35.7&42.2$\pm$09 & 15.2 & 0.006\\
 & Adapt. & 46&54&79&78&75&41&33&88&58&56&19&18&32&49.9&\textbf{52.1}$\pm$\textbf{11}&12.9&0.006\\
 \hline
-UNETR & MEDM & 33&40&69&68&65&16&11&84&50&35&3&8&22& 36.3 & 38.6$\pm$10&21.7&0.032 \\ 
-& Adapt. & 50&56&83&75&81&35&35&84&68&59&19&26&34&53.1&\textbf{54.2}$\pm$\textbf{14}&27.3&0.026\\ 
+UNETR & MEDM & 33&40&69&68&65&16&11&84&50&35&3&8&22& 36.3 & 38.6$\pm$10&21.7&0.032 \\
+& Adapt. & 50&56&83&75&81&35&35&84&68&59&19&26&34&53.1&\textbf{54.2}$\pm$\textbf{14}&27.3&0.026\\
 
-\end{tabular}
+\end{tabular}%
+    }
     \label{tab:AMOS}
 \end{table}
 
