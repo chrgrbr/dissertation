@@ -350,18 +350,20 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
 
 
 
+\FloatBarrier
+
 \begin{table*}
     \centering
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{ccc}
-\begin{minipage}[h]{0.3\textwidth}
+\begin{tabular}{cc}
+\begin{minipage}[t]{0.48\textwidth}
 \scriptsize
+    \centering
 
      \caption{CuRIOUS}
      \label{tab:test_task1}
         \begin{tabular}{c}
         
-        \hspace{-12pt}\includegraphics[height = 6cm]{\tmiPath/figures/CuRIOUS_complete.pdf}\\
+        \includegraphics[height=5cm]{\tmiPath/figures/CuRIOUS_complete.pdf}\\
 		% \includegraphics[height=2cm]{CuRIOUS_fixed.png} &
 		% \includegraphics[height=2cm]{CuRIOUS_moving.png}\\
 		% Fixed (MR) & Moving (US)\\
@@ -392,7 +394,7 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
 
 \end{minipage}
 &
-\begin{minipage}[h]{0.35\textwidth}
+\begin{minipage}[t]{0.48\textwidth}
 \scriptsize
     \centering
 
@@ -400,7 +402,7 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
      \label{tab:test_task2}
         \begin{tabular}{c}
         
-        \hspace{-2pt}\includegraphics[height = 6cm]{\tmiPath/figures/HippocampusMR_complete.pdf}\\
+        \includegraphics[height=5cm]{\tmiPath/figures/HippocampusMR_complete.pdf}\\
 		% \includegraphics[height=2cm]{HippocampusMR_fixed.png} &
 		% \includegraphics[height=2cm]{HippocampusMR_moving.png}\\
 		% Fixed (MR) & Moving (MR)\\
@@ -435,8 +437,8 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
         \end{tabular}
 
 \end{minipage}
-&
-\begin{minipage}[h]{0.3\textwidth}
+\\[1em]
+\begin{minipage}[t]{0.48\textwidth}
 \scriptsize
     \centering
 
@@ -444,7 +446,7 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
      \label{tab:test_task3}
 \begin{tabular}{c}
         
-        \hspace{-12pt}\includegraphics[height = 6cm]{\tmiPath/figures/LungCT_complete.pdf}\\
+        \includegraphics[height=5cm]{\tmiPath/figures/LungCT_complete.pdf}\\
 		% \includegraphics[height=2cm]{LungCT_fixed.png} &
 		% \includegraphics[height=2cm]{LungCT_moving.png}\\
 		% Fixed (CT) & Moving (CT)\\
@@ -474,24 +476,8 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
         \end{tabular}
 
 \end{minipage}
-\end{tabular}%
-}
-\end{table*}
-
-%\begin{figure*}[htp]
-%    \centering
-%    \subfigure{\includegraphics[width=0.4\textwidth]{LaTeX/distribution_performance_plot.pdf}}
-%    \subfigure{\includegraphics[width=0.4\textwidth]{LaTeX/distribution_performance_plot_tre.pdf}}
-%    \caption{Distribution of performances for "Convex" on four tasks with nnU-Net features with respect to Dice score (accuracy, higher=better) and Smoothness (stdJ lower=better) over all explored hyperparameters. Large circles mark task specific optimum based on significance ranking and Squares indicate the overall best setting nn\_mult=2 grid\_sp=3disp\_hw=6 - demonstrating that our ranking approximately finds the optimal point after which diminishing improvements in accuracy lead to undesirable complexity of transformations.   Note that for AbdomenCTCT those choices nearly overlap whereas other tasks can additionally benefit from their specific choice. Furthermore, all results can be substantially improved through the second step: Adam optimisation. }
-%    \label{fig:distribution_performance_plot_label}
-%\end{figure*}
-
-
-\begin{table*}
-\centering
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{ccc}
-\begin{minipage}[t]{0.3\textwidth}
+&
+\begin{minipage}[t]{0.48\textwidth}
 \scriptsize
     \centering
 
@@ -499,7 +485,7 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
      \label{tab:test_task4}
      \begin{tabular}{c}
         
-        \hspace{-6pt}\includegraphics[height = 6cm]{\tmiPath/figures/AbdomenCTCT_complete.pdf}\\
+        \includegraphics[height=5cm]{\tmiPath/figures/AbdomenCTCT_complete.pdf}\\
 		% \includegraphics[height=2cm]{AbdomenCTCT_fixed.png} &
 		% \includegraphics[height=2cm]{AbdomenCTCT_moving.png}\\
 		% Fixed (CT) & Moving (CT)\\
@@ -533,8 +519,22 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
         \bottomrule
         \end{tabular}
 \end{minipage}
-&
-\begin{minipage}[t]{0.35\textwidth}
+\end{tabular}
+\end{table*}
+
+%\begin{figure*}[htp]
+%    \centering
+%    \subfigure{\includegraphics[width=0.4\textwidth]{LaTeX/distribution_performance_plot.pdf}}
+%    \subfigure{\includegraphics[width=0.4\textwidth]{LaTeX/distribution_performance_plot_tre.pdf}}
+%    \caption{Distribution of performances for "Convex" on four tasks with nnU-Net features with respect to Dice score (accuracy, higher=better) and Smoothness (stdJ lower=better) over all explored hyperparameters. Large circles mark task specific optimum based on significance ranking and Squares indicate the overall best setting nn\_mult=2 grid\_sp=3disp\_hw=6 - demonstrating that our ranking approximately finds the optimal point after which diminishing improvements in accuracy lead to undesirable complexity of transformations.   Note that for AbdomenCTCT those choices nearly overlap whereas other tasks can additionally benefit from their specific choice. Furthermore, all results can be substantially improved through the second step: Adam optimisation. }
+%    \label{fig:distribution_performance_plot_label}
+%\end{figure*}
+
+
+\begin{table*}
+\centering
+\begin{tabular}{cc}
+\begin{minipage}[t]{0.48\textwidth}
 \scriptsize
     \centering
 
@@ -542,7 +542,7 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
      \label{tab:test_task5}
 \begin{tabular}{c}
         
-        \hspace{-2pt}\includegraphics[height = 6cm]{\tmiPath/figures/AbdomenMRCT_complete.pdf}\\
+        \includegraphics[height=5cm]{\tmiPath/figures/AbdomenMRCT_complete.pdf}\\
 		% \includegraphics[height=2cm]{AbdomenMRCT_fixed.png} &
 		% \includegraphics[height=2cm]{AbdomenMRCT_moving.png}\\
 		% Fixed (MR) & Moving (CT)\\
@@ -578,7 +578,7 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
 
 \end{minipage}
 &
-\begin{minipage}[t]{0.3\textwidth}
+\begin{minipage}[t]{0.48\textwidth}
 \scriptsize
     \centering
 
@@ -586,7 +586,7 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
      \label{tab:test_task6}
 \begin{tabular}{c}
         
-        \hspace{-9pt}\includegraphics[height = 6cm]{\tmiPath/figures/OASIS_complete.pdf}\\
+        \includegraphics[height=5cm]{\tmiPath/figures/OASIS_complete.pdf}\\
 		% \includegraphics[height=2cm]{OASIS_fixed.png} &
 		% \includegraphics[height=2cm]{OASIS_moving.png}\\
 		% Fixed (MR) & Moving (MR)\\
@@ -621,15 +621,8 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
         \end{tabular}
 
 \end{minipage}
-\end{tabular}%
-}
-\end{table*}
-
-
-
-\begin{table}
-
-\begin{minipage}[t]{0.45\textwidth}
+\\[1em]
+\multicolumn{2}{c}{\begin{minipage}[t]{0.48\textwidth}
 \scriptsize
     \centering
 
@@ -637,7 +630,7 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
      \label{tab:test_task7}
 \begin{tabular}{c}
         
-        \hspace{0pt}\includegraphics[height = 6cm]{\tmiPath/figures/NLST_complete.pdf}\\
+        \includegraphics[height=5cm]{\tmiPath/figures/NLST_complete.pdf}\\
 		% \includegraphics[height=2cm]{NLST_fixed.png} &
 		% \includegraphics[height=2cm]{NLST_moving.png}\\
 		% Fixed (MR) & Moving (MR)\\
@@ -670,8 +663,13 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
         \bottomrule
         \end{tabular}
 
-\end{minipage}
-\end{table}
+\end{minipage}}
+\end{tabular}
+\end{table*}
+
+
+
+
 
 \subsection{Evaluation on test datasets}
 
