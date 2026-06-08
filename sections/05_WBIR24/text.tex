@@ -124,8 +124,9 @@ The 3D version of our model employs a SIREN with 10 layers with 256 channels and
 	\centering
     \caption{ \label{tab:jsrt-results} JSRT Results. We report SSIM, PSNR, and standard deviation of logarithmized Jacobian determinant for Atlas (comparison of warped atlas and image) and Image space (comparison of warped image with the atlas). Target Registration Error (TRE in mm) and Dice scores (DSC) are computed with propagated annotations through source-to-atlas and atlas-to-target transformations. Atlas synthesis methods are divided into forward (f) or backward (b) models. The row "zerofield" describes results without any deformation and utilises the mean shape between data samples as an atlas.}
     \vspace{1ex}
+    \resizebox{\textwidth}{!}{%
     \begin{tabular}{c|c|ccc|ccc|cc}
-        
+
         \toprule
         & & \multicolumn{3}{c|}{\textbf{Atlas space}} & \multicolumn{3}{c|}{\textbf{Image space}} & \multicolumn{2}{c}{\textbf{Atlas as a bridge}} \\
         %\cline{3-9}
@@ -143,7 +144,8 @@ The 3D version of our model employs a SIREN with 10 layers with 256 channels and
         \cline{3-10}
         SINA (ours) & b & \makecell{$\mathbf{0.85}$ \\ $\pm$ $\mathbf{0.05}$} & \makecell{$\mathbf{30.05}$ \\ $\pm$ $\mathbf{2.40}$} & \makecell{$0.49$ \\ $\pm$ $0.48$} & \makecell{$\mathbf{0.89}$ \\ $\pm$ $\mathbf{0.02}$} & \makecell{$\mathbf{28.43}$ \\ $\pm$ $\mathbf{2.87}$} & \makecell{$0.11$ \\ $\pm$ $0.08$} &\makecell{$\mathbf{21.03}$ \\ $\pm$ $\mathbf{8.61}$} & \makecell{$\mathbf{64.60}$ \\ $\pm$ $\mathbf{11.72}$} \\
         \bottomrule
-    \end{tabular}
+    \end{tabular}%
+    }
     
 \end{table}
 
@@ -174,6 +176,7 @@ We further employ the unconditioned atlas generation variant of \textbf{VoxelMor
      \centering 
      \caption{\label{tab:OASIS-results} OASIS Results. We report SSIM, PSNR, and standard deviation of logarithmized Jacobian determinant for Atlas (comparison of warped atlas and image) and Image space (comparison of warped image with the atlas). Dice scores (DSC) are computed with propagated annotations through source-to-atlas and atlas-to-target transformations. Atlas synthesis methods are divided into forward (f) or backward (b) models. The row "zerofield" describes results without any deformation and utilises the mean shape between data samples as an atlas.}
      \vspace{1ex}
+    \resizebox{\textwidth}{!}{%
     \begin{tabular}{c|c|ccc|ccc|c}
         \toprule
         & & \multicolumn{3}{c|}{\textbf{Atlas space}} & \multicolumn{3}{c|}{\textbf{Image space}} & \textbf{Atlas as a bridge} \\
@@ -191,7 +194,8 @@ We further employ the unconditioned atlas generation variant of \textbf{VoxelMor
         \cline{3-9}
         ours & b & \makecell{$\mathbf{0.70}$ \\ $\pm$ $\mathbf{0.04}$} & \makecell{$32.77$ \\ $\pm$ $0.98$} & \makecell{$0.14$ \\ $\pm$ $0.15$} & \makecell{$0.58$ \\ $\pm$ $0.03$} & \makecell{$25.90$ \\ $\pm$ $0.97$} & \makecell{$0.13$ \\ $\pm$ $0.10$} &\makecell{$67.38$ \\ $\pm$ $4.49$}\\
         \bottomrule
-    \end{tabular}
+    \end{tabular}%
+    }
     
 \end{table}
 
