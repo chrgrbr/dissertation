@@ -86,26 +86,28 @@ First, we demonstrate the advantages of our nonlinear and segmentation-based sha
     \caption{Dice scores (DSC) and 95th percentile of Hausdorff-Distances (HD) in mm regarding all investigated scenarios. Results include reconstruction with the mean learned latent code ($k=0$), un-regularised fitting ($k=n=14$) and best-performing $k$-Regularisation per task.}
 
     \label{3633-tab-results}
-    \begin{tabular*}{\textwidth}{c@{\extracolsep\fill}ccccccccccc}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{cccccccccccc}
         \hline
         & \multicolumn{2}{c}{Original} & \multicolumn{3}{c}{Corrupted} & \multicolumn{4}{c}{Incomplete} & & \\
         \hline
         corruption-aware & - & - & \checkmark & $\times$ & $\times$ & \checkmark & \checkmark & $\times$ & $\times$ & & \\
- 
+
         $k$ & 0 ($\boldsymbol{\tilde{z}}=\boldsymbol{\overline{z}}$) & 14 ($\boldsymbol{\tilde{z}}=\boldsymbol{z}$) & 14 & 6 & 14 & 6 & 14 & 2 & 14 & & \\
         \hline
 
         % DICE
-        \multirow[c]{2}{*}{DSC $\uparrow$} 
+        \multirow[c]{2}{*}{DSC $\uparrow$}
         & $65.6$ & $87.8$ & $86.5$ & $77.5$ & $70.6$ & $84.4$ & $88.1$ & $67.4$ & $58.7$ & & \\
         & ${}^{\pm12.0}$ & ${}^{\pm5.6}$ & ${}^{\pm6.7}$ & ${}^{\pm7.5}$ & ${}^{\pm8.3}$ & ${}^{\pm5.7}$ & ${}^{\pm5.6}$ & ${}^{\pm10.5}$ & ${}^{\pm6.1}$ & & \\
 
         % HD95
-        \multirow[c]{2}{*}{HD $\downarrow$} 
+        \multirow[c]{2}{*}{HD $\downarrow$}
         & $9.5$ & $3.6$ & $4.1$ & $7.5$ & $\infty$ & $4.7$ & $4.0$ & $8.9$ & $13.7$ & & \\
         & ${}^{\pm3.1}$ & ${}^{\pm1.6}$ & ${}^{\pm1.9}$ & ${}^{\pm2.4}$ & & ${}^{\pm1.6}$ & ${}^{\pm1.7}$ & ${}^{\pm2.7}$ & ${}^{\pm3.0}$ & & \\
         \hline
-    \end{tabular*}
+    \end{tabular}%
+    }
 \end{table}
 
 We further evaluate the performance of the Statistical Shape Model and regularisation in three scenarios: Fitting (1) original, (2) corrupted and (3) incomplete out-of-training samples. For (2) and (3), we investigate both corruption-agnostic and -aware fitting. For the latter, we assume knowledge over the corrupted area and optimise the latent code with a loss computed for non-corrupted image parts, thus only using uncorrupted and available information.
