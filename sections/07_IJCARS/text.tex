@@ -154,6 +154,7 @@ To assess the theoretical potential of the registration methods without the infl
 \begin{table}[t]
     \caption{Freehand Sweep Registration. We report the mean Directed Surface Distance (DSD) between fixed and warped point clouds, target registration error (TRE*), average symmetric surface distance (ASSD*), and 95th percentile of Hausdorff Distances (HD95*), as well as the translational pose error (E\textsubscript{T}*) and inference runtime. Metrics appended with * refer to evaluation with tracked trajectories. Methods denoted with \textsuperscript{\textdagger} use gradient keypoints in addition to surface keypoints. Significant results (compared to FPT+HR+DiVRoC\textsuperscript{\textdagger}, $p<0.05$) are labelled with \textdaggerdbl, while best results are shown in bold.}
     \label{tab:final}%
+    \resizebox{\textwidth}{!}{%
     \begin{tabular}{lcccccc}
     \toprule
      & DSD  & TRE* & ASSD*  & HD95*  & E\textsubscript{T}*  & Runtime \\
@@ -167,7 +168,8 @@ FPT+HR & $1.64_{\pm 0.40\ddagger}$ & $5.85_{\pm 2.37\ddagger}$ & $1.36_{\pm 0.38
 FPT+HR+Adam & $1.41_{\pm 0.43\ddagger}$ & $7.46_{\pm 2.99\ddagger}$ & $1.37_{\pm 0.43\ddagger}$ & $3.28_{\pm 2.78\ddagger}$ & $8.28_{\pm 3.35\ddagger}$ & 192 \\
 FPT+HR+DiVRoC\textsuperscript{\textdagger} & $\mathbf{1.29_{\pm 0.38}}$ & $\mathbf{5.20_{\pm 2.15}}$ & $\mathbf{1.13_{\pm 0.21}}$ & $\mathbf{2.59_{\pm 0.80}}$ & $\mathbf{6.14_{\pm 2.66}}$ & 880 \\
     \bottomrule
-    \end{tabular}
+    \end{tabular}%
+    }
 \end{table}
 
 \begin{figure}
