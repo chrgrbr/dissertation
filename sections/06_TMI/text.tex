@@ -203,7 +203,8 @@ We apply our proposed automatic hyperparameter selection to the validation cases
 \centering
 \caption{Comparison of results and hyperparameters on the Learn2Reg validation datasets. Similarity of the aligned images is measured by target registration error (TRE) in mm or Dice score in \% of segmentation labels (DSC). Smoothness of the deformation field is indicated by the standard deviation of the logarithmic Jacobian determinant (SDLogJ).}
 \label{tab:valresults}
-\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} lr|c|c|c|c|c|c|c}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lr|c|c|c|c|c|c|c}
 \toprule
 & \multicolumn{1}{c}{}& \multicolumn{1}{c}{\rule{0pt}{50pt}\tabrotate{\textbf{CuRIOUS}}} & \multicolumn{1}{c}{\tabrotate{\textbf{HippocampusMR}}}& \multicolumn{1}{c}{\tabrotate{\textbf{LungCT}}}& 
 \multicolumn{1}{c}{\tabrotate{\textbf{AbdomenCTCT}}}& \multicolumn{1}{c}{\tabrotate{\textbf{AbdomenMRCT}}}& 
@@ -321,7 +322,8 @@ We apply our proposed automatic hyperparameter selection to the validation cases
 %& $iters\_smooth$ & 5 & 3 & 5 & / & / & 3 & 5 \\
 
 \bottomrule
-\end{tabular*}
+\end{tabular}%
+}
 \end{table*}
 
 \begin{figure*}
@@ -350,6 +352,7 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
 
 \begin{table*}
     \centering
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{ccc}
 \begin{minipage}[h]{0.3\textwidth}
 \scriptsize
@@ -471,7 +474,8 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
         \end{tabular}
 
 \end{minipage}
-\end{tabular}
+\end{tabular}%
+}
 \end{table*}
 
 %\begin{figure*}[htp]
@@ -485,6 +489,7 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
 
 \begin{table*}
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{ccc}
 \begin{minipage}[t]{0.3\textwidth}
 \scriptsize
@@ -616,7 +621,8 @@ The runtime of the hyperparameter selection process is approximately 30 minutes 
         \end{tabular}
 
 \end{minipage}
-\end{tabular}
+\end{tabular}%
+}
 \end{table*}
 
 
