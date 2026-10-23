@@ -1,0 +1,32 @@
+% INR icon: coordinate (x,y,z) -> small MLP -> smooth CONTINUOUS field (raster from real liver).
+% Consumes thumb_field.png. Distinct from latent: the network IS the representation; output is a field.
+\newcommand{\iconINR}{%
+  % input coordinate as a column vector
+  \node[font=\tiny, anchor=east] at (-0.50,0) {$\begin{bmatrix} x\\ y\\ z\end{bmatrix}$};
+  \draw[-{Latex[length=1mm]}] (-0.46,0) -- (-0.40,0);
+  % small MLP node-graph (2 -> 3 -> 1): draw edges first (behind nodes)
+  % edges: input layer to hidden layer
+  \draw[gray,very thin] (-0.32, 0.14) -- (-0.05, 0.22);
+  \draw[gray,very thin] (-0.32, 0.14) -- (-0.05, 0.00);
+  \draw[gray,very thin] (-0.32, 0.14) -- (-0.05,-0.22);
+  \draw[gray,very thin] (-0.32,-0.14) -- (-0.05, 0.22);
+  \draw[gray,very thin] (-0.32,-0.14) -- (-0.05, 0.00);
+  \draw[gray,very thin] (-0.32,-0.14) -- (-0.05,-0.22);
+  % edges: hidden layer to output
+  \draw[gray,very thin] (-0.05, 0.22) -- (0.20,0);
+  \draw[gray,very thin] (-0.05, 0.00) -- (0.20,0);
+  \draw[gray,very thin] (-0.05,-0.22) -- (0.20,0);
+  % input layer nodes (2)
+  \node[circle,draw,inner sep=0.6pt,scale=0.5,fill=white] at (-0.32, 0.14) {};
+  \node[circle,draw,inner sep=0.6pt,scale=0.5,fill=white] at (-0.32,-0.14) {};
+  % hidden layer nodes (3)
+  \node[circle,draw,inner sep=0.6pt,scale=0.5,fill=white] at (-0.05, 0.22) {};
+  \node[circle,draw,inner sep=0.6pt,scale=0.5,fill=white] at (-0.05, 0.00) {};
+  \node[circle,draw,inner sep=0.6pt,scale=0.5,fill=white] at (-0.05,-0.22) {};
+  % output node (1)
+  \node[circle,draw,inner sep=0.6pt,scale=0.5,fill=white] at (0.20,0) {};
+  % arrow to output image
+  \draw[-{Latex[length=1mm]}] (0.30,0) -- (0.44,0);
+  % continuous field output (real liver, soft-edged)
+  \node[anchor=west, inner sep=0] at (0.48,0) {\includegraphics[width=0.40cm]{thumb_field.png}};
+}

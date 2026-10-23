@@ -1,0 +1,15 @@
+% Shared assets for the learned-row icons (SSM, latent code, INR), redesigned as a parallel
+% "code -> decoder -> liver" triptych. Every icon ends in the SAME lavender liver used by the
+% geometric-row renders, so all eight tiles read as the same organ.
+% Requires: \liveroutline (\input shared/liver_outline) and tikz libs arrows.meta, shadings.
+\definecolor{liverfill}{HTML}{BCD0E6}   % FACE tone of the 3D renders
+\definecolor{liveredge}{HTML}{3B6EA5}   % ACCENT/edge tone
+% flat lavender liver (matches the geometric-row look)
+\newcommand{\liverglyph}{\fill[liverfill] \liveroutline; \draw[liveredge, thin] \liveroutline;}
+% continuous-field liver (soft radial gradient) -- signals the INR's continuous output
+\newcommand{\liverfield}{%
+  \begin{scope}
+    \clip \liveroutline;
+    \shade[inner color=liverfill!35, outer color=liveredge!60] (-0.7,-0.6) rectangle (0.7,0.6);
+  \end{scope}
+  \draw[liveredge, thin] \liveroutline;}

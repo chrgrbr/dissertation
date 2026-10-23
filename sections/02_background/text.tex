@@ -1,8 +1,444 @@
 % 22 pages
-This chapter will lay foundations...
+This chapter assembles the background the thesis draws on, in four steps that narrow from general machinery to the specific intersection the later chapters work in.
 
-\section{The role of shapes in Medical Image Analysis} %7 pages
+\secref{sec:bg-dl} covers the learning methods used throughout: convolutional and attention-based architectures, implicit neural representations, and operators that act on unordered point sets. \secref{sec:bg-registration} states the registration problem and its components, the transformation model, the dissimilarity metric, the regulariser, and the optimiser, together with how registration results are evaluated and why no single metric suffices. \secref{sec:bg-shapes} turns to the central object of the thesis, the shape of anatomy, and sets out a taxonomy of the representations used to encode it. \secref{sec:bg-shape-uses} then brings the two together, surveying the ways shape information is incorporated into registration methods, ordered by how much a method depends on it.
 
-\section{Implcit Neural Representations}
+Readers familiar with deep learning may wish to begin at \secref{sec:bg-registration}.
+
+\section{Methodological Background: Deep Learning}
+\label{sec:bg-dl}
+
+\subsection{Neural networks and convolutional architectures}
+\begin{itemize}
+\item A neural network is a parameterised function $f_\theta$ whose parameters are chosen by minimising a loss over data rather than designed by hand. An extensive treatment is given by \citet{goodfellow2016deep}.
+\item The basic construction is the multilayer perceptron: an alternating composition of affine maps and elementwise non-linearities, $f_\theta(x) = W_L \sigma(\dots \sigma(W_1 x + b_1) \dots) + b_L$, with weights and biases collected in $\theta$. Without the non-linearity $\sigma$ the composition would collapse to a single affine map, so the choice of $\sigma$ determines what the network can represent.
+\item Training minimises an objective over a dataset by gradient descent, following the update rule given in \secref{sec:bg-registration-optimisation}, with the gradients $\nabla_\theta$ obtained by backpropagation, that is, by applying the chain rule backwards through the composition \citep{rumelhart1986learning}.
+\item For data on a regular grid, convolutional networks replace the dense affine map with a small kernel applied at every position \citep{lecun1989backpropagation}. Two properties follow. Connections are sparse, since the kernel is smaller than the input, so far fewer parameters are needed than for a fully connected layer. And the same kernel is reused at every position, which both reduces the parameter count further and makes the response equivariant to translation.
+\item A convolutional layer typically combines several convolutions in parallel, an elementwise non-linearity such as the rectified linear unit, and a downsampling step. Downsampling by pooling or by strided convolution enlarges the receptive field, so that deeper layers respond to progressively larger regions of the input and can capture context rather than only local structure.
+\item Dense prediction tasks, in which an output is required at every position, are commonly built on an encoder-decoder architecture. The encoder compresses the input through repeated convolution and downsampling into a low-resolution representation carrying global context; the decoder restores spatial resolution through convolution and upsampling. Skip connections pass high-resolution detail from encoder to decoder directly, which is the arrangement of the U-Net \citep{ronneberger2015unet} and the basis of most learning-based registration architectures, including those compared in \chapref{chap:MIUA24}.
+\item Attention layers offer an alternative to the fixed locality of a convolution, weighting all positions against one another according to a learned similarity rather than a fixed neighbourhood \citep{vaswani2017attention}; the transformer-based registration architecture evaluated in \chapref{chap:MIUA24} is built from these.
+\end{itemize}
+
+\subsection{Implicit neural representations}
+\label{sec:bg-inr}
+\begin{itemize}
+\item An implicit neural representation stores a signal in the weights $\theta$ of a network $f_\theta : \mathbb{R}^d \to \mathbb{R}^c$ mapping a coordinate to a field value, so the signal \emph{is} the parameters rather than a table of samples. Memory therefore scales with the complexity of the signal rather than with the sampling resolution of the domain.
+\item The field can be queried at any coordinate, so the representation is continuous and resolution-free, and it is differentiable in $x$ as well as in $\theta$, which makes spatial derivatives available analytically rather than by finite differences.
+\item What is stored depends only on the codomain: an occupancy \citep{mescheder2019occupancy}, a signed distance whose zero level set is the surface \citep{park2019deepsdf}, an intensity or radiance \citep{mildenhall2021nerf}, or a displacement, which is the form used in registration \citep{pmlr-v172-wolterink22a}.
+\item A plain multilayer perceptron on raw coordinates is biased towards low frequencies and cannot fit fine detail. Positional encoding lifts the coordinate into a higher-frequency basis before the network sees it \citep{tancik2020fourier, mildenhall2021nerf}, periodic activations achieve the same inside the network \citep{sitzmann2020siren}, and multi-resolution hash encodings make fitting fast enough to be practical \citep{muller2022instant}. Encoding bandwidth is a genuine hyperparameter: introducing high frequencies too early creates spurious local minima when a representation is optimised jointly with a transformation, which coarse-to-fine schedules address \citep{lin2021barf}.
+\item A single such network encodes a single instance. Representing a population requires conditioning, most commonly by pairing a shared decoder $f_\theta(z, x)$ with a per-instance latent code $z$; during training both are optimised, and at test time $\theta$ is frozen and only $z$ is fitted \citep{park2019deepsdf}. The resulting latent space is a learned, non-linear counterpart to the modes of a statistical shape model (\secref{sec:bg-shapes}), and it requires no landmark correspondence.
+\item Fitting is therefore either amortised over a population or performed per instance, and registration methods built on these representations are typically of the latter kind, which places them closer to classical iterative registration than to feed-forward prediction. Both constructions are used in this thesis, in \chapref{chap:BVM25} and \chapref{chap:WBIR24}.
+\item The trade is continuity, compactness, analytic derivatives, and freedom from a fixed grid, against the cost of an optimisation at inference, no generalisation without conditioning, and no explicit surface, since any use requiring points or a mesh must extract them by sampling.
+\end{itemize}
+
+\subsection{Operators for point clouds}
+\begin{itemize}
+\item A point cloud has no grid and no canonical ordering, so a convolution cannot be applied to it and any network consuming one must be invariant to permutation of its points.
+\item The standard construction applies a shared multilayer perceptron to each point independently and then aggregates with a symmetric function such as a maximum, which is permutation-invariant by design and yields a global descriptor \citep{qi2017pointnet}. Local structure is recovered by building a neighbourhood graph over the points and applying the same idea within neighbourhoods, so that features depend on relative positions rather than absolute ones \citep{wang2019dgcnn}.
+\item Displacement can be estimated per point in the same framework, by correlating features between two clouds and regressing a flow \citep{wu2020pointpwc}, which is the point-cloud analogue of the dense correspondence estimated on a grid.
+\item These operators are what make registration possible without an image at all, and they are used in \chapref{chap:IJCARS}.
+\end{itemize}
 
 \section{Medical Image Registration}
+\label{sec:bg-registration}
+
+\subsection{Problem statement}
+\begin{itemize}
+\item Pairwise registration seeks a spatial correspondence between a fixed image $I_F$ and a moving image $I_M$, both defined on a domain $\Omega \subset \mathbb{R}^d$ with $d \in \{2,3\}$ \citep{sotiras2013deformable}.
+\item The correspondence is a transformation $\varphi$ chosen from an admissible space $\mathcal{T}$ by minimising an objective, $\hat{\varphi} = \arg\min_{\varphi \in \mathcal{T}} E(I_F, I_M, \varphi)$.
+\item The objective splits into a dissimilarity term and a regulariser weighted by $\lambda$: $E(I_F, I_M, \varphi) = D(I_F, I_M \circ \varphi) + \lambda R(\varphi)$.
+\item The problem is ill-posed: a dense transformation carries $d\,|\Omega|$ degrees of freedom against $|\Omega|$ intensity constraints, so $R$ is constitutive rather than optional.
+\item A registration method is therefore specified by four choices: transformation model, dissimilarity metric, regulariser, and optimiser \citep{sotiras2013deformable}; a fifth choice, the evaluation metric, decides what counts as success.
+\end{itemize}
+
+\subsection{Transformation models}
+\begin{itemize}
+\item \textbf{Linear (global).} In homogeneous coordinates $\varphi(x) = Ax$ with $A \in \mathbb{R}^{4\times4}$. Rigid transformations have six degrees of freedom in 3D (three rotations, three translations) and preserve Euclidean distances; affine transformations have twelve, adding scaling and shearing, and preserve lines and parallelism but not distances.
+\item Linear registration is normally an initialisation stage that conditions the subsequent deformable optimisation rather than an end in itself.
+\item \textbf{Non-linear, parametric.} Free-form deformations place a B-spline control-point grid over the image, so the degrees of freedom are the control points and thus far fewer than $|\Omega|$ \citep{rueckert1999nonrigid}. Smoothness comes from the basis functions rather than from an explicit penalty.
+\item \textbf{Non-linear, non-parametric.} A dense displacement field gives $\varphi(x) = x + u(x)$ with $u : \Omega \to \mathbb{R}^d$, the most expressive model and the one requiring the strongest regularisation.
+\item \textbf{Diffeomorphic models} constrain $\varphi$ to be smooth, invertible, and topology-preserving, typically by integrating a stationary or time-varying velocity field \citep{chen2025survey}.
+\item \textbf{Warping.} Backward mapping $\varphi : \Omega_F \to \Omega_M$ is standard because it produces no holes; forward mapping scatters intensities onto non-grid positions and needs scattered-data interpolation.
+\item Resampling requires interpolation (nearest neighbour, linear, spline); learning-based methods additionally require it to be differentiable, which is what the spatial transformer provides \citep{jaderberg2015spatial}.
+\end{itemize}
+
+\subsection{Dissimilarity metrics}
+\begin{itemize}
+\item \textbf{SSD} assumes an identity relation between intensities: $D_{\mathrm{SSD}} = \sum_{x \in \Omega} \big(I_F(x) - I_M(\varphi(x))\big)^2$, with MSE the same quantity averaged over $|\Omega|$. Monomodal only.
+\item \textbf{NCC} assumes a linear intensity relation and is therefore robust to brightness and gain differences; it may be evaluated globally or in local windows.
+\item \textbf{Mutual information} assumes only a statistical relation, $D_{\mathrm{MI}} = H(I_F) + H(I_M \circ \varphi) - H(I_F, I_M \circ \varphi)$ with $H$ the (joint) entropy, and is the classical choice for multimodal data.
+\item \textbf{MIND} sidesteps the intensity relation entirely by describing each voxel through its local self-similarities, $\mathrm{MIND}(I, x, r) \propto \exp\!\big(-D_p(I, x, x+r) / \mathrm{Var}(I,x)\big)$ over a search region $r \in R$ \citep{heinrich2012mind}, and is used with self-similarity context for greater robustness \citep{heinrich2013towards}.
+\item Descriptors convert a multimodal problem into a monomodal one in feature space, so the dissimilarity applied on top can remain SSD.
+\item \textbf{Shape- and label-derived terms} replace or supplement intensity agreement with agreement of anatomy: overlap losses on segmentations, distances between surfaces, or correspondence of keypoints. These are the terms this thesis builds on, and they are what make registration transferable across modality boundaries.
+\end{itemize}
+
+\subsection{Regularisation}
+\begin{itemize}
+\item \textbf{Diffusion} penalises first derivatives, $R_{\mathrm{diff}}(\varphi) = \tfrac{1}{|\Omega|}\sum_{x \in \Omega} \sum_{i=1}^{d} \lVert \nabla \varphi_i(x) \rVert_2^2$, and yields locally smooth fields.
+\item \textbf{Bending energy} and \textbf{total variation} act on second derivatives; bending energy penalises curvature, total variation admits piecewise-smooth fields with discontinuities.
+\item \textbf{Curvature} regularisation is invariant to linear transformations, so it does not penalise a global rotation or scaling that is already correct.
+\item \textbf{Jacobian-based} penalties act on $\det(J_\varphi)$ to discourage folding and volume change, and thus to encourage topology preservation.
+\item The weight $\lambda$ trades accuracy against plausibility and is typically the single most influential hyperparameter, which is one reason per-task tuning dominates practice (\chapref{chap:TMI}).
+\end{itemize}
+
+\subsection{Optimisation}
+\label{sec:bg-registration-optimisation}
+\begin{itemize}
+\item \textbf{Discrete} optimisers (graph-based methods, message passing, linear programming) quantise the displacement space into a label set, which makes large displacements reachable and the solution less dependent on initialisation, at the cost of quantised accuracy.
+\item \textbf{Continuous} optimisers (gradient descent, conjugate gradient, quasi-Newton, Adam) require a differentiable objective and follow $\theta_{t+1} = \theta_t - \alpha_t \nabla_{\theta} E(\theta_t)$; they refine precisely but converge locally.
+\item The two are complementary, and coupling a discrete stage for capture range with a continuous stage for precision is the pattern used in \chapref{chap:TMI}.
+\item \textbf{Instance optimisation} solves the objective separately for each image pair at test time, recovering the accuracy of classical methods while retaining learned features.
+\end{itemize}
+
+\subsection{Learning-based registration}
+\begin{itemize}
+\item The learning formulation amortises the optimisation: a network $g_\theta(I_F, I_M) \mapsto u$ is trained once over a population and predicts a displacement field in a single forward pass \citep{balakrishnan2019voxelmorph}, moving cost from inference to training.
+\item \textbf{Supervised} training regresses onto reference deformation fields, which for real data are rarely available and are therefore usually synthetic.
+\item \textbf{Unsupervised} training optimises the same $E$ as classical registration, made differentiable end-to-end by warping with a spatial transformer \citep{jaderberg2015spatial}; the loss is the classical objective, only the optimisation is amortised.
+\item \textbf{Weakly supervised} training adds anatomical labels to the loss, which is the most common route by which shape information enters a registration method \citep{chen2025survey}.
+\item Architectural developments include pyramid and progressive schemes, correlation layers, transformers, diffusion models, and neural ODEs \citep{chen2025survey}.
+\item \textbf{Implicit neural representations} parameterise the transformation itself as a coordinate network $\psi : x \mapsto \varphi(x)$, giving a continuous and compact field; because the input is only the coordinate grid, such models are optimised per image pair rather than amortised over a population \citep{chen2025survey}, which places them closer to classical registration than to feed-forward prediction (\chapref{chap:BVM25}, \chapref{chap:WBIR24}).
+\item \textbf{Anatomy-aware networks} take label maps as network input rather than using them only in the loss \citep{chen2025survey}, which is the design this thesis generalises from labels to shape representations.
+\end{itemize}
+
+\subsection{Evaluation}
+\label{sec:bg-registration-evaluation}
+\begin{itemize}
+\item Dense ground-truth correspondence does not exist for real deformations, because homogeneous regions are genuinely ambiguous; direct comparison of deformation fields is possible only for synthetic deformations.
+\item \textbf{Target registration error} on $N$ annotated landmarks, $\mathrm{TRE} = \tfrac{1}{N}\sum_{k=1}^{N} \lVert L_F^k - L_M^k(\varphi) \rVert_2$, is the closest thing to a gold standard, but landmarks are sparse, are placed at salient intensity features, and therefore systematically ignore the homogeneous regions where registration is hardest \citep{chen2025survey}.
+\item \textbf{Overlap} of propagated segmentations, $\mathrm{Dice} = \tfrac{1}{N}\sum_{k=1}^{N} 2\sum_{x} S_F^k S_M^k(\varphi) \,/\, \big(\sum_{x} S_F^k + \sum_{x} S_M^k(\varphi)\big)$, is cheap and widely reported.
+\item Overlap and intensity surrogates are nevertheless unreliable on their own: reordering voxels by intensity rank, with no geometric constraint whatsoever, outperforms state-of-the-art registration on most surrogate measures, and only sufficiently local labels retain discriminative power \citep{rohlfing2011image}.
+\item \textbf{Surface distances} (Hausdorff distance, its 95th percentile HD95, mean minimum distance) measure boundary agreement, and remain sensitive where overlap saturates: for a large structure, Dice is dominated by the interior and is nearly blind to a boundary error of several millimetres.
+\item \textbf{Regularity} is reported alongside accuracy, typically as the fraction of voxels with $\det(J_\varphi) \leq 0$ or the standard deviation of $\log \det(J_\varphi)$; accuracy without a regularity measure is not interpretable, since folding fields can score well on overlap.
+\item Point- and surface-based metrics matter particularly for shape-informed registration, because they assess correspondence of geometry rather than agreement of masses.
+\item They also guard against circularity: a method that consumes segmentations as input must not be validated solely on segmentation overlap, which that input trivially optimises. Reporting TRE or surface distance alongside Dice is what keeps the evaluation independent of the supervision.
+\item Because problems, acquisition scenarios, and the techniques developed for them are so diverse, results reported on one task and one set of metrics are difficult to compare against results reported on another. Unifying challenges that fix the data, the metrics, and the evaluation protocol are therefore important to the field, and the Learn2Reg challenge \citep{hering2022learn2reg} serves that role for medical image registration.
+\end{itemize}
+
+\subsection{Towards universal registration}
+\begin{itemize}
+\item Registration tasks vary along axes that no single configuration spans: modality and contrast, intra- or inter-patient, deformation magnitude, and whether topology is preserved at all (resection, disease progression).
+\item No dissimilarity metric is appropriate across all of them, which is why feature descriptors and learned features are attractive: they move the modality problem out of the metric and into the representation.
+\item Performance is strongly hyperparameter-dependent, above all in $\lambda$, grid spacing, and search radius, so a method that is state of the art on one task after tuning may be mediocre on another with the same settings.
+\item A method that is compared only on the task it was tuned for therefore tells one very little, which is what makes the multi-task benchmarks noted above the practical reference point.
+\item Two responses follow: automate the configuration for each task (\chapref{chap:TMI}), or seek representations general enough that configuration matters less, which is the direction this thesis pursues through shape.
+\end{itemize}
+
+\section{Shapes in Medical Image Analysis} %7 pages
+\label{sec:bg-shapes}
+
+% Bullet outline; the full prose draft is in drafts/shapes_prose.tex.
+\begin{itemize}
+    \item Many shape representations in use: binary masks, point clouds, meshes, distance fields, SSMs, latent codes, neural implicit fields \citep{heimann2009statistical, ambellan2019statistical}.
+    \item Literature tends to treat them as separate worlds; here: most are the same kind of object, differing in a few shared choices (what is queried, what comes back, how geometry is read off).
+    \item Goal: classification, not a survey. Enough structure to say how, e.g., a voxel mask and a network encoding the same organ are related.
+\end{itemize}
+
+\subsection{Representation as a queryable map}
+\label{sec:shape-frame}
+
+\begin{itemize}
+    \item Fix one object: shape as solid region $S \subset \mathbb{R}^3$, boundary surface $\partial S$. Ground truth; everything below encodes one of them.
+    \item Shape representation = pair $(f, \mathcal{R})$:
+    \begin{itemize}
+        \item queryable map $f : \Omega \to \mathcal{C}$, with query domain $\Omega$ (what one may ask about) and codomain $\mathcal{C}$ (what comes back);
+        \item recovery operator $\mathcal{R}$: fixed rule that reads $S$ or $\partial S$ off $f$.
+    \end{itemize}
+    \item Representations differ almost only in these three slots. Agreement on all three = same representation, stored differently (structural kinship).
+    \item Two recovery modes cover essentially all cases; the explicit/implicit distinction rests on them.
+\end{itemize}
+
+\paragraph{Image recovery (explicit).}
+\begin{itemize}
+    \item Stored values are points or samples of the shape; $\mathcal{C} = \mathbb{R}^3$; geometry = image of $f$, possibly after reconstruction.
+    \item Definition: values lie \emph{on} $\partial S$, not that $S = f(\Omega)$. The stronger claim holds for meshes, not for sparse landmarks or boundary samples (need labelling or reconstruction).
+\end{itemize}
+
+\paragraph{Level-set recovery (implicit).}
+\begin{itemize}
+    \item $\Omega \subseteq \mathbb{R}^3$; $f$ returns a scalar tested against threshold $\tau$. Shape not stored; it is a sub- or superlevel set, boundary $\partial S = f^{-1}(\tau)$.
+    \item Exact only under mild regularity (non-vanishing gradient, no flat patch at $\tau$); state once.
+    \item Sign convention must be stated per field: SDF negative inside $\Rightarrow$ solid $\{d \le 0\}$; occupancy/mask $\approx 1$ inside $\Rightarrow$ solid $\{f \ge \tau\}$. Mixing them up inverts the shape.
+\end{itemize}
+
+\paragraph{Classification, not distance.}
+\begin{itemize}
+    \item The view is taxonomic: says what a representation is and how it relates to others, but gives no distance.
+    \item Distance needs a recovered, comparable object; the object dictates the metric:
+    \begin{itemize}
+        \item set $\Rightarrow$ overlap (Dice) and boundary distances (symmetric Hausdorff);
+        \item measure $\Rightarrow$ optimal transport (Wasserstein), KL; robust to blur and partial mass.
+    \end{itemize}
+    \item Taxonomy = organising spine; metrics come downstream.
+\end{itemize}
+
+\subsection{The representations}
+\label{sec:shape-reps}
+
+\begin{itemize}
+    \item Walk through the canonical representations, each in its standard form, each with a margin icon.
+    \item Per representation: what is stored, $\Omega$, $\mathcal{C}$, $\mathcal{R}$, an intuition, and the most common caveat.
+\end{itemize}
+
+\repicon{05_binary_mask.png}%
+\paragraph{1.~Binary / voxel mask.}
+\begin{itemize}
+    \item Segmentation as labelled raster \citep{isensee2021nnunet}; domain is a finite grid $G \subset \mathbb{Z}^3$, $f : G \to \{0,1\}$ (or $[0,1]$ for soft masks).
+    \item Recovery by threshold: $S \approx \{x : f(x) \ge \tfrac12\}$.
+    \item Intuition: the organ painted onto a grid.
+    \item Caveat: implicit by our recovery test, but neural-field literature calls voxel grids explicit and discrete. Classify as implicit-by-recovery, flag the tension.
+\end{itemize}
+
+\repicon{01_landmarks.png}%
+\paragraph{2.~Landmarks / keypoints.}
+\begin{itemize}
+    \item Small set of labelled points, each naming an anatomical location: $\Omega = \{1,\dots,m\}$, $f : \Omega \to \mathbb{R}^3$ \citep{cootes1995active}.
+    \item Explicit: values are points on or near $\partial S$.
+    \item Intuition: named anatomical dots.
+    \item Caveat: sparse sample, does not determine the shape; value lies in correspondence across shapes via the labels.
+\end{itemize}
+
+\repicon{02_point_cloud.png}%
+\paragraph{3.~Point cloud.}
+\begin{itemize}
+    \item Same slots as landmarks, but unordered and unlabelled: no correspondence between shapes \citep{qi2017pointnet, wang2019dgcnn}.
+    \item Explicit: sample of $\partial S$; solid needs surface reconstruction \citep{kazhdan2006poisson}.
+    \item Intuition: scatter of surface hits (depth sensor, surface voxels of a segmentation).
+    \item Only formal difference to landmarks: missing labels. Makes point clouds cheap and abundant, but harder to compare.
+\end{itemize}
+
+\repicon{03_mesh.png}%
+\paragraph{4.~Mesh / surface.}
+\begin{itemize}
+    \item Stores discrete vertices $V \subset \mathbb{R}^3$ and faces $F$; linear interpolation realises a continuous piecewise-flat surface \citep{lorensen1987marching}.
+    \item Explicit: interpolated triangles are $\partial S$.
+    \item Intuition: triangulated skin over the organ.
+    \item Caveat: bounds a solid only if watertight (closed, oriented, no self-intersections). Anatomical meshes often are not; open surfaces (cortical sheet, valve leaflet) bound none.
+    \item Lesson: stored vs.\ realised; discrete data, continuous geometry, bridged by interpolation.
+\end{itemize}
+
+\repicon{04_sdf.png}%
+\paragraph{5.~Distance function (SDF and UDF).}
+\begin{itemize}
+    \item Store distance to the surface at every point. SDF $d : \mathbb{R}^3 \to \mathbb{R}$, negative inside; solid $\{d \le 0\}$, surface $\{d = 0\}$ \citep{osher1988fronts, park2019deepsdf}.
+    \item Intuition: how far to the surface, and on which side.
+    \item Same region as a mask, but a smooth field: convenient for gradient-based optimisation.
+    \item An exact SDF adds no information beyond $S$; payoff is computational. Only learned/approximate SDFs carry new information.
+    \item $|\nabla d| = 1$ away from the surface, except on the skeleton (ambiguous nearest point).
+    \item UDF $u(x) = \operatorname{dist}(x, \partial S)$ drops the sign: handles open surfaces, but no threshold brackets the surface, so extraction is harder \citep{chibane2020ndf}.
+\end{itemize}
+
+\repicon{06_ssm.png}%
+\paragraph{6.~Statistical shape model (point-distribution form).}
+\begin{itemize}
+    \item Represents a population; each member as $n$ corresponding points \citep{cootes1995active, heimann2009statistical}.
+    \item $s = \bar{s} + \Phi b$: mean $\bar{s}$, variation modes $\Phi$ (leading PCA directions), short coefficient vector $b$.
+    \item Gaussian on $b$ $\Rightarrow$ prior over plausible anatomy \citep{ambellan2019statistical}.
+    \item Explicit: fixing $b$ yields landmarks.
+    \item Carry forward: compact shape-specific code $b$ vs.\ shared generator $(\bar{s}, \Phi)$; the latent code repeats this structure.
+    \item Caveat: classical point-distribution form; SSMs on distance fields are implicit.
+\end{itemize}
+
+\repicon{07_latent_code.png}%
+\paragraph{7.~Latent code / embedding.}
+\begin{itemize}
+    \item A code $z \in \mathbb{R}^d$ alone represents nothing; no rule back to geometry.
+    \item Shape = pair $(z, D_\theta)$ with learned decoder; geometry via the field $D_\theta(z,\cdot)$, classified by that field's recovery mode (usually implicit: occupancy or SDF) \citep{park2019deepsdf, mescheder2019occupancy}.
+    \item Mirrors the SSM: $z \leftrightarrow b$, $D_\theta \leftrightarrow (\bar{s}, \Phi)$. SSM generator linear and explicit; decoder nonlinear and implicit.
+    \item Intuition: $z$ is the compressed address, the decoder the dictionary.
+\end{itemize}
+
+\repicon{08_inr.png}%
+\paragraph{8.~Implicit neural representation (INR).}
+\begin{itemize}
+    \item Shape stored in weights $\theta$ of a small network $f_\theta : \mathbb{R}^3 \to \mathbb{R}$ (occupancy or signed distance) \citep{mescheder2019occupancy, park2019deepsdf, sitzmann2020siren}.
+    \item Level-set recovery, as for the SDF.
+    \item Intuition: a network learns the field instead of tabulating it; evaluable anywhere, at any resolution.
+    \item Same $\mathcal{C}$ and $\mathcal{R}$ as a voxel SDF; differs only in storage (weights vs.\ grid) and continuity. Structurally a continuously stored SDF.
+\end{itemize}
+
+\repicon{09_deformation.png}%
+\paragraph{9.~Deformation field / diffeomorphism of a template.}
+\begin{itemize}
+    \item Special to registration: shape as deformation of a reference. Template/atlas $S_0$ warped by $\varphi : \mathbb{R}^3 \to \mathbb{R}^3$ (often a diffeomorphism), $S = \varphi(S_0)$ \citep{beg2005lddmm, balakrishnan2019voxelmorph}.
+    \item Query and answer are both ambient points.
+    \item Explicit: apply $\varphi$ to the template (or warp a stored field by composition).
+    \item Intuition: describe how to bend a known organ into this one.
+    \item Registration thereby turns comparing shapes into comparing deformations.
+\end{itemize}
+
+\begin{itemize}
+    \item Set aside: SPHARM parametrisations of closed surfaces \citep{styner2006framework}; medial/$s$-rep representations (skeleton + thickness) \citep{pizer2003deformable}. Relevant, but not needed later.
+\end{itemize}
+
+\begin{table}[htbp]
+    \centering
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabularx}{\textwidth}{@{}l l l l X l l l@{}}
+        \toprule
+        Representation & $\Omega$ & $\mathcal{C}$ & Stored object & Recovery $\mathcal{R}$ & E/I & G/L & D/C \\
+        \midrule
+        Binary / voxel mask
+            & $G \subset \mathbb{Z}^3$ & $\{0,1\}$ & occupancy raster
+            & superlevel set $\{f \ge \tfrac12\}$ & I\textsuperscript{a} & G & D \\
+        Landmarks / keypoints
+            & $\{1,\dots,m\}$ & $\mathbb{R}^3$ & labelled points
+            & read coordinates (sparse) & E & G & D \\
+        Point cloud
+            & $\mathbb{R}^{3n}/\mathfrak{S}_n$ & $\mathbb{R}^3$ & unlabelled points
+            & sample of $\partial S$; reconstruct $S$ & E & G & D \\
+        Mesh / surface
+            & $|K|$ (realized) & $\mathbb{R}^3$ & vertices $V$, faces $F$
+            & image $\varphi(|K|)$ & E & G & D\textsuperscript{b} \\
+        Distance function (SDF)
+            & $\mathbb{R}^3$ & $\mathbb{R}$ & scalar field $d$
+            & sublevel set $\{d \le 0\}$ & I & G & C\textsuperscript{c} \\
+        Distance function (UDF)
+            & $\mathbb{R}^3$ & $\mathbb{R}_{\ge 0}$ & scalar field $u$
+            & zero set $\{u=0\}$ (no interior) & I & G & C\textsuperscript{c} \\
+        Statistical shape model
+            & $\{1,\dots,n\}\!\times\!\mathbb{R}^k$ & $\mathbb{R}^3$ & $\bar{s}, \Phi$; measure on $\mathbb{R}^k$
+            & per-vertex $\bar{s}_i + \Phi_i b$ & E\textsuperscript{d} & L & C \\
+        Latent code / embedding
+            & $\{*\}$ & $\mathbb{R}^d$ & vector $z$ (+ decoder)
+            & none alone; via $D_\theta(z,\cdot)$ & I\textsuperscript{e} & L & C \\
+        Implicit neural repr.\ (INR)
+            & $\mathbb{R}^3$ & $\mathbb{R}$ & weights $\theta$
+            & level set of $f_\theta$ & I & L & C \\
+        Deformation field
+            & $\mathbb{R}^3$ & $\mathbb{R}^3$ & warp $\varphi$ (+ template)
+            & pushforward $\varphi(S_0)$ & E & G\textsuperscript{f} & C \\
+        \bottomrule
+    \end{tabularx}
+    \caption[Taxonomy of shape representations]{Shape representations in the taxonomy of
+    \secref{sec:shape-frame}. Columns give the query domain $\Omega$, codomain $\mathcal{C}$, the
+    stored object, the recovery operator $\mathcal{R}$, and the three descriptive axes:
+    Explicit/Implicit (E/I), Geometric/Learned (G/L), Discrete/Continuous (D/C).
+    \textsuperscript{a}~Implicit \emph{by recovery mode}; a defensible choice, contested by
+    literature that calls voxel grids explicit and discrete.
+    \textsuperscript{b}~Discrete storage $(V,F)$; continuous realized surface $\varphi(|K|)$.
+    \textsuperscript{c}~Continuous in concept, usually grid-sampled in practice.
+    \textsuperscript{d}~Point-distribution form; level-set SSMs are implicit.
+    \textsuperscript{e}~The code alone recovers nothing; the classification is inherited from the
+    decoded field. \textsuperscript{f}~The warp is geometric; a network-predicted or
+    velocity-parametrized warp is learned.}
+    \label{tab:shape-representations}
+\end{table}
+
+\subsection{Three descriptive axes}
+\label{sec:shape-axes}
+
+\begin{itemize}
+    \item \tabref{tab:shape-representations} labels each representation on three axes.
+    \item The axes do not simply follow from the tuple $(\Omega, \mathcal{C}, f, \mathcal{R})$; two of them depend on provenance and storage outside it.
+\end{itemize}
+
+\paragraph{Explicit vs.\ implicit: a question about $\mathcal{R}$.}
+\begin{itemize}
+    \item The only axis read off the taxonomy directly.
+    \item Stored values name the geometry (explicit, image recovery) or test space against a threshold (implicit, level-set recovery).
+    \item Explicit: landmarks, point clouds, meshes, SSMs, deformation fields. Implicit: masks, distance functions, latent code + decoder, INRs.
+\end{itemize}
+
+\paragraph{Geometric vs.\ learned: a question about provenance.}
+\begin{itemize}
+    \item Not in the tuple. Learned = parameters $\theta$ are optimisation-fitted \emph{and} required at query time (INR weights, decoder $D_\theta$, PCA basis $\Phi$).
+    \item Consequences: a single-shape INR is learned; masks, meshes, landmarks stay geometric even when a network produced them.
+    \item Learned $\neq$ statistical: statistical = probability measure on $\Omega$ (SSM's $\mathcal{N}(0,\Lambda)$). Single-shape INR is learned but not statistical.
+\end{itemize}
+
+\paragraph{Discrete vs.\ continuous: stored vs.\ realised.}
+\begin{itemize}
+    \item Not settled by the tuple either; distinguishes what is stored from what is realised.
+    \item Mesh: discrete $(V,F)$, continuous surface. Voxel SDF: grid, conceptually continuous field. INR: continuous weights, continuous field, no grid.
+    \item Name both: masks and point sets discrete in storage; distance and neural fields continuous in realisation; meshes in between.
+\end{itemize}
+
+\begin{itemize}
+    \item Keep the axes separate, no single ``modernness'' score.
+    \item Sharpest example: INR vs.\ voxel SDF. Same on explicit/implicit and in what they encode; differ only on discrete/continuous and fitted parameters.
+\end{itemize}
+
+\subsection{What the taxonomy buys, and what it costs}
+\label{sec:shape-closing}
+
+\begin{itemize}
+    \item Buys: kinship and difference made visible. Latent code = generalised SSM coefficient; INR = continuously stored SDF; landmarks vs.\ point clouds differ only by labels.
+    \item Costs: classifies, does not measure. For a distance, recover a set or measure first. Avoids applying set metrics to objects without a recovered set (bare latent code, UDF).
+    \item Arc followed by the thesis:
+    \begin{itemize}
+        \item direct geometric encodings (masks, point clouds, meshes) store anatomy as is;
+        \item distance fields re-express the region as a smooth, differentiable landscape for gradient-based optimisation;
+        \item statistical and neural codes compress shape to few numbers plus a shared generator, capturing what a population has in common.
+    \end{itemize}
+    \item Payoff for registration: representation abstract enough to share across images decouples organ geometry from the intensities of one acquisition.
+    \item Hence shape as a bridge across modality, scanner, and protocol; leads into the following chapters.
+\end{itemize}
+
+\section{Uses of shape in registration methods}
+\label{sec:bg-shape-uses}
+
+% TODO: primary citations below are marked with the author/year as given in
+% \citet{chen2025survey}. They still need to be resolved into bib entries from
+% that survey's reference list; only verified keys are cited with \citep so far.
+
+\begin{itemize}
+\item Shape information is incorporated into registration methods in several distinct ways. The subsections below are ordered by how much a method depends on it: from shape used only during training, through shape required as an input at inference, to methods that operate on geometry alone and never read an image. A final mode sits apart from that ordering, constraining the transformation rather than what is matched.
+\item Such methods are found chiefly where an intensity relation is unreliable or absent: between modalities such as ultrasound and MRI, in anatomy where pathology alters intensities while geometric structures remain stable, and where an acquisition yields geometry directly rather than incidentally.
+\end{itemize}
+
+\subsection{Shape in the loss}
+\begin{itemize}
+\item The standard construction warps the moving label map with the estimated transformation and penalises its disagreement with the fixed label map; Dice loss dominates in practice, with cross-entropy and focal loss as alternatives \citep{chen2025survey}.
+\item Used \emph{alongside} an intensity term, this is weakly supervised registration, and it is the most common route by which anatomy enters a learning-based method.
+\item Used \emph{instead of} an intensity term, the anatomy loss becomes a modality-independent similarity measure, which is what makes cross-modality registration tractable without a shared intensity relation (Hu et al., 2018; Song et al., 2022; Blendowski et al., 2020, as surveyed in \citealp{chen2025survey}). % TODO primary cites
+\item The failure mode is structural: an anatomy loss constrains nothing where labels are absent or ambiguous, so deformations in unlabelled regions are unpenalised and labels must be as dense and as finely differentiated as possible \citep{chen2025survey}.
+\item An alternative is to introduce the anatomical information through multi-task learning rather than an added loss term, which Tan et al. (2023) report to be more effective than applying the anatomy loss directly. % TODO primary cite
+\end{itemize}
+
+\subsection{Landmarks as supervision}
+\begin{itemize}
+\item Landmark supervision has a long history in optimisation-based registration, where a correspondence term is added to the objective (Fischer and Modersitzki, 2003; Ehrhardt et al., 2010; Polzin et al., 2013; \citealp{heinrich2015estimating}; Rühaak et al., 2017). % TODO primary cites
+\item Hering et al. (2021) first carried this into a learning framework, applying the predicted transformation to the moving landmarks and penalising the mean squared error against the fixed landmarks, with a substantial reduction in target registration error \citep{chen2025survey}. % TODO primary cite
+\item VoxelMorph++ \citep{heinrich2022voxelmorphplusplus} confirmed the advantage of keypoint supervision across several benchmark datasets, combining it with multi-channel instance optimisation.
+\item Landmarks need not be manual: automatic detectors supply them before or during training \citep{heinrich2015estimating}, which is what makes landmark supervision cheap enough to add to most frameworks.
+\item Note the circularity risk identified in \secref{sec:bg-registration-evaluation}: supervising on landmarks and then evaluating on target registration error measures the same quantity twice.
+\end{itemize}
+
+\subsection{Shape as network input}
+\begin{itemize}
+\item Su and Yang (2023) derive a set of non-uniformly spaced control points by sampling along the contours of anatomical structures, then align intensity and spatial features to those positions. Deformation resolution follows anatomy rather than a regular grid, which improves accuracy at structure boundaries. % TODO primary cite
+\item Chen et al. (2021) use label maps to partition fixed and moving images into regions, estimate a separate deformation field per region with its own network, and sum them. This admits spatially discontinuous deformations without a discontinuity-permitting regulariser, which matters wherever sliding motion occurs. % TODO primary cite
+\item Both share a practical cost that a loss-based approach avoids: the label maps are required at inference, not only during training, so the method is unusable when segmentations are unavailable \citep{chen2025survey}.
+\item Hu et al. (2019) take keypoints as the representation rather than the grid, detecting them automatically in CT and MR and training a Siamese network with a contrastive loss that pulls corresponding keypoints together and pushes non-corresponding ones apart; correspondences between the two keypoint sets are then established at test time. % TODO primary cite
+\end{itemize}
+
+\subsection{Implicit shape representations}
+\begin{itemize}
+\item Sun et al. (2022) apply implicit neural representations to organ shape registration following \citet{park2019deepsdf}: an auto-decoder maps a latent code identifying an organ shape, together with a sampled 3D coordinate, to a signed distance value, so that the sign locates the point inside, outside, or on the surface. % TODO primary cite
+\item The shape is thereby described implicitly and continuously by the network, and the latent code becomes a compact handle on the shape itself rather than on the image; this is the construction \chapref{chap:BVM25} builds on.
+\item Dalca et al. (2019) convert segmentation maps into signed distance functions to approximate the distance between fixed and warped surfaces, and show that a surface-distance loss during training improves the alignment of anatomical boundaries \citep{chen2025survey}. % TODO primary cite
+\end{itemize}
+
+\subsection{Geometric and point-based registration}
+\begin{itemize}
+\item A separate line of work drops the image grid altogether and registers geometry directly, which removes the intensity relation from the problem instead of working around it.
+\item Point-based network architectures developed in computer vision supply the machinery: permutation-invariant encoders for unordered point sets \citep{qi2017pointnet} and scene-flow networks that estimate per-point displacement \citep{wu2020pointpwc}.
+\item In medical data, keypoint graphs have been shown to solve alignment tasks using geometry alone, with no visual features at any stage \citep{hansen2021deep}, and graph networks combined with an optimal transport solver estimate large breathing motion on pulmonary vessel trees \citep{shen2021accurate}.
+\item Transformers operating directly on point sets register prostate anatomy between transrectal ultrasound and MRI \citep{baum2021real}, a modality pair where intensity-based similarity is of little use.
+\item Correspondence need not be regressed directly. Predicting a heatmap over candidate correspondences and taking a weighted sum improves gradient flow and robustness to large deformations \citep{heinrich2022voxelmorphplusplus}, an idea \chapref{chap:IJCARS} builds on.
+\item The recurring cost is that the points have to come from somewhere, and their selection is task-dependent: surface points from segmentations, keypoints from a detector, or vertices from a mesh, each with different failure modes under partial or non-overlapping coverage.
+\end{itemize}
+
+\subsection{Shape models as registration priors}
+\begin{itemize}
+\item Rather than supplying shape as an input or a supervisory signal, a statistical shape model can constrain the transformation itself, restricting the solution to deformations the model regards as anatomically plausible.
+\item \citet{berendsen2013freeform} regularise a free-form deformation with a statistical shape model, so that the registration is penalised for leaving the space the model spans, and apply it to organ segmentation in cervical MR.
+\item \citet{barratt2008instantiation} instantiate shape models of the femur and pelvis and register them to sparse point sets obtained from 3D ultrasound, recovering a full surface from a partial and noisy observation. The problem is close to that of \chapref{chap:IJCARS}, solved with the tools of two decades ago.
+\item The approach remains current where anatomy is tubular or branching and dense correspondence is hard to define, for instance in extending aortic shape models to the supra-aortic vessels \citep{scarpolini2023enabling}.
+\item Statistical priors on the deformation rather than on the shape are the older relative of this idea: principal component analysis over point correspondences, shape models over boundary points, and PCA priors on dense deformation fields are all surveyed by \citet{sotiras2013deformable}.
+\item The limitation is the model itself. A point distribution model requires corresponding landmarks across the training population, and it can only express deformations within the span of its modes, which is what motivates the non-linear and correspondence-free construction of \chapref{chap:BVM25}.
+\end{itemize}
+

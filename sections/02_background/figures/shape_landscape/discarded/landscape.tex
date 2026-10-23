@@ -1,0 +1,24 @@
+% Shape-representation landscape figure float. For inclusion in main.tex.
+% Requires (in the preamble, once): \newcommand{\slbase}{sections/02_background/figures/shape_landscape/}
+% and \graphicspath must include sections/02_background/figures/shape_landscape/shared/.
+% The icon macros + liver paths are input just before the float here.
+% NOTE: main.tex preamble must load \usetikzlibrary{arrows.meta,calc,shadings} (shadings + a pdf
+% backend are needed for the SSM icon's screen blend).
+\input{\slbase shared/liver_outline}
+\input{\slbase shared/ssm_modes}
+\input{\slbase shared/learned_common}
+\input{\slbase representations/6_ssm_edm/versions/v2_icon}
+\input{\slbase representations/7_latent_code/versions/v2_icon}
+\input{\slbase representations/8_inr/versions/v2_icon}
+\begin{figure}[htbp]
+    \centering
+    \begin{scaletikzpicturetowidth}{\textwidth}
+    \input{\slbase landscape_body}
+    \end{scaletikzpicturetowidth}
+    \caption[Shape representation landscape]{The landscape of shape representations. Horizontal
+    position encodes \emph{explicit\,$\rightarrow$\,implicit}, vertical position
+    \emph{geometric\,$\rightarrow$\,learned}, and tile shading the \emph{discrete\,/\,continuous}
+    axis. \textsuperscript{*}The binary mask is a discretized (hence \emph{discrete}) occupancy
+    field, yet behaves \emph{implicitly}. Compare \tabref{tab:shape-representations}.}
+    \label{fig:shape-landscape}
+\end{figure}

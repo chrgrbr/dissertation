@@ -1,0 +1,18 @@
+% Latent-code icon: liver thumbnail -> trapezoid encoder -> long UNLABELED heatmap vector.
+% Consumes \liveroutline. Distinct from SSM: no ghosts/arrows; opaque code that drives nothing.
+\newcommand{\iconLatent}{%
+  % liver thumbnail (input), small and filled
+  \begin{scope}[scale=0.62, shift={(-0.35,0)}]
+    \fill[black!15] \liveroutline; \draw[thin] \liveroutline;
+  \end{scope}
+  % trapezoid encoder glyph
+  \fill[blue!12] (0.30,0.22) -- (0.62,0.12) -- (0.62,-0.12) -- (0.30,-0.22) -- cycle;
+  \draw          (0.30,0.22) -- (0.62,0.12) -- (0.62,-0.12) -- (0.30,-0.22) -- cycle;
+  \draw[-{Latex[length=1mm]}] (0.66,0) -- (0.80,0);
+  % long unlabeled heatmap vector z (8 cells, explicit varying teal shades)
+  \foreach \i/\c in {0/teal!80,1/teal!25,2/teal!55,3/teal!15,4/teal!70,5/teal!40,6/teal!20,7/teal!50}{
+    \fill[\c] (0.86,{0.36-\i*0.09}) rectangle ++(0.20,0.085);
+    \draw     (0.86,{0.36-\i*0.09}) rectangle ++(0.20,0.085);
+  }
+  \node[font=\tiny] at (0.96,0.50) {$z$};
+}

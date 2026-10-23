@@ -1,0 +1,21 @@
+% Deformation-field icon (v1) -- the geometric sibling of the SSM icon:
+%   template S_0  --(warp phi)-->  phi(S_0)      (template + spatial warp = shape)
+% Deliberately NOT the "s-bar + Phi b =" algebra: a warp is a pushforward, not a sum.
+% Middle term is the canonical registration warped grid (\deformgrid).
+% Consumes \liveroutline, \liverglyph, \liverfill/\liveredge (learned_common),
+%          \liverMtwo (ssm_modes) as the warped result, and \deformgrid (deform_grid).
+\newcommand{\iconDeform}{%
+  % template shape S_0
+  \begin{scope}[shift={(-0.72,0)}, scale=0.40] \liverglyph \end{scope}
+  \node[font=\tiny, anchor=south] at (-0.72,0.30) {$S_0$};
+  \draw[-{Latex[length=1mm]}] (-0.52,0) -- (-0.34,0);
+  % warp operator phi : the warped deformation grid
+  \begin{scope}[shift={(-0.05,0)}, scale=0.46] \deformgrid \end{scope}
+  \node[font=\tiny, anchor=south] at (-0.05,0.30) {$\varphi$};
+  \draw[-{Latex[length=1mm]}] (0.24,0) -- (0.42,0);
+  % result phi(S_0) : the template under the SAME warp (see gen_deform_grid.py)
+  \begin{scope}[shift={(0.72,0)}, scale=0.40]
+    \fill[liverfill] \liverwarped; \draw[liveredge, thin] \liverwarped;
+  \end{scope}
+  \node[font=\tiny, anchor=south] at (0.72,0.30) {$\varphi(S_0)$};
+}

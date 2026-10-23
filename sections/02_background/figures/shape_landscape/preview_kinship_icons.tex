@@ -1,0 +1,22 @@
+\documentclass[border=6pt]{standalone}
+\usepackage[T1]{fontenc}\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{tikz}\usepackage{amsmath}
+\usetikzlibrary{arrows.meta,calc,shadings}
+\graphicspath{{shared/}}
+\definecolor{grpS}{HTML}{E4EAF1}
+\definecolor{grpF}{HTML}{B9CAD9}
+\definecolor{grpC}{HTML}{8DA5BC}
+\newcommand{\slb}{}
+\input{shared/liver_outline}
+\input{shared/ssm_modes}
+\input{shared/learned_common}
+\input{shared/deform_grid}
+\input{representations/6_ssm_edm/versions/v2_icon}
+\input{representations/7_latent_code/versions/v2_icon}
+\input{representations/8_inr/versions/v2_icon}
+\input{representations/9_deformation/versions/v1_icon}
+\newif\ifshowicons \showiconstrue
+\begin{document}
+\input{kinship_body}
+\end{document}

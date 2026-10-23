@@ -1,0 +1,32 @@
+% SSM icon (v2) -- the generative equation  s = s-bar + Phi b  (NOT a code->proc pipeline).
+% mean liver  +  Phi b (mode-coloured coefficient term)  =  result (mean + screen-blended RGB modes).
+% Consumes \liveroutline, \liverglyph (learned_common) and \liverM{one,two,three} (ssm_modes).
+\definecolor{ssmR}{HTML}{CC5B5B}   % mode 1 (desaturated red)
+\definecolor{ssmG}{HTML}{4FA36A}   % mode 2 (desaturated green)
+\definecolor{ssmB}{HTML}{4A72C0}   % mode 3 (desaturated blue)
+\newcommand{\iconSSM}{%
+  % mean shape s-bar
+  \begin{scope}[shift={(-0.68,0)}, scale=0.40] \liverglyph \end{scope}
+  \node[font=\tiny, anchor=south] at (-0.68,0.30) {$\bar{\mathbf{s}}$};
+  % +
+  \node at (-0.34,0) {$+$};
+  % Phi b : mode-coloured coefficient term (the deformation)
+  \foreach \i/\c in {0/ssmR, 1/ssmG, 2/ssmB}{
+    \fill[\c] (-0.17,{0.10-\i*0.165}) rectangle ++(0.18,0.13);
+    \draw     (-0.17,{0.10-\i*0.165}) rectangle ++(0.18,0.13);
+  }
+  \node[font=\tiny, anchor=south] at (-0.08,0.30) {$\boldsymbol{\Phi}\mathbf{b}$};
+  % =
+  \node at (0.24,0) {$=$};
+  % result: mean + 3 screen-blended RGB modes
+  \begin{scope}[shift={(0.70,0)}, scale=0.40]
+    \begin{scope}[blend group=screen]
+      \fill[ssmB] \liverMthree;
+      \fill[ssmG] \liverMtwo;
+      \fill[ssmR] \liverMone;
+    \end{scope}
+    \draw[ssmB, thin] \liverMthree;
+    \draw[ssmG, thin] \liverMtwo;
+    \draw[ssmR, thin] \liverMone;
+  \end{scope}
+}

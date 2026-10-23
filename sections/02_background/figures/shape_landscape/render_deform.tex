@@ -1,0 +1,15 @@
+\documentclass[border=4pt]{standalone}
+\usepackage[T1]{fontenc}\usepackage{lmodern}  % match thesis typeface (includes.tex)
+\usepackage{tikz}\usepackage{amsmath}
+\usetikzlibrary{arrows.meta,calc,shadings}
+\graphicspath{{shared/}}
+\input{shared/liver_outline}
+\input{shared/ssm_modes}
+\input{shared/learned_common}
+\input{shared/deform_grid}
+\input{representations/9_deformation/versions/v1_icon}
+\begin{document}
+\begin{tikzpicture}[scale=4, every node/.style={transform shape}]
+  \iconDeform
+\end{tikzpicture}
+\end{document}

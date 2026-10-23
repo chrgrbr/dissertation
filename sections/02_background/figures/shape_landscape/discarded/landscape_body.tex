@@ -1,0 +1,65 @@
+% TikZ body for the shape-representation landscape. Shared by the document figure float
+% (landscape.tex) and the standalone preview (preview_landscape.tex).
+% X: explicit -> implicit | Y: geometric -> learned | tile fill: discrete (white) / continuous (shaded)
+% Icon macros + liver paths must be \input'd by the top-level file before including this body.
+\begin{tikzpicture}[scale=\tikzscale,
+    every node/.style={transform shape},
+    tile/.style={draw, rounded corners=3pt, minimum width=1.7cm, minimum height=1.4cm, inner sep=0pt},
+    lbl/.style={font=\scriptsize, align=center},
+    cont/.style={fill=blue!8},   % continuous
+    disc/.style={fill=white},    % discrete
+]
+
+% --- axes ---
+\draw[-{Latex[length=2mm]}, thick] (-0.2,0) -- (12.6,0);
+\draw[-{Latex[length=2mm]}, thick] (0,-0.2) -- (0,9.4);
+\node[lbl, anchor=north] at (1.4,-0.25) {explicit};
+\node[lbl, anchor=north] at (11.2,-0.25) {implicit};
+\node[lbl, rotate=90, anchor=south] at (-0.35,1.4) {geometric};
+\node[lbl, rotate=90, anchor=south] at (-0.35,7.6) {learned};
+
+% --- quadrant dividers ---
+\draw[gray!45, dashed] (6,0) -- (6,9.2);
+\draw[gray!45, dashed] (0,4.5) -- (12.4,4.5);
+
+% --- legend (empty upper-middle) ---
+\node[tile, cont, minimum width=0.5cm, minimum height=0.35cm] (lc) at (5.1,8.5) {};
+\node[lbl, anchor=west] at (5.45,8.5) {continuous};
+\node[tile, disc, minimum width=0.5cm, minimum height=0.35cm] (ld) at (5.1,7.9) {};
+\node[lbl, anchor=west] at (5.45,7.9) {discrete};
+
+%=================== ICONS ===================
+% Landmarks
+\node[tile, disc] (lm) at (1.3,1.3) {};
+\node at (1.3,1.3) {\includegraphics[width=1.5cm]{\slbase representations/1_landmarks/versions/v1_render.png}};
+\node[lbl, anchor=north] at (1.3,0.55) {Landmarks};
+% Point cloud
+\node[tile, disc] (pc) at (3.6,1.1) {};
+\node at (3.6,1.1) {\includegraphics[width=1.5cm]{\slbase representations/2_point_cloud/versions/v2_render.png}};
+\node[lbl, anchor=north] at (3.6,0.35) {Point cloud};
+% Mesh
+\node[tile, disc] (me) at (1.6,3.4) {};
+\node at (1.6,3.4) {\includegraphics[width=1.5cm]{\slbase representations/3_mesh/versions/v2_render.png}};
+\node[lbl, anchor=north] at (1.6,2.65) {Mesh / surface};
+% SDF
+\node[tile, cont] (sdf) at (8.6,1.6) {};
+\node at (8.6,1.6) {\includegraphics[width=1.5cm]{\slbase representations/4_sdf/versions/v9_rdbu_nooutline.png}};
+\node[lbl, anchor=north] at (8.6,0.85) {Signed distance\\function};
+% Binary mask
+\node[tile, disc] (mk) at (10.7,1.2) {};
+\node at (10.7,1.2) {\includegraphics[width=1.5cm]{\slbase representations/5_binary_mask/versions/v2_render.png}};
+\node[lbl, anchor=north] at (10.7,0.45) {Binary mask\textsuperscript{*}};
+% SSM / EDM
+\node[tile, cont] (ssm) at (1.8,7.0) {};
+\begin{scope}[shift={(1.8,7.0)}, scale=0.7] \iconSSM \end{scope}
+\node[lbl, anchor=north] at (1.8,6.2) {Statistical shape\\model};
+% Latent code
+\node[tile, cont] (lat) at (8.4,7.2) {};
+\begin{scope}[shift={(8.4,7.2)}, scale=0.75] \iconLatent \end{scope}
+\node[lbl, anchor=north] at (8.4,6.4) {Latent code};
+% INR
+\node[tile, cont] (inr) at (10.7,6.4) {};
+\begin{scope}[shift={(10.7,6.4)}, scale=0.75] \iconINR \end{scope}
+\node[lbl, anchor=north] at (10.7,5.65) {Implicit neural\\representation};
+
+\end{tikzpicture}

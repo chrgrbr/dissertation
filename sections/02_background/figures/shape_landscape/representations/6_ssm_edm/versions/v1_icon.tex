@@ -1,0 +1,22 @@
+% SSM/EDM icon: mean liver + ghost +-sigma outlines + mode-1 arrows + short labeled coeff vector.
+% Consumes \liveroutline. Draw inside a tikzpicture: \begin{scope}[shift={...}] \iconSSM \end{scope}
+\newcommand{\iconSSM}{%
+  % ghost +-sigma deformation outlines (scaled copies of the real outline)
+  \draw[gray!55, dashed, scale=1.14] \liveroutline;
+  \draw[gray!55, dashed, scale=0.88] \liveroutline;
+  % mean shape (solid)
+  \draw[very thick] \liveroutline;
+  % mode deformation arrows (double-headed = +-sigma), one per mode, on the real boundary,
+  % colour-matched to the corresponding coeff cell b_i
+  \draw[{Latex[length=1.1mm]}-{Latex[length=1.1mm]}, red!75,    thick] (0.30,-0.06) -- (0.55,-0.06); % mode 1 (b1), right flank
+  \draw[{Latex[length=1.1mm]}-{Latex[length=1.1mm]}, orange!85, thick] (0.06,0.29)  -- (0.06,0.51);  % mode 2 (b2), top
+  \draw[{Latex[length=1.1mm]}-{Latex[length=1.1mm]}, teal!70,   thick] (-0.43,0.15) -- (-0.68,0.15); % mode 3 (b3), left tip
+  % short, LABELED coefficient vector b (3 cells), each cell tied to a mode colour
+  \foreach \i/\c in {0/red!70, 1/orange!70, 2/teal!60}{
+    \fill[\c] (0.95+\i*0.001,{-0.18+ (2-\i)*0.18}) rectangle ++(0.22,0.16);
+    \draw    (0.95,{-0.18+ (2-\i)*0.18}) rectangle ++(0.22,0.16);
+  }
+  \node[font=\tiny, anchor=west] at (1.20,0.28) {$b_1$};
+  \node[font=\tiny, anchor=west] at (1.20,0.10) {$b_2$};
+  \node[font=\tiny, anchor=west] at (1.20,-0.08) {$b_3$};
+}

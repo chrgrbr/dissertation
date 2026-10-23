@@ -1,0 +1,19 @@
+% Latent-code icon (v2) -- shared learned-row grid (code x=-0.90 | proc x=-0.08 | liver x=0.74).
+% Identity: NONLINEAR & OPAQUE. Code = monochrome vector z (no per-cell meaning); processor =
+% neural decoder trapezoid; output = one reconstructed liver.
+% Consumes \liveroutline, \liverglyph (learned_common).
+\newcommand{\iconLatent}{%
+  % opaque code z -- 5 monochrome cells, same total height as the other code stacks
+  \foreach \i/\s in {0/70, 1/25, 2/55, 3/15, 4/45}{
+    \fill[liveredge!\s] (-0.99,{0.17-\i*0.10}) rectangle ++(0.18,0.07);
+    \draw              (-0.99,{0.17-\i*0.10}) rectangle ++(0.18,0.07);
+  }
+  \node[font=\tiny, anchor=south] at (-0.90,0.30) {$\mathbf{z}$};
+  \draw[-{Latex[length=1mm]}] (-0.78,0) -- (-0.40,0);
+  % neural decoder (trapezoid widening code -> shape), centred at x=-0.08
+  \fill[blue!12] (-0.33,0.10) -- (0.17,0.24) -- (0.17,-0.24) -- (-0.33,-0.10) -- cycle;
+  \draw          (-0.33,0.10) -- (0.17,0.24) -- (0.17,-0.24) -- (-0.33,-0.10) -- cycle;
+  \draw[-{Latex[length=1mm]}] (0.20,0) -- (0.45,0);
+  % output shape
+  \begin{scope}[shift={(0.74,0)}, scale=0.45] \liverglyph \end{scope}
+}

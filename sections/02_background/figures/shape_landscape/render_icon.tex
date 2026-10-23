@@ -1,0 +1,17 @@
+\documentclass[border=4pt]{standalone}
+\usepackage[T1]{fontenc}\usepackage{lmodern}  % match thesis typeface (includes.tex)
+\usepackage{tikz}\usepackage{amsmath}
+\usetikzlibrary{arrows.meta,calc,shadings}
+\graphicspath{{shared/}}
+\input{shared/liver_outline}
+\input{shared/ssm_modes}
+\input{shared/learned_common}
+\input{representations/6_ssm_edm/versions/v2_icon}
+\input{representations/7_latent_code/versions/v2_icon}
+\input{representations/8_inr/versions/v2_icon}
+\providecommand{\sel}{SSM}
+\begin{document}
+\begin{tikzpicture}[scale=4, every node/.style={transform shape}]
+  \csname icon\sel\endcsname
+\end{tikzpicture}
+\end{document}

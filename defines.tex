@@ -372,9 +372,27 @@
 }
 
 \newcommand{\figref}[1]{Fig.\,\ref{#1}}
+\newcommand{\tabref}[1]{Tab.\,\ref{#1}}
 \newcommand{\secref}[1]{Sec.\,\ref{#1}}
 \newcommand{\eqqref}[1]{Eq.\,\eqref{#1}}
 \newcommand{\chapref}[1]{Chapter\,\ref{#1}}
+
+% Inline representation icon beside a \paragraph (right-hand wrap figure).
+% Icons are trimmed/padded copies in export_png/inline/ (see shared/trim_export.py).
+% Sized by target height with a width cap + keepaspectratio, so the compact square
+% renders and the wide process-diagrams read at a comparable content size.
+% #1 = filename inside export_png/inline/
+\newcommand{\repiconh}{0.17\textwidth}   % target content height (square icons bind here)
+\newcommand{\repiconw}{0.315\textwidth}  % max width (wide diagrams bind here)
+\newcommand{\repicon}[1]{%
+  \begin{wrapfigure}{r}{0.33\textwidth}%
+    \vspace{-0.6\baselineskip}%
+    \centering
+    \includegraphics[height=\repiconh, width=\repiconw, keepaspectratio]%
+      {sections/02_background/figures/shape_landscape/export_png/inline/#1}%
+    \vspace{-1.0\baselineskip}%
+  \end{wrapfigure}%
+}
 
 
 %\DeclareUnicodeCharacter{0301}{*************************************}

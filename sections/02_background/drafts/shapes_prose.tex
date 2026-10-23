@@ -1,0 +1,338 @@
+% Prose draft of Background §2.3 (Shapes in Medical Image Analysis), moved here 2026-10-23
+% when the section in text.tex was converted to bullet points. Not \input anywhere.
+
+\section{Shapes in Medical Image Analysis} %7 pages
+\label{sec:bg-shapes}
+
+Medical image analysis uses a wide range of shape representations: binary masks, point
+clouds, meshes, distance fields, statistical shape models, learned latent codes, and
+neural implicit fields \citep{heimann2009statistical, ambellan2019statistical}. On first
+encounter they look quite different, and the literature often treats them as separate
+worlds. This section takes the opposite view: most of them are the same kind of object
+seen through a few shared choices --- what one queries, what comes back, and how the
+geometry is read off the answer. Making those choices explicit relates the
+representations to one another and shows exactly where they differ. The aim is clarity of
+classification rather than a survey: enough structure to say precisely how, for example,
+a voxel mask and a neural network encoding the same organ are related.
+
+\subsection{Representation as a queryable map}
+\label{sec:shape-frame}
+
+We fix a single object of interest. Let $S \subset \mathbb{R}^3$ denote the
+\emph{shape} as a solid region --- the set of points the anatomy occupies --- and let
+$\partial S$ denote its \emph{boundary surface}. These are the geometric ground truth;
+everything below is a way of encoding one of them so that it can be recovered.
+
+Formally, take a \emph{shape representation} to be a pair $(f, \mathcal{R})$. The first
+component is a queryable map
+\[
+    f : \Omega \longrightarrow \mathcal{C},
+\]
+where $\Omega$ is the \emph{query domain} (the set of things one is allowed to ask
+about) and $\mathcal{C}$ is the \emph{codomain} (the kind of answer that comes back).
+The second component is a \emph{recovery operator} $\mathcal{R}$, a fixed rule that
+reads the geometric shape --- $S$ or $\partial S$ --- off the map $f$. Representations
+differ almost entirely in these three slots: \emph{what you query} ($\Omega$),
+\emph{what you get back} ($\mathcal{C}$), and \emph{how geometry is recovered}
+($\mathcal{R}$). The virtue of this view is that it exposes structural kinship: two
+representations that agree on all three slots are, for our purposes, the same
+representation stored differently.
+
+Two recovery modes account for essentially all cases, and it is worth stating them
+sharply because the entire explicit/implicit distinction rests on them.
+
+\paragraph{Image recovery (explicit).} The stored values \emph{are} points or samples
+of the shape itself. The codomain is ambient space, $\mathcal{C} = \mathbb{R}^3$, and
+the recovered geometry is the image of $f$ --- possibly after a reconstruction step.
+Here $\mathcal{R}$ is essentially ``read off the coordinates'': $f(\Omega)$ lies
+\emph{on} $\partial S$ (or is $\partial S$). Crucially the definition is that the
+stored values are points \emph{of} the shape, not the stronger claim that the shape
+equals $f(\Omega)$; the latter holds for a mesh but not for a sparse landmark set or a
+finite boundary sample, which are samples that must be labelled or reconstructed to
+recover $S$.
+
+\paragraph{Level-set recovery (implicit).} The query domain is space itself,
+$\Omega \subseteq \mathbb{R}^3$, and $f$ returns a \emph{scalar} that is tested
+against a threshold $\tau$. The shape is not stored; it is the sub- or superlevel set
+of $f$. Depending on the sign convention one recovers the solid as
+$S = f^{-1}\big((-\infty,\tau]\big)$ or $S = f^{-1}\big([\tau,\infty)\big)$, and the
+boundary as the level set
+\[
+    \partial S = f^{-1}(\tau) = \{\, x \in \Omega : f(x) = \tau \,\}.
+\]
+The last equality is exact only under mild regularity (a non-vanishing gradient, or at
+least no flat patch sitting exactly at value $\tau$); we flag this once and do not
+repeat it. The sign convention must be stated with each field: for a signed distance
+function, which is \emph{negative inside}, the solid is the sublevel set $\{d \le 0\}$;
+for an occupancy or mask field, which is $\approx 1$ inside, the solid is the
+\emph{superlevel} set $\{f \ge \tau\}$. Writing $\le$ for an occupancy field, or $\ge$
+for an SDF, silently inverts the shape.
+
+\paragraph{Classification, not distance.} This view is deliberately \emph{taxonomic}:
+it tells us what a representation \emph{is} and how it relates to its neighbours. It is
+not, by itself, a source of \emph{distance}. To measure how far two shapes lie apart one
+first recovers a comparable object and then reaches for the appropriate metric --- and
+the choice of object dictates the metric. Recovering a \emph{set} (a subset of
+$\mathbb{R}^3$) invites the natural overlap and boundary comparisons: overlap scores such
+as the Dice coefficient and boundary distances such as the (symmetric) Hausdorff
+distance. Recovering a \emph{measure} (a mass distribution on $\mathbb{R}^3$) instead
+opens the door to optimal-transport (Wasserstein) and information-theoretic (KL)
+comparisons, which behave gracefully under blur and partial mass. The division of labour
+is worth keeping explicit: the taxonomy \emph{classifies} representations, whereas a
+metric is computed only \emph{after} a set or a measure has been recovered from one. We
+treat the taxonomy as the organizing spine, because it is where the representational
+choices live, and reach for a metric downstream whenever a distance is actually needed.
+
+\subsection{The representations}
+\label{sec:shape-reps}
+
+We now walk through the canonical representations, each in its most standard form and
+each marked by an icon in the margin. For every one we name the same slots --- what is
+stored, what one queries ($\Omega$), what comes back ($\mathcal{C}$), and how the geometry
+is recovered ($\mathcal{R}$) --- together with a plain intuition and the caveat most
+easily got wrong.
+
+\repicon{05_binary_mask.png}%
+\paragraph{1.~Binary / voxel mask.} The most familiar representation: a segmentation
+stored as a labelled raster \citep{isensee2021nnunet}. The domain is a \emph{finite grid}
+$G \subset \mathbb{Z}^3$ (not all of ambient space), and the map $f : G \to \{0,1\}$ ---
+or $[0,1]$ for a soft mask --- reports whether each voxel lies inside the object. Recovery
+is by threshold: with inside $\approx 1$, the solid is the set of voxels above one half,
+$S \approx \{\, x : f(x) \ge \tfrac12 \,\}$. Intuition: the organ painted onto a grid.
+Caveat: whether a mask counts as \emph{implicit} is a matter of convention. By our
+recovery test it is a thresholded field, hence implicit; but much of the neural-field
+literature reserves ``implicit'' for continuous coordinate functions and calls a voxel
+grid explicit and discrete. We classify it as implicit-by-recovery and simply flag the
+tension.
+
+\repicon{01_landmarks.png}%
+\paragraph{2.~Landmarks / keypoints.} A small set of \emph{labelled} points, each label
+naming one anatomically meaningful location: the domain is the index set
+$\Omega = \{1, \dots, m\}$ and $f : \Omega \to \mathbb{R}^3$ gives each label a position
+\citep{cootes1995active}. Recovery is explicit --- the stored values are points on or near
+the surface $\partial S$. Intuition: named anatomical dots. Caveat: landmarks do
+\emph{not} determine the whole shape; they are a sparse sample, valuable precisely because
+their labels establish correspondence from one shape to the next.
+
+\repicon{02_point_cloud.png}%
+\paragraph{3.~Point cloud.} The same slots as landmarks --- a finite set of points in
+$\mathbb{R}^3$ --- but now the points are \emph{unordered and unlabelled}: there is no
+correspondence between one shape's points and another's
+\citep{qi2017pointnet, wang2019dgcnn}. Recovery is explicit: the points are a sample
+\emph{of} the boundary $\partial S$, and recovering the solid $S$ needs a
+surface-reconstruction step \citep{kazhdan2006poisson}. Intuition: a scatter of surface
+hits, as from a depth sensor or the surface voxels of a segmentation. The only formal
+difference from landmarks is the missing labels --- and that single difference is what
+makes point clouds cheap and abundant but harder to compare across shapes.
+
+\repicon{03_mesh.png}%
+\paragraph{4.~Mesh / surface.} A mesh stores a discrete object --- vertices
+$V \subset \mathbb{R}^3$ joined into triangular faces $F$ --- but \emph{realizes} a
+continuous one: interpolating linearly across each triangle yields a piecewise-flat
+surface in space \citep{lorensen1987marching}. Recovery is explicit: the interpolated
+triangles \emph{are} the boundary $\partial S$. Intuition: a triangulated skin stretched
+over the organ. Caveat: the surface bounds a well-defined \emph{solid} only when the mesh
+is watertight --- closed, consistently oriented, and free of self-intersections.
+Anatomical meshes routinely violate this, and genuinely open surfaces (a cortical sheet, a
+valve leaflet) bound no solid at all. The lesson is the stored-versus-realized split:
+discrete data, continuous geometry, bridged by interpolation.
+
+\repicon{04_sdf.png}%
+\paragraph{5.~Distance function (SDF and UDF).} Instead of marking inside from outside,
+store at every point in space its distance to the surface. The \emph{signed} distance
+function (SDF) $d : \mathbb{R}^3 \to \mathbb{R}$ is negative inside and positive outside,
+so recovery is again by threshold: the solid is $S = \{\, x : d(x) \le 0 \,\}$ and the
+surface is the zero level set $\partial S = \{d = 0\}$
+\citep{osher1988fronts, park2019deepsdf}. Intuition: at every point, how far to the
+surface and on which side. It describes the same region as a mask, but as a \emph{smooth}
+field, which is what makes it convenient for gradient-based optimization. Two facts are
+worth keeping in mind. An exact SDF adds no information beyond the set $S$ --- its values
+are fixed once $S$ is known; the payoff is computational (cheap distance and gradient
+queries), and only \emph{learned} or approximate SDFs carry genuinely new information. And
+away from the surface an SDF changes at unit rate, $|\nabla d| = 1$, except along the
+object's skeleton, where the nearest surface point is ambiguous. The \emph{unsigned}
+distance function (UDF) $u(x) = \operatorname{dist}(x, \partial S)$ drops the sign; it can
+represent open surfaces that enclose no interior, at the price that no threshold brackets
+the surface cleanly, so extracting it is harder \citep{chibane2020ndf}.
+
+\repicon{06_ssm.png}%
+\paragraph{6.~Statistical shape model (point-distribution form).} A statistical shape
+model (SSM) represents not one shape but a whole \emph{population}, each member described
+by $n$ corresponding points \citep{cootes1995active, heimann2009statistical}. Any shape is
+written
+\[
+    s = \bar{s} + \Phi\,b,
+\]
+a mean configuration $\bar{s}$ plus a short coefficient vector $b$ that moves along a small
+set of learned variation modes $\Phi$ (typically the leading PCA directions). Placing a
+Gaussian on $b$ turns the model into a \emph{prior} over plausible anatomy
+\citep{ambellan2019statistical}. Recovery is explicit: fixing $b$ produces a set of
+landmarks. The point to carry forward is the split between a compact, shape-specific code
+$b$ and a shared generator $(\bar{s}, \Phi)$ --- exactly the structure the learned latent
+code below repeats. Caveat: this is the classical point-distribution form; SSMs can equally
+be built on distance fields, in which case they are implicit.
+
+\repicon{07_latent_code.png}%
+\paragraph{7.~Latent code / embedding.} On its own a latent code represents
+\emph{nothing}: a vector $z \in \mathbb{R}^d$ is just coordinates in an abstract space, with
+no rule for turning it back into geometry. The shape is the \emph{pair} $(z, D_\theta)$ of
+the code and a learned decoder $D_\theta$; geometry appears only through the field
+$D_\theta(z, \cdot)$, and it is then classified by that field's recovery mode (usually
+implicit --- an occupancy or SDF decoder) \citep{park2019deepsdf, mescheder2019occupancy}.
+This mirrors the SSM directly: the code $z$ plays the role of the coefficient $b$, and the
+decoder $D_\theta$ the role of the shared generator $(\bar{s}, \Phi)$. The difference is
+that the SSM generator is linear and explicit, whereas the decoder is nonlinear and
+implicit. Intuition: $z$ is the shape's compressed address; the decoder is the dictionary
+that turns it back into geometry.
+
+\repicon{08_inr.png}%
+\paragraph{8.~Implicit neural representation (INR).} An INR stores the shape directly in the
+weights $\theta$ of a small network $f_\theta : \mathbb{R}^3 \to \mathbb{R}$ that maps a
+coordinate to a field value --- occupancy or signed distance
+\citep{mescheder2019occupancy, park2019deepsdf, sitzmann2020siren}. Recovery is level-set,
+exactly as for the distance function: threshold the network's output and read off the
+surface. Intuition: rather than tabulate the field on a grid, a network learns it and can be
+evaluated at any point and any resolution. The taxonomy makes the punchline plain: an INR
+and a voxel-stored SDF have the \emph{same} codomain and the \emph{same} recovery rule. They
+differ only in how the field is stored --- network weights versus a grid of samples --- and
+in that the network is continuous where the grid is not. The representation that looks most
+novel is, structurally, a continuously stored SDF.
+
+\repicon{09_deformation.png}%
+\paragraph{9.~Deformation field / diffeomorphism of a template.} One representation is special
+to registration and central to this thesis: describe a shape not directly but as a
+\emph{deformation of a reference}. A fixed template or atlas $S_0$ is warped by a spatial
+transformation $\varphi : \mathbb{R}^3 \to \mathbb{R}^3$ --- often a diffeomorphism, a smooth
+invertible warp --- so that the represented shape is $S = \varphi(S_0)$
+\citep{beg2005lddmm, balakrishnan2019voxelmorph}. Both what one queries and what comes back are
+ambient points: $\varphi$ maps space to space. Recovery is explicit --- apply $\varphi$ to the
+template (or, if $S_0$ is stored as a field, warp the field by composition). Intuition: don't
+describe the organ, describe how to bend a known organ into it. This is the precise sense in
+which registration converts a comparison of \emph{shapes} into a comparison of
+\emph{deformations}, and it is why this view sits at the centre of the thesis.
+
+We set aside two further, more specialized families: spherical-harmonic (SPHARM)
+parametrizations of closed surfaces \citep{styner2006framework}, and medial or
+\mbox{$s$-rep} representations that encode a shape through its skeleton and a thickness field
+\citep{pizer2003deformable}. Both matter, but neither is needed for what follows.
+
+\begin{table}[htbp]
+    \centering
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabularx}{\textwidth}{@{}l l l l X l l l@{}}
+        \toprule
+        Representation & $\Omega$ & $\mathcal{C}$ & Stored object & Recovery $\mathcal{R}$ & E/I & G/L & D/C \\
+        \midrule
+        Binary / voxel mask
+            & $G \subset \mathbb{Z}^3$ & $\{0,1\}$ & occupancy raster
+            & superlevel set $\{f \ge \tfrac12\}$ & I\textsuperscript{a} & G & D \\
+        Landmarks / keypoints
+            & $\{1,\dots,m\}$ & $\mathbb{R}^3$ & labelled points
+            & read coordinates (sparse) & E & G & D \\
+        Point cloud
+            & $\mathbb{R}^{3n}/\mathfrak{S}_n$ & $\mathbb{R}^3$ & unlabelled points
+            & sample of $\partial S$; reconstruct $S$ & E & G & D \\
+        Mesh / surface
+            & $|K|$ (realized) & $\mathbb{R}^3$ & vertices $V$, faces $F$
+            & image $\varphi(|K|)$ & E & G & D\textsuperscript{b} \\
+        Distance function (SDF)
+            & $\mathbb{R}^3$ & $\mathbb{R}$ & scalar field $d$
+            & sublevel set $\{d \le 0\}$ & I & G & C\textsuperscript{c} \\
+        Distance function (UDF)
+            & $\mathbb{R}^3$ & $\mathbb{R}_{\ge 0}$ & scalar field $u$
+            & zero set $\{u=0\}$ (no interior) & I & G & C\textsuperscript{c} \\
+        Statistical shape model
+            & $\{1,\dots,n\}\!\times\!\mathbb{R}^k$ & $\mathbb{R}^3$ & $\bar{s}, \Phi$; measure on $\mathbb{R}^k$
+            & per-vertex $\bar{s}_i + \Phi_i b$ & E\textsuperscript{d} & L & C \\
+        Latent code / embedding
+            & $\{*\}$ & $\mathbb{R}^d$ & vector $z$ (+ decoder)
+            & none alone; via $D_\theta(z,\cdot)$ & I\textsuperscript{e} & L & C \\
+        Implicit neural repr.\ (INR)
+            & $\mathbb{R}^3$ & $\mathbb{R}$ & weights $\theta$
+            & level set of $f_\theta$ & I & L & C \\
+        Deformation field
+            & $\mathbb{R}^3$ & $\mathbb{R}^3$ & warp $\varphi$ (+ template)
+            & pushforward $\varphi(S_0)$ & E & G\textsuperscript{f} & C \\
+        \bottomrule
+    \end{tabularx}
+    \caption[Taxonomy of shape representations]{Shape representations in the taxonomy of
+    \secref{sec:shape-frame}. Columns give the query domain $\Omega$, codomain $\mathcal{C}$, the
+    stored object, the recovery operator $\mathcal{R}$, and the three descriptive axes:
+    Explicit/Implicit (E/I), Geometric/Learned (G/L), Discrete/Continuous (D/C).
+    \textsuperscript{a}~Implicit \emph{by recovery mode}; a defensible choice, contested by
+    literature that calls voxel grids explicit and discrete.
+    \textsuperscript{b}~Discrete storage $(V,F)$; continuous realized surface $\varphi(|K|)$.
+    \textsuperscript{c}~Continuous in concept, usually grid-sampled in practice.
+    \textsuperscript{d}~Point-distribution form; level-set SSMs are implicit.
+    \textsuperscript{e}~The code alone recovers nothing; the classification is inherited from the
+    decoded field. \textsuperscript{f}~The warp is geometric; a network-predicted or
+    velocity-parametrized warp is learned.}
+    \label{tab:shape-representations}
+\end{table}
+
+\subsection{Three descriptive axes}
+\label{sec:shape-axes}
+
+The comparison in \tabref{tab:shape-representations} labels every representation along three axes.
+It is tempting to say these axes ``fall out'' of the tuple $(\Omega, \mathcal{C}, f, \mathcal{R})$,
+but that overstates the case. The taxonomy \emph{organizes} the axes as sharp questions one asks of the
+slots and of information the slots do not fully contain; two of the three depend on facts about
+provenance and storage that live outside the tuple.
+
+\paragraph{Explicit vs.\ implicit --- a question about $\mathcal{R}$.} This one \emph{is} read off
+the taxonomy, from the recovery operator alone. Do the stored values \emph{name} the geometry
+(explicit: points of the shape, image recovery), or do they \emph{test} space against a threshold
+(implicit: a scalar field, level-set recovery)? Landmarks, point clouds, meshes, SSMs, and
+deformation fields are explicit; masks, distance functions, latent-code-plus-decoder, and INRs are
+implicit.
+
+\paragraph{Geometric vs.\ learned --- a question about provenance.} This is \emph{not} in the tuple. We
+define \emph{learned} precisely: a representation is learned when its parameters $\theta$ are
+\emph{optimization-fitted \emph{and} required at query time}. INR weights, a decoder $D_\theta$, and
+the PCA basis $\Phi$ all qualify --- you cannot evaluate the representation without them, and they were
+fitted. This definition has two deliberate consequences. It classifies even a \emph{single-shape} INR
+as learned (its weights are fitted, though no population is involved), and it keeps masks, meshes, and
+landmarks \emph{geometric} even when a trained network produced them, because the trained parameters are
+not part of the representation at query time --- only the resulting coordinates or raster are. Note also
+that ``learned'' is not the same as ``statistical''. Statistical means a probability measure lives on
+$\Omega$ (as with the SSM's $\mathcal{N}(0,\Lambda)$); a single-shape INR is learned but not
+statistical, and one can imagine geometric-but-statistical constructions. The axis is about fitted
+parameters at query time, nothing more.
+
+\paragraph{Discrete vs.\ continuous --- a stored-vs-realized question.} This too is not settled by the
+tuple; it is a distinction between what is \emph{stored} and what is \emph{realized}. A mesh stores a
+discrete $(V, F)$ but realizes a continuous surface through $\varphi$; a voxel-SDF tabulates a grid but
+conceptually represents a continuous field; an INR stores continuous weights and realizes a continuous
+field with no grid at all. The honest reading is to name both: masks and point sets are discrete in
+storage, distance fields and neural fields are continuous in realization, and meshes sit astride the
+two by construction.
+
+Two representations can therefore share their answer on one axis and diverge on another, which is the
+whole point of keeping the axes separate rather than collapsing them into a single ``modernness''
+score. The sharpest example, again, is the INR against the voxel-SDF: identical on the
+explicit/implicit axis (both implicit, same $\mathcal{R}$), identical in what they encode, and
+separated \emph{only} on the discrete/continuous axis and by whether their parameters are fitted.
+
+\subsection{What the taxonomy buys, and what it costs}
+\label{sec:shape-closing}
+
+The taxonomy earns its keep by making kinship and difference legible: it tells us that a latent code is a
+generalized SSM coefficient, that an INR is a continuously stored SDF, that landmarks and point clouds
+differ only in a label on their domain. What it does \emph{not} do is measure: it classifies structure,
+and is taxonomic, not metric. The moment a distance is required --- overlap, boundary error,
+transport cost --- one recovers a set or a measure from the representation and
+computes there. Keeping this division explicit prevents a common confusion, namely reaching for a set
+metric on an object (a bare latent code, a UDF) from which no set has yet been recovered.
+
+Read in sequence, the representations trace an arc that this thesis will follow. It begins with direct,
+geometric encodings --- masks, point clouds, meshes --- that store the anatomy as it is. It passes through
+distance fields, which re-express the same region as a smooth, differentiable landscape and so make shape
+amenable to gradient-based optimization. It ends with statistical and neural codes, which compress a shape
+to a handful of numbers plus a shared generator and thereby capture what a \emph{population} of anatomies
+have in common. The pay-off of this progression is exactly what makes shape useful for registration: a
+representation abstract enough to be shared across images decouples the geometry of an organ from the
+intensities of any one acquisition. That is what lets a shape serve as a common language --- a bridge ---
+across differences in modality, scanner, and acquisition protocol, which is the theme the following
+chapters develop.

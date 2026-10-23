@@ -1,0 +1,96 @@
+% Kinship figure body. Shared by both variants; the driver sets \showiconstrue/false and
+% defines \slb (base path) + \graphicspath. x = explicit->implicit, y = geometric->learned.
+% Node FILL = provenance group (sampled / field / code); BORDER = discrete/mixed/continuous.
+% Edges label the single modelling change between neighbours ("differs only in X").
+\begin{tikzpicture}[x=1cm, y=1cm,
+  knode/.style={draw, rounded corners=2.5pt, line width=0.5pt, inner sep=2.5pt,
+                font=\scriptsize, align=center, minimum width=1.5cm, minimum height=0.8cm},
+  itile/.style={draw, rounded corners=2pt, line width=0.5pt, inner sep=1.5pt},
+  gS/.style={fill=grpS}, gF/.style={fill=grpF}, gC/.style={fill=grpC},
+  bD/.style={dotted}, bM/.style={dash pattern=on 3pt off 2pt}, bC/.style={solid},
+  kedge/.style={draw=gray!60, line width=0.5pt},
+  kelab/.style={font=\tiny\itshape, text=gray!45, fill=white, fill opacity=0.9,
+                text opacity=1, inner sep=1pt},
+  axlab/.style={font=\scriptsize, text=gray!70}]
+
+  % in the icon variant the edges stay as faint connectors but their labels are hidden
+  \ifshowicons\tikzset{kelab/.append style={text opacity=0, fill opacity=0, inner sep=0pt}}\fi
+
+  % --- axes ---
+  \draw[-{Latex[length=1.6mm]}, gray!65] (0.3,0.3) -- (11.9,0.3);
+  \draw[-{Latex[length=1.6mm]}, gray!65] (0.5,0.5) -- (0.5,8.7);
+  \node[axlab, anchor=north] at (1.9,0.15) {explicit};
+  \node[axlab, anchor=north] at (10.6,0.15) {implicit};
+  \node[axlab, rotate=90, anchor=south] at (0.2,1.6) {geometric};
+  \node[axlab, rotate=90, anchor=south] at (0.2,7.3) {learned};
+
+  % --- node positions (reconciled with tab:shape-representations) ---
+  \coordinate (pc)  at (2.4,1.5);
+  \coordinate (lm)  at (1.2,3.0);
+  \coordinate (me)  at (2.7,4.5);
+  \coordinate (mk)  at (6.3,1.4);
+  \coordinate (sdf) at (9.7,2.1);
+  \coordinate (df)  at (6.0,3.5);
+  \coordinate (ssm) at (2.2,7.1);
+  \coordinate (lat) at (8.8,7.3);
+  \coordinate (inr) at (11.0,6.1);
+
+  % --- kinship edges (drawn first, sit under the tiles) ---
+  \draw[kedge] (pc)  to[bend right=8]  node[kelab,pos=0.5,anchor=east,xshift=-1mm]{label the points} (lm);
+  \draw[kedge] (pc)  --                node[kelab,pos=0.45,anchor=west,xshift=1.5mm]{add connectivity} (me);
+  \draw[kedge] (me)  to[bend right=24] node[kelab,pos=0.5,yshift=-1mm]{rasterise interior} (mk);
+  \draw[kedge] (mk)  to[bend right=14] node[kelab,pos=0.5,yshift=-2mm]{indicator $\to$ distance} (sdf);
+  \draw[kedge] (sdf) to[bend left=12]  node[kelab,pos=0.5]{store field as a network} (inr);
+  \draw[kedge] (lm)  to[bend left=16]  node[kelab,pos=0.45,anchor=east,xshift=-1mm]{add population statistics} (ssm);
+  \draw[kedge] (ssm) to[bend left=8]   node[kelab,pos=0.5,yshift=1mm]{linear $\to$ nonlinear generator} (lat);
+  \draw[kedge] (inr) to[bend right=10] node[kelab,pos=0.5,anchor=west,xshift=1mm]{condition field on a code} (lat);
+  \draw[kedge] (me)  to[bend left=8]   node[kelab,pos=0.55,yshift=2.5mm]{warp one template} (df);
+  \draw[kedge] (df)  to[bend right=12] node[kelab,pos=0.62,anchor=west,xshift=1mm]{statistics on warps} (ssm);
+
+  \ifshowicons
+    % ---------- icon variant: tile hugs the icon, title just below ----------
+    % geometric icons are PNGs -> ONE fixed frame for all five (largest = landmarks),
+    % image centred inside with padding
+    \newcommand{\gtile}[4]{% (coord)(styles)(image)(name)
+      \node[itile,#2, minimum width=1.7cm, minimum height=1.5cm] (#1T) at (#1)
+        {\includegraphics[width=1.5cm,height=1.3cm,keepaspectratio]{\slb export_png/inline/#3}};
+      \node[font=\tiny, anchor=north, yshift=-0.4mm] at (#1T.south) {#4};}
+    \gtile{pc}{gS,bD}{02_point_cloud.png}{Point cloud}
+    \gtile{lm}{gS,bD}{01_landmarks.png}{Landmarks}
+    \gtile{me}{gS,bM}{03_mesh.png}{Mesh / surface}
+    \gtile{mk}{gS,bD}{05_binary_mask.png}{Binary mask\textsuperscript{*}}
+    \gtile{sdf}{gF,bM}{04_sdf.png}{SDF / UDF}
+    % learned + deformation icons are the crisp TikZ macros (as in the liked version),
+    % drawn in a FIXED box: same height as reps 1-5 (1.5cm), fixed width for the four,
+    % icon shifted down slightly so the top labels sit inside the frame. No autofit.
+    \newcommand{\mtile}[4]{% (coord)(styles)(iconmacro)(name)
+      \node[itile,#2, minimum width=2.9cm, minimum height=1.5cm] (#1T) at (#1) {};
+      \begin{scope}[shift={(#1)}, yshift=-2.5pt, scale=1.3] #3 \end{scope}
+      \node[font=\tiny, anchor=north, yshift=-0.4mm] at (#1T.south) {#4};}
+    \mtile{df}{gF,bC}{\iconDeform}{Deformation field}
+    \mtile{ssm}{gC,bC}{\iconSSM}{SSM}
+    \mtile{lat}{gC,bC}{\iconLatent}{Latent code}
+    \mtile{inr}{gC,bC}{\iconINR}{INR}
+  \else
+    % ---------- clean variant: labelled tiles only ----------
+    \node[knode, gS, bD] at (pc)  {Point\\cloud};
+    \node[knode, gS, bD] at (lm)  {Landmarks};
+    \node[knode, gS, bM] at (me)  {Mesh\,/\,surface};
+    \node[knode, gS, bD] at (mk)  {Binary\\mask\textsuperscript{*}};
+    \node[knode, gF, bM] at (sdf) {SDF\,/\,UDF};
+    \node[knode, gF, bC] at (df)  {Deformation\\field};
+    \node[knode, gC, bC] at (ssm) {SSM};
+    \node[knode, gC, bC] at (lat) {Latent\\code};
+    \node[knode, gC, bC] at (inr) {INR};
+  \fi
+
+  % --- legend (below the axis, out of the way of the tiles) ---
+  \begin{scope}[shift={(2.4,-0.7)}]
+    \node[knode, gS, bC, minimum width=0.45cm, minimum height=0.3cm] (l1) at (0,0) {};
+    \node[axlab, anchor=west, font=\tiny] at (0.35,0) {sampled anatomy};
+    \node[knode, gF, bC, minimum width=0.45cm, minimum height=0.3cm] (l2) at (3.1,0) {};
+    \node[axlab, anchor=west, font=\tiny] at (3.45,0) {field over domain};
+    \node[knode, gC, bC, minimum width=0.45cm, minimum height=0.3cm] (l3) at (6.0,0) {};
+    \node[axlab, anchor=west, font=\tiny] at (6.35,0) {code + generator};
+  \end{scope}
+\end{tikzpicture}

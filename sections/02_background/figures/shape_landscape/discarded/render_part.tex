@@ -1,0 +1,28 @@
+\documentclass[border=2pt]{standalone}
+\usepackage{tikz}\usepackage{amsmath}
+\usetikzlibrary{arrows.meta,calc,shadings}
+\graphicspath{{shared/}}
+\input{shared/liver_outline}
+\input{shared/ssm_modes}
+\input{shared/learned_common}
+\input{representations/6_ssm_edm/versions/v2_icon} % pulls in ssmR/ssmG/ssmB colours
+% ---- part macros (drawn at tikz scale=4; line widths tuned for that size) ----
+\newcommand{\pLiver}{\fill[liverfill] \liveroutline; \draw[liveredge, line width=2pt] \liveroutline;}
+\newcommand{\pLiverOutline}{\draw[liveredge, line width=2.4pt] \liveroutline;}
+\newcommand{\pLiverField}{%
+  \begin{scope}\clip \liveroutline;
+    \shade[inner color=liverfill!35, outer color=liveredge!60] (-0.7,-0.6) rectangle (0.7,0.6);\end{scope}
+  \draw[liveredge, line width=2pt] \liveroutline;}
+\newcommand{\pSSMout}{%
+  \begin{scope}[blend group=screen]
+    \fill[ssmB] \liverMthree; \fill[ssmG] \liverMtwo; \fill[ssmR] \liverMone;\end{scope}
+  \draw[ssmB, line width=1.6pt] \liverMthree; \draw[ssmG, line width=1.6pt] \liverMtwo; \draw[ssmR, line width=1.6pt] \liverMone;}
+\newcommand{\pSSMoutlines}{%
+  \draw[ssmB, line width=2.4pt] \liverMthree; \draw[ssmG, line width=2.4pt] \liverMtwo; \draw[ssmR, line width=2.4pt] \liverMone;}
+\newcommand{\pModeR}{\draw[ssmR, line width=2.4pt] \liverMone;}
+\newcommand{\pModeG}{\draw[ssmG, line width=2.4pt] \liverMtwo;}
+\newcommand{\pModeB}{\draw[ssmB, line width=2.4pt] \liverMthree;}
+\providecommand{\sel}{Liver}
+\begin{document}
+\begin{tikzpicture}[scale=4]\csname p\sel\endcsname\end{tikzpicture}
+\end{document}
