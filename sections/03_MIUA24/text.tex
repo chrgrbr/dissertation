@@ -1,3 +1,15 @@
+This first methodological chapter opens Part~I of the thesis, which concerns the encoding
+of anatomical shape. Instead of registering grey values, it converts anatomical
+segmentations into a generalised, label-agnostic encoding and registers those, turning
+deformable image registration into a shape-matching problem. A learned adaptation module
+produces per-structure shape features that transfer to new datasets, anatomies, and
+modalities without retraining. Trained only on segmentations of skeletal and vascular
+structures from CT, the method registers previously unseen abdominal organs in both CT and
+MRI, showing that shape can bridge differences in dataset and modality where
+intensity-based correspondence fails. It sets up the encoding arc that the following
+chapter develops into a full statistical shape model. The work presented in this chapter
+was published in \citep{grossbrohmer2023generalised}.
+
 % begin{abstract}
 % Due to the high variability in medical images, task-specific solutions have often prevailed in the field of Deep Learning Image Registration (DLIR). Contrary to classical approaches, these are hardly transferable to other tasks or datasets. To overcome these limitations we propose to exploit easy-to-acquire anatomical segmentations, which provide strong semantic features as a common representation across different datasets and image modalities. We, therefore, present a new module for  medical image registration based on generalised label encodings that can be applied to arbitrary label maps. We demonstrate the generalisability of our approach by employing the module trained on skeletal and pulmonary vascular structures to the registration of abdominal segmentations, yielding an average increase in Dice scores of 24\% and compare their encoding qualities to classical Euclidean Distance Maps. Furthermore, we leverage the modular design to assess the generalisability of convolutional and vision-transformer based registration architectures. Source code and trained models are released on GitHub.
 

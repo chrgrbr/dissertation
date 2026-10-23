@@ -1,3 +1,18 @@
+The second chapter of Part~I develops the shape encoding of the previous chapter into a
+full statistical shape model. Anatomical structures are represented as continuous signed
+distance functions by a generalised implicit neural representation that is trained jointly
+with per-instance latent codes. Principal component analysis of those codes yields a
+non-linear shape model built directly from multi-label segmentations, without the matched
+landmarks that classical models require. A probabilistic regularisation of the latent code
+lets the model act as an anatomical prior, so that shapes can be reconstructed robustly even
+when the input is corrupted or partially missing. On multi-label chest radiograph
+segmentations the implicit model approaches the accuracy of a correspondence-based
+point-distribution model, while also capturing topological change that fixed landmark sets
+cannot express. It turns the compact shape encoding into a generative prior, completing the
+encoding part of the thesis before Part~II puts such representations to work inside
+registration. The work presented in this chapter was published in
+\citep{grossbrohmer2025robust}.
+
 % \begin{abstract}
 %     We present a frameworkfor multi-label statistical shape modelling using implicit neural representations (INRs). By training a generalised INR alongside instance-specific latent codes to model individual shapes as continuous signed distance maps, the approach captures complex anatomical variations without relying on fixed landmarks. We further propose to employ the shape model for regularisation to obtain robust reconstructions of corrupted or incomplete data. Experiments on 2D chest X-ray segmentations demonstrate that this regularisation facilitates reconstructions under flawed data conditions, achieving high-fidelity segmentations. Conceptual examples highlight topological advantages of INR-based shape models over conventional point distribution models.
 %     \end{abstract}

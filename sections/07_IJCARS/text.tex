@@ -1,5 +1,21 @@
 
 
+The final methodological chapter is the capstone of Part~II and brings the full pipeline
+together. It addresses three-dimensional freehand ultrasound reconstruction, which it
+recasts as a geometric problem: bone surfaces segmented from the individual ultrasound
+frames are turned into point clouds, and reconstructing a sweep becomes the task of
+registering a new, untracked acquisition onto a previously tracked reference. The chapter
+follows the complete chain from acquisition to result, covering image acquisition,
+bone-surface segmentation, point-cloud generation, coarse and fine point-cloud registration,
+and instance-optimisation refinement, and combines a Free Point Transformer for global
+alignment with a heatmap-based regressor and gradient-keypoint refinement. On a forearm
+ultrasound dataset the pipeline substantially improves both surface alignment and the
+recovered probe trajectory over its initialisation. Because it works on geometry in place of
+image intensities, it closes Part~II by assembling encoding and registration into a single
+working system, and shows once more that shape provides a common language across modality
+and acquisition. The work presented in this chapter was published in
+\citep{grossbrohmer20253d}.
+
 % \abstract{\textbf{Purpose:}
 % This study aims to address the challenging estimation of trajectories from freehand ultrasound examinations by means of registration of automatically generated surface points. Current approaches to inter-sweep point cloud registration can be improved by incorporating heatmap predictions, but practical challenges such as label-sparsity or only partially overlapping coverage of target structures arise when applying realistic examination conditions.
 
