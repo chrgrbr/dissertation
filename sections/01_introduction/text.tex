@@ -1,207 +1,158 @@
-% TODO
-% Hinweise Grundlagen anpassen
-% Bisschen konkreter
+\section{Motivation}
+
+% 1. Imaging and comparison
+%  - Volumetric imaging (CT, MRI, 3D US) is central to diagnosis, treatment
+%    planning, image-guided intervention and monitoring.
+%  - Much of its value lies in comparison: across time points, against a
+%    reference or atlas, across modalities.
+Radiological imaging is central to modern medicine. Volumetric modalities such as computed tomography (CT), magnetic resonance imaging (MRI), and three-dimensional ultrasound (US) allow clinicians to look inside the body non-invasively, and they underpin diagnosis, treatment planning, image-guided intervention, and the monitoring of disease over time. Rarely, however, is a single image examined in isolation: much of the clinical value of imaging lies in comparison of one acquisition against another, of a patient against a reference or of multiple modalities.
+
+% 2. Registration
+%  - Definition: estimate a spatial transformation that brings images into a
+%    common frame so that corresponding anatomy coincides.
+%  - Uses: motion (respiratory, cardiac), multimodal fusion (diagnosis,
+%    intra-operative guidance), longitudinal follow-up (tumour progression),
+%    atlas-based propagation of annotations.
+%  - Usual formulation: maximise a measure of image similarity, subject to a
+%    regularity constraint on the transformation.
+% REVIEW: "facilitating comparison and translations across different images": "translations" reads as the geometric transformation here; use "transfer of information".
+% REVIEW typo: scenarious -> scenarios.
+Bringing images into such comparison is the task of \emph{image registration}: the estimation of a spatial transformation that places two or more images in a common coordinate frame, so that corresponding anatomical locations coincide, facilitating comparison and translations across different images. It allows quantifying anatomical motion between time points, such as respiratory or cardiac deformation, it fuses complementary modalities for diagnosis and intra-operative guidance, it follows disease or tumour progression across longitudinal scans and it propagates expert annotations from an atlas onto new subjects for automatic segmentation. In each of these scenarious the goal is to relate one anatomy to another by maximisation of some metric of image similarity while constraining the transformation to be anatomically plausible.
+
+% 3. The problem: registration depends on the scenario
+%  - Anatomy, modality, protocol, application and patient all change what
+%    "similar" means and which deformations are plausible.
+%  - Appearance: lung tissue denser at exhale than inhale; ultrasound
+%    reflects and attenuates where X-rays pass; MR contrasts differ.
+%  - Deformation: large displacements (posture, breathing), sliding organs,
+%    tissue removed between scans (resection, cf. BraTS-Reg), partial fields
+%    of view (freehand US sweeps).
+%  - Clinicians know these characteristics: which structure is which and
+%    how it moves. The algorithm only sees grey values. This knowledge gap is
+%    the problem the thesis addresses.
+However, image registration is heavily tied to the scenario it is applied to. These include, but are not limited to, anatomical structures of interest, imaging modalities, acquisition protocols, clinical applications, or patient characteristics. The diversity directly influences the definition of similarity and the plausibility of deformations. Appearance changes can derive from variations in imaging conditions. Breathing-related density changes of lung tissue will result in inconsistent grey values, the appearance of vessels in MRI will change by the infusion of contrast agents and different acquisition physics rely on different contrast mechanisms for image composition. The deformations and the associated plausibility are scenario-dependent as well, as large displacements can occur due to posture or breathing. Finally, the images may not even show the same content, for instance due to differing fields of view or resected tissue. In contrast to image registration algorithms, clinicians can compensate and adjust for these differences implicitly by connecting their semantic knowledge of anatomy and acquisition for assessment and comparison of multiple images. This thesis investigates how to bridge this knowledge gap by introducing semantic knowledge into the registration process in the form of anatomical shape. 
+% 4. Premise: shape as cheap, accessible semantic knowledge
+%  - Anatomical shape (segmentations, surfaces, point clouds, shape models)
+%    is the most direct way to hand that knowledge to the algorithm: it
+%    states which structure is where.
+%  - Why now: segmentation has become cheap and widely available (nnU-Net,
+%    TotalSegmentator, frozen foundation backbone + small head
+%    \cite{xu2025generalizable}).
+%    Qualifier: these models still rest on annotations somewhere; where none
+%    exist, methods fall back to hand-crafted descriptors (MIND in ch:TMI).
+%      * modality and domain independence: shape stays where grey values
+%        change (ch:TMI, ch:IJCARS)
+%      * capture range: label-based features give global correspondences
+%        for large deformations (ch:TMI, ch:MIUA24)
+%      * plausibility: shape models act as priors that keep deformations
+%        anatomically plausible (ch:BVM25)
+%      * robustness to incomplete data: partial sweeps, corrupted or
+%        incomplete segmentations (ch:IJCARS, ch:BVM25)
+%      * optional: privacy, label maps carry no identifiable intensity data
+%        (ch:MIUA24)
+%  - NOTE: ch:WBIR24 (SINA) fits through continuous, per-instance
+%    representations rather than semantic knowledge; it is intensity-based.
+%    Keep the claim honest here or in the Objectives.
+%  - Premise, ONE sentence (lines 9 and 11 of the old draft duplicated it),
+%    e.g.: "This thesis examines how anatomical shape can serve as a cheap
+%    and accessible carrier of semantic knowledge in medical image
+%    registration."
+
+Anatomical shape, in the form of segmentations, surfaces, point clouds, or statistical shape models, provides exactly this kind of knowledge. If a structure is delineated in both images, the change in position and deformation can be relayed to the registration algorithm as additional information. Shape thus acts as a semantic anchor that addresses the difficulties mentioned above. A segmented structure retains its identity when its grey values change, while corresponding structures provide direct correspondences that remain under large displacements. Furthermore, combined with population-based information, such as statistical shape or deformation models, shapes can help to assess the plausibility of transformation. These advantages are within reach today, as segmentation frameworks such as nnU-Net and TotalSegmentator, and self-supervised foundation models that adapt to new structures with few annotations, make anatomical segmentations widely available at low cost \cite{isensee2021nnu,wasserthal2022totalsegmentator,xu2025generalizable}.
 
 
-% Der Mensch kann ziemlich gut generalisieren
-% Medical AI kann das lernen
 
-% Wie lernen Kinder -> Wie viele Beispiele bruachen Kinder?
-% Wie viele brauchen Maschinen
-
-\section{Motivation} % pages 4
-    TODO
-    % Clinical diagnostics and research has been improved dramatically with emergence of volumetric imaging such as \ac{CT} and \ac{MRI} technology which enables visualizing body parts and organs.
-    % In recent years, \ac{CT} examinations have increased substantially in many countries \citep{westmark2023increasing, masjedi2020european, martella2023diagnostic}. The importance of \ac{MRI} scans, which offer better soft-tissue contrast without exposing radiation to the patient examined, has likewise increased reaching above 200 scans per 1000 people in some countries in 2020 \citep{martella2023diagnostic}.
-    % % TODO Are there some papers that have evidence for benefit of methods?
-
-    % Volumetric imaging offers the benefit of capturing the organ of interest in its \ac{3D} space. However, visualizing the \ac{3D} volume is performed on \ac{2D} screens where in case of \ac{CT} and \ac{MRI}
-    % % a suitable form of \ac{3D} projection for the densly acquired volume has to be found or
-    % individual view planes / imaging slices have to be selected for examination. Automated processing is needed
-    % % in the first case
-    % for the visualization
-    % % itself and in the latter case automated processing
-    % and can support clinicians navigating the \ac{3D} volume, help classifying organ boundaries, measuring tumour sizes and highlight organ deformations, all of which is complicated to perform manually when navigating a \ac{3D} volume in \ac{2D} space.
-
-    % Deep learning with its basic principles invented in the last century, has become a de-facto standard now for automated processing in versatile fields such as for processing text, images, audio, video, analogous signals, biological processes or physical agent simulations
-    % \citep{%
-    %     ouyang2022training, %text
-    %     kirillov2023segment, %images
-    %     birtchnell2018listening,%audio
-    %     huang2020movienet,%video
-    %     sahoo2020machine,%analogous signals (ecg)
-    %     jumper2021highly,%biological processes
-    %     makoviychuk2021isaac,%physical interaction ,%agent simulations
-    % }
-    % and has created a significant technology push throughout all of the mentioned areas of application.
-    % Of course, this holds true for (volumetric) medical image analysis as well, where formerly hand-crafted method design is now combined or even entirely replaced with data-driven, learning-based methods \citep{hosny2018artificial, rajpurkar2022ai}.
-
-    % Deep learning as a special concept of artificial learning, was sought to mimick the neuronal activity in brain tissue. It has been found that higher-level concepts of human learning such as reasoning about generalization applies to deep learning in similar ways \citep{jakel2008generalization}. Shifting our view to the main topic of this thesis a question is raised to the reader:
-
-    % \begin{quote}
-    %     \centering \Large
-    %     What is \emph{generalization?}
-    %     % $\vdots$
-    % \end{quote}
-
-    % \begin{figure}
-    %     \includegraphics[width=\textwidth]{sections/01_introduction/figures/synthesized_generalization.pdf}
-    %     \caption{Visualizations of a state-of-the-art text-to-image generator DALL$\cdot$E 3 \citep{betker2023improving} when prompted to \textquote{visualize generalization} (left), to \textquote{visualize generalization in deep learning} (middle) and to \textquote{visualize generalization in deep learning for volumetric medical images} (right).}
-    %     \label{fig:synthesized_generalization}
-    % \end{figure}
-
-    % % This question will serve us as starting point to motivate the main aspects of this thesis.
-    % As a help for brainstorming, a deep learning-based text-to-image generator \citep{betker2023improving} was prompted to visualize \textquote{generalization}, \textquote{generalization in deep learning} and \textquote{generalization for volumetric medical images} (see \figref{fig:synthesized_generalization}).
-    % % In the following lines, the above raised question is answered using the generative output of \figref{fig:synthesized_generalization}.
-
-    % \textquote{Generalization} (\figref{fig:synthesized_generalization}, left) was depicted as a human brain related topic, showing abstract organic shapes emerging from the central skull boundary.
-    % % as well as regular wire-like structures at the top and bottom of the image.
-    % The initial definition of generalization is indeed brain related and was described for fear learning, where two sub-mechanisms of conditioned learning --- generalization and specialization --- were discovered \citep{banich2011generalization}. % TODO primary source needed
-    % In fear learning, initially an instance-based generalization\footnote{Opposed to the presented finding, in deep learning, specialization is considered to be formed instance-based} occurs that maps a novel fear to an environment \citep{banich2011generalization}.
-    % % Later, this generalization is specialized and mapped to specific environmental stimuli leading to the learning of discriminative aspects \citep{banich2011generalization}.
-
-    % The visualization for \textquote{generalization in deep learning} is showing such a network of nodes with connecting lines inbetween these nodes and lead us to a different \emph{level} in which learning processes can be analyzed.
-    % Learning (of generalization) on the cell level, is assumed to work as the change of neuron (nodal) connection-strength through synaptic plasticity \citep{do1949organization, martin2000synaptic}.
-    % % Researching the biological learning process requires different levels of abstractions, such as contextual behavioural and psychological studies, understanding brain macro activity, as well as cell level experiments.
-
-    % The investigation of principal conditioned learning mechanisms in the last century revealed, that learning is context based and described as the association of an experienced stimulus (input) to an expectation (output)
-    % % e.g. a dog that awaits food after hearing the sound of a bell
-    % \citep{pavlov1928conditioned, pavlov2010conditioned, banich2011generalization}. This implies that learning must not only be analyzed on different levels but also in varying contexts and \emph{areas}.
-
-    % As synthesized in \figref{fig:synthesized_generalization} (right),
-    % this thesis will explore various different areas of volumetric medical imaging, namely different organs, different types of tasks such as segmentation and shape reconstruction as well as different imaging modalities.
-
-    % In deep learning, the ability of models to generalize is like in biological learning a desirable aspect.
-    % The mechanisms of artificial generalization are an active area of research but have not been understood or even solved entirely yet.
-    % This is also due to the fact that deep learning models are considered a blackbox model and forming an understanding of the internal reasoning of the models is hard, if not impossible.
-    % A trained deep learning model should still work if the specific anatomy in question is visible regardless of the individual image properties of the scanner used to acquire the image to enable a reliable analysis but it was often shown that even current methods for generalizing learning struggle under imaging domain shifts \citep{ouyang2022causality}.
-
-    % % This thesis will likewise investigate the differnt levels of data acquisition, data presentation, training and inference strategies, as well as model kernel level design to find elements necessary for generalization.
-    % The above mentioned findings lead us to the final research question of this thesis:
-
-    % \begin{quote}
-    %     \centering \Large
-    %     In which areas and on which levels can
-
-    %     \noindent \emph{Generalization in Deep Learning Methods for Volumetric Medical Image Analysis}
-
-    %     \noindent be enabled and improved?
-    %     % $\vdots$
-    % \end{quote}
-
-    % It is not enough to only look at the biological cells or their deep learning neuron equivalents, but at tasks' contexts, the encountered stimuli (data samples) as well as the learning processes.
-    % Due to these reasons, this thesis investigates the elements to enable and optimize deep learning generalization for volumetric medical image analysis while looking wholistically along the processes of data acquisition, data presentation, model design as well as model training and inference strategies.
+  
+%
+% 5. Two requirements, which structure the thesis
+%  - Encode anatomical shape into representations that a method can compare
+%    and manipulate (Part I).
+%  - Use these representations to drive registration (Part II).
+%  - Leads into the Objectives.
+%
+% MOVED OUT: D'Arcy Thompson's theory of transformations and the fish figure.
+%   TODO: place in Background, shapes section, next to the point that the
+%   deformation field is "not a family but the denominator". Old paragraph
+%   and figure code are in the previous draft below.
+% TODO: align the Objectives (first sentence still says "bridge modality,
+%   domain, and acquisition differences"), the two-part signposting in the
+%   chapter openers, and the summary threads with the new framing.
+% TODO (typos in the previous draft, fix when writing out): translationacross,
+%   scenarious (x2), aquisition, charasteistics, regisration, "is examines",
+%   inmodality.
+%
 
 
-    % A general concept may thus only be formed if \emph{all} possible stimuli had been encountered. This is plain impossible for real learning and deep learning as well.
+\section{Objectives}
+\label{sec:objectives}
 
-    % When training deep learning models, over-specialization is an often experienced challenge which is more technically referred to as overfitting and undesirable as it limits the performance of trained models for unseen data points \citep{xx}.
-
-    % in human learning, generalization enables the transfer of an experienced stimulus or input to a broader context \citep{xx}.
-
-    % , whereas specialization narrows generalized concepts down to more individual cases \citep{xx}.
-    % Both steps were first described for fear-learning \citep{xx}.
-    % % TODO explain concept of the study.
-
-    % Over-generalization can lead to anxiety disorders in this regard \citep{xx}, whereas over-specialization can lead to missclassify dangerous situations. These mechanisms could be tracked down to individual parts of the brain: The amygdala is responsible for generalization whereas specialization occurs in the prefrontal cortex and the hippocampus \citep{banich2011generalization}.
-
-    % In many technical applications the comparison with survival situations in biological learning may seem drastical, but in medical deep learning this scenario is not too far away, where misinterpretation during automated processing can results in misdiagnosis and potentially impact patients recovery or in the most extreme situations survival.
-
-    % General deep learing findings
-    % DL boosted and is boosting performance and outcome in versatile applications. This spans large areas
-    % text processing
-    % image processing
-    % audio processings
-    % video processing for robotics
-    % robotics itself, sensors actuators
-    % analog signals
-    % biological processes
-    % explorative agent simulations
-    % physical applications
-    % computer graphics
-
-    % before: spezialized algorithms, frameworks
-    % now: models can be used interchangebly with adjustmens to fit the target task at hand.
-
-    % the idea is learning itself - defined as.
-
-    % universal function approximators, but highly dependent on the data as the model itself isnt worth anything before it has been adjusted (trained).
-    % AGI - is of recent discussion where some models reach impressive results.
-
-    % this brings us to the term generalization ...
-    % Generalization
-    % Wholistic models
-    % what is needed for learning in the first place?
-
-    % enough data can fit everything
-
-    % still  problems, halluzinations, intransparency,
-
-    % generalization can be tackeled at different stages of the medical image processing pipeline
-    % model optimizing?
-    % data curation is necessary?
-
-    % can we do sth at training, model application?
-
-    % Medical deep learing findings
-    % as well as medical applications and processing of spezialized sensor data such as volumetric data as MRI CT.
-    % especially for medical imaging where outcomes can have real world implications on fragile patients.
-    % and can also be applied in the medical domain (SAM)
-
-    % advent of deep learning in medical imaging
-
-    % Definition of generalization
+Using shape as an informant in image registration requires two things: a way to encode anatomical shape into representations that a method can compare and manipulate, and a way to use those representations to determine the deformation.
 
 
-    \section{Objectives} % pages 3
-        \label{sec:objectives}
-        TODO
-    \section{Organization and Contributions}  % pages 5
-        \label{sec:organization}
-        TODO
-        % The thesis is divided into three major parts:
-        % Foundations are laid in \chapref{chap:background} \nameref{chap:background}, which is itself divided into clinical and methodological deep learning background.
-        % The following four chapters \ref{chap:acquisitionfocus} to \ref{chap:dgtta} explain the developed generalizing methods in medical deep learning for volumetric images. Each of these four chaptes is itself divided into a self-contained introduction, description of the methodology, the experiment configuration and results as well as a discussion and conclusion for the method. % TODO check the individual structure
-        % \figref{fig:draft} highlights the major aspects of the four chapters which are explained in more detail now.
+\paragraph{Encoding shape.} The first part asks \emph{how the shape of anatomy can be encoded into compact, comparable, and robust representations}. Here, this thesis investigates
+\begin{itemize}
+    \item how anatomical shape can be captured by learned encodings in a common latent space suitable for registration (\chapref{chap:MIUA24});
+    \item how statistical shape models can be built on implicit neural representations so that they remain robust to noisy, sparse, or partial observations (\chapref{chap:BVM25}).
+\end{itemize}
 
-        % \begin{figure}
-        %     \includegraphics[width=\textwidth]{sections/01_introduction/figures/draft_areas_levels.pdf}
-        %     \caption{Thesis organization: Four main chapters of this thesis will explore possible different areas and different levels for generalization. Different areas of exploration are described in the horizontal 3D plane. The levels of exploration are visualized perpendicular to the areas on the vertical axis of each chapter sub-figure.}
-        %     \label{fig:draft}
-        % \end{figure}
+\paragraph{Shape-informed registration.} The second part asks \emph{how such shape representations, and continuous representations of anatomy more broadly, can inform and improve registration}. Here, this thesis investigates
+\begin{itemize}
+    \item how implicit neural representations can serve as sharp, continuous atlases that jointly optimise a shared representation and the deformations relating individuals to it (\chapref{chap:WBIR24});
+    \item how a registration method that aligns semantic label features can be made self-configuring, so that it applies without manual tuning across the wide range of anatomies and modalities encountered in practice (\chapref{chap:TMI});
+    \item how a reconstruction problem, assembling a three-dimensional volume from freehand ultrasound, can be solved as the registration of point clouds against a geometric reference (\chapref{chap:IJCARS}).
+\end{itemize}
 
-        % \begin{itemize}
-        %     \item
-        %         In Chapter \ref{chap:acquisitionfocus} a wholistic view on the  high-level deep learning process is used to derive a concept for optimized data acquisition. Given a cardiac shape reconstruction task, the data acquisition process and the shape reconstruction model are jointly modelled and optimized to find generalizing MRI view planes describing the overall heart shape best. The ideas and methods were published in:
+Combined, the two parts trace an arc from representing shape to registering with it, and support the thesis that anatomical shape is a cheap and effective way to bring semantic knowledge into registration.
 
-        %         \vspace{1em}
-        %         \noindent\fullcite{weihsbach2023acquisitionfocus}
+\paragraph{Recurring considerations.} Two questions are encountered thoughout both parts:
+\begin{itemize}
+    \item \emph{How anatomy is represented.} Each chapter describes makes use of different techniques to descirbe anatomy: learned shape encodings (\chapref{chap:MIUA24}), an implicit neural shape model (\chapref{chap:BVM25}), a continuous neural field (\chapref{chap:WBIR24}), semantic label features (\chapref{chap:TMI}), and point clouds (\chapref{chap:IJCARS}). Setting these choices against one another is what the representation taxonomy of \secref{sec:bg-shapes} is for.
+    \item \emph{Where learning is used.} The chapters place learning at different points: encodings trained to transfer across anatomical structures (\chapref{chap:MIUA24}); a framework that restricts learning to feature extraction, solves for the deformation by optimisation, and configures itself for each task (\chapref{chap:TMI}); and representations optimised per instance at test time rather than predicted by a trained network (\chapref{chap:BVM25}, \chapref{chap:WBIR24}).
+\end{itemize}
 
-        %         \vspace{1em}
-        %         \noindent\fullcite{weihsbach2024acquisitionfocus}
+\section{Organisation and Contributions}
+\label{sec:organization}
 
-        %     \item
-        %         Chapter \ref{chap:dgtta} explains concepts to enable generalization for different imaging domains shifting view to the training and inference (application) phase of the model. Here, data augmentation is used to train models with generalizing capabilities to optimally segment various organs and bone structures given a large CT base dataset. The generalizing models are further optimized on individual MR images to optimize their performance when segmenting the same anatomical structures given very different image intensity distributions compared to the training domain. The method was published as a preprint in:
+The thesis consists of a background chapter, five method chapters, and a concluding summary. \chapref{chap:background} surveys the shape representations used throughout the thesis, implicit neural representations, and the fundamentals of medical image registration. The five method chapters (\chapref{chap:MIUA24}--\chapref{chap:IJCARS}) present the methodological contributions: Each is self-contained, comprising its own introduction, methodology, experiments, and discussion. Finally, \chapref{chap:summary} draws the contributions together and discusses them across chapters.
 
-        %         \vspace{1em}
-        %         \noindent\fullcite{weihsbach2023dg}
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=\textwidth]{sections/01_introduction/figures/thesis_map.pdf}
+    \caption[Overview of the method chapters]{Overview of the five method chapters. Each line follows one chapter from the source images, through the representations it derives and the operations it applies, to what it produces; colour identifies the chapter. \chapref{chap:BVM25} is the only line that does not reach registration, and it converges with \chapref{chap:WBIR24} on a population model.}
+    \label{fig:thesis-map}
+\end{figure}
 
-        %     \item
-        %         In Chapter \ref{chap:deepstaple} data aggregation and curriculum learning enable generalization on the data level. Applied to the task of vestibular schwanomma tumour and cochlea segmentation for differently weighted MR images, the method is developed to weight individual samples during the training phase of the model. This leads to the learning of a generalized shape representation given noisy, probably imperfect input labels derived by image registration. The method was published in:
+The five method chapters fall into the two parts introduced above, and \figref{fig:thesis-map} shows how each of them derives its working representation from the source images and what it ultimately produces.
 
-        %         \vspace{1em}
-        %         \noindent\fullcite{weihsbach2022deepstaple}
+\paragraph{Part~I: Encoding shape.}
+\begin{itemize}
+    \item \chapref{chap:MIUA24} introduces learned shape encodings that embed segmented anatomy into a common latent space and applies them to generalised three-dimensional registration across differing structures. The ideas and methods were published in:
 
-        %     \item
-        %         Moving to a lower level of detail, in Chapter \ref{chap:xedgeconv} modifications of the model kernels are explained that enable to learn generalized representations of organs to be segmented for differently oriented image volumes. This is especially interesting for the MRI domain, where image volumes can be acquired with arbitrary orientation.
-        %         The task-agnostic capabilities of the method were shown for an abdominal organ segmentation scenario as well as a cardiac chamber segmentation scenario.
-        %         The method was published in:
+    \vspace{0.5em}
+    \noindent\fullcite{grossbrohmer2023generalised}
 
-        %         \vspace{1em}
-        %         \noindent\fullcite{weihsbach2022xedgeconv}
+    \item \chapref{chap:BVM25} develops a statistical shape model built on implicit neural representations, yielding robust modelling of anatomical variation from imperfect observations. The ideas and methods were published in:
 
+    \vspace{0.5em}
+    \noindent\fullcite{grossbrohmer2025robust}
+\end{itemize}
 
-        % \end{itemize}
+\paragraph{Part~II: Shape-informed registration.}
+\begin{itemize}
+    \item \chapref{chap:WBIR24} presents \mbox{SINA}, sharp implicit neural atlases obtained by jointly optimising a continuous representation and the deformations that relate individual images to it. The ideas and methods were published in:
 
-        % In the last chapter of this thesis \ref{chap:summary} \nameref{chap:summary} all of the findings are summarized again two-fold: The clinical impact of the mentioned contributions is evaluated with respect to the clinical benefit.
-        % Furthermore, technical improvements are discussed, not only yielding insight for deep learning in volumetric medical imaging but also for other fields of research.
+    \vspace{0.5em}
+    \noindent\fullcite{grossbrohmer2024sina}
+
+    \item \chapref{chap:TMI} presents convexAdam, a self-configuring, dual-optimisation registration method that attains state-of-the-art results across a wide range of tasks without manual tuning. The ideas and methods were published in the following shared-first-author work:
+
+    \vspace{0.5em}
+    \noindent\fullcite{siebert2024convexadam}
+
+    \item \chapref{chap:IJCARS} recasts three-dimensional freehand ultrasound reconstruction as reference-based point cloud registration, using a geometric reference in place of image intensities. The ideas and methods were published in:
+
+    \vspace{0.5em}
+    \noindent\fullcite{grossbrohmer20253d}
+\end{itemize}
+
+In the concluding \chapref{chap:summary}, the contributions are first summarised chapter by chapter, .... 
