@@ -1,0 +1,243 @@
+% 16 pages
+% Structure: contributions (which absorb the representation question) ->
+% the two remaining recurring considerations from \secref{sec:objectives} as
+% sections -> limitations -> trend/outlook.
+% Clinical and methodological impact are folded into the three threads rather
+% than standing as separate sections (departs from Christian ch.7 deliberately).
+% NOTE: if the faculty expects an explicit clinical-relevance section, the
+% material for it is the availability + privacy + robustness bullets under
+% "Where the geometry comes from" below.
+
+% ---------------------------------------------------------------------------
+% CHRIS'S ORIGINAL NOTES (preserved verbatim)
+%
+% On shape-generation (its getting much easier to generate mensingful shapes):
+%   nnunet, Totalsegementator, cheap destilling -> \cite{grossbroehmer2026frozen}
+% Maybe lets do some statistics on one random Totalsegmentator dataset:
+%   How many voxels are labelled etc?
+% On generalised medical image registration (its an active topic and other
+%   appraoches): ICON, GradICON etc.
+% ---------------------------------------------------------------------------
+
+\section{Contributions}
+% Chapter-by-chapter recap, with the representation question folded in here
+% rather than given its own section (former thread 1).
+%
+% WHY FOLDED: a cross-chapter verdict on which representation is best cannot be
+% supported. The five chapters use different representations on different tasks,
+% anatomies and modalities, and were never controlled against one another. Say
+% that limit plainly; it is stronger than implying a verdict.
+%
+% What CAN be said here, and what each claim rests on:
+%  - The two genuine head-to-head comparisons in the thesis:
+%      * ch:MIUA24, learned label encodings vs classical Euclidean Distance Maps
+%      * ch:BVM25, INR-SSM vs linear PDM-SSM (partial rings; disc-to-ring, where
+%        the topologies differ and one keypoint set cannot cover both)
+%  - Analytical claims from the taxonomy (\secref{sec:bg-shapes}), which hold
+%    without controlled experiments:
+%      * an INR and a voxel-stored SDF share codomain and recovery rule and
+%        differ only in how the field is stored
+%      * representation 9 (deformation field) is not a family but the
+%        denominator: it is what registration produces
+%  - Which representation each chapter used and why that problem called for it:
+%    learned encodings (ch:MIUA24), implicit shape model (ch:BVM25), continuous
+%    field (ch:WBIR24), semantic label features (ch:TMI), point clouds
+%    (ch:IJCARS).
+%  - ch:WBIR24 sits differently from the rest: its link is representation
+%    continuity (continuous vs discretised) rather than shape as such.
+%
+% SIGNPOSTING: \secref{sec:objectives} promises three recurring considerations
+% and this chapter returns to two of them as sections. Say explicitly here that
+% the first is answered in this recap, so the reader is not left waiting for a
+% section that never arrives.
+%
+%  - Impact of ch:TMI beyond this thesis (uptake verified in the full text,
+%    2026-10-08). Uptake:
+%    Applications, where convexAdam was used to solve someone else's problem:
+%      * CT-to-MRI registration that produced the aligned ground truth of the
+%        public DoseRAD2026 challenge dataset (115 patients; hyperparameters
+%        tuned by hand, not self-configured) \cite{xiao2026doserad}
+%      * clinical HCC ablation-margin pipeline, 139 lesions: instance
+%        optimisation around each lesion after a global network registration;
+%        the resulting margin predicts local tumour progression
+%        \cite{fogarollo2026ablative}
+%      * T2/DWI alignment in a 24-hospital prostate MRI annotation pipeline,
+%        +1.0 AUROC points on PROMIS \cite{bosma2025scale}. NOTE: Heinrich and
+%        Hering are co-authors, so not fully independent uptake.
+%    Methods that reuse the decoupled design and swap in their own features:
+%      * DINO-Reg: DINOv2 features + convexAdam optimisation \cite{song2024dinoreg}
+%      * benchmark of five vision foundation models (SAM, MedSAM, DINOv2, ...)
+%        for breast MRI registration, all plugged into the convexAdam two-stage
+%        optimisation; convexAdam is the fixed back-end that makes the
+%        encoders comparable \cite{gu2025vfmready}
+%      * anatomix (ICLR 2025): general-purpose features from randomised
+%        synthesis, registered with "the ConvexAdam registration solver";
+%        adding its features to convexAdam's handcrafted ones gains 11 and 6
+%        Dice points (L2R AbdomenMRCT, MM-WHS) \cite{dey2025anatomix}
+%      * HAGR (MICCAI 2026): learned modality-agnostic features, registered
+%        with the convexAdam coupled convex scheme at each pyramid level plus
+%        a final instance optimisation; convexAdam is also its strongest
+%        non-learned baseline on Learn2Reg AbdomenMRCT \cite{mi2026hagr}
+%      * SAMConvex: SAM embeddings + a cost-volume pyramid added to the
+%        convexAdam convex step \cite{li2023samconvex}
+%    For the thread section: the split into features and optimisation is
+%    what lets others plug in new features or apply it to new tasks without
+%    retraining anything.
+%    Translation:
+%      * convexAdam is a core part of pending patent applications in the EU
+%        and the US; I am a co-inventor. Application numbers deliberately
+%        left out of the public thesis.
+%      * basis of the university spin-off CONVEA, currently being founded
+%        under the EXIST programme; I am a co-founder.
+%      * conflict of interest declared in the ch:TMI opening remarks.
+
+\section{Where learning is used}
+% Thread 2 from \secref{sec:objectives}. First of the two thread sections.
+%  - The span: encodings trained to transfer across anatomical structures
+%    without retraining (ch:MIUA24); a framework that keeps learning to a
+%    minimum and configures itself per task instead (ch:TMI); representations
+%    optimised per instance at test time rather than predicted by a trained
+%    network (ch:BVM25, ch:WBIR24). (Old wording "no population model at all"
+%    was wrong: both build population models, see the thesis map.)
+%  - Connects to the universal-registration discussion in the outlook below:
+%    minimising task-specific learning is what "universal" actually means in
+%    practice.
+%  - Discussion point: why the success of deep learning in segmentation did
+%    not carry over to registration. Thesis to argue: DL wins the
+%    representation (semantic features), optimisation keeps the deformation
+%    (convex + Adam IO, INR fitting).
+%      * no ground-truth deformations: unsupervised nets minimise the same
+%        similarity + regulariser objective as classical optimisation, so
+%        they amortise it (speed) rather than beat it (accuracy)
+%      * amortised predictors break under domain shift, per-instance
+%        optimisation adapts; hence IO bolted onto learned methods
+%        (VoxelMorph++, uniGradICON+IO)
+%      * the hard part is the similarity, i.e. the features: exactly where
+%        DL helps (multimodal, semantic correspondence)
+%      * evidence: independent work converges on DL features + convexAdam
+%        solver (DINO-Reg, anatomix, HAGR, VFM benchmark; see Contributions)
+%      * links the chapters: ch:TMI (learned features + optimisation),
+%        ch:MIUA24 (learned shape encodings), ch:BVM25 / ch:WBIR24
+%        (per-instance INR optimisation instead of a trained predictor);
+%        and the Trend section (registration's shrinking share of the main venues)
+%      * COUNTER-POSITION, discuss explicitly: uniGradICON
+%        \cite{tian2024unigradicon}, a "foundation model" for registration.
+%        One GradICON network trained on twelve public datasets (lung, knee,
+%        brain, abdomen; CT, CBCT, MRI), claims in-distribution accuracy on
+%        par with task-specific SOTA, zero-shot use on unseen tasks, and a
+%        strong initialisation for finetuning. This is the opposite bet:
+%        amortise the deformation itself across tasks instead of keeping
+%        optimisation.
+%        Points for the discussion (all from the papers, verified):
+%          - its own limitations section names our recipe as the way
+%            forward: multimodal support "could likely be improved by using
+%            self-supervised modality-agnostic representations", and
+%            "further improvements might also be possible by including
+%            segmentations for training and instance optimization"
+%          - it ships an IO variant (uniGradICON(IO)) itself
+%          - zero-shot performance on unseen anatomical regions is "limited"
+%            (their Tab. 4)
+%          - anatomix \cite{dey2025anatomix} reports that uniGradICON+IO
+%            "cannot handle the larger deformations in L2RAb", while their
+%            features + convexAdam solver do
+%        Its multimodal successor multiGradICON \cite{demir2024multigradicon}
+%        (WBIR 2024) extends the bet to multimodal pairs (randomised
+%        similarity loss, multimodal training data). Verified points:
+%          - motivated by uniGradICON failing on large appearance gaps: it
+%            "cannot register pairs containing T2w images, even with
+%            instance optimization"
+%          - its instance optimisation uses MIND-SSC, i.e. a handcrafted
+%            descriptor from the classical toolbox (same family as the MIND
+%            features convexAdam falls back on)
+%          - remaining failure (DIXON fat/water) to be addressed "by
+%            incorporating semantic information": again our recipe
+%        Fair framing: uni-/multiGradICON win on speed and zero-setup use; the
+%        open question is whether amortisation can match per-instance
+%        optimisation on large deformations and new modalities.
+%      * CAVEAT: do not claim DL registration failed. It won on speed and is
+%        widely used; foundation registration models (uniGradICON, see above) are a
+%        live counter-trend. Defensible claim: "DL won the representation,
+%        optimisation kept the deformation".
+%      * TODO: when the Learn2Reg 2026 solution papers are released, count
+%        end-to-end DL vs DL features + optimisation/IO vs classical among the
+%        entries and top ranks. Reframe if end-to-end dominates.
+%      * TODO: check what \cite{hering2022learn2reg} reports on IO among the
+%        top entries (not verified yet).
+%  - Evidence from outside the thesis: the uptake of ch:TMI (others plugging
+%    their own features into its solver) is listed under Contributions;
+%    refer back to it here rather than repeating it.
+
+\section{Where the geometry comes from}
+% Thread 3 from \secref{sec:objectives}. The strongest of the three: it is
+% argued in four of the five chapters rather than imposed. Absorbs the former
+% "clinical impact" material.
+%  - Availability is the enabling condition. Segmentation became cheap
+%    (nnU-Net, TotalSegmentator, MONAI Model Zoo, and cheap distilling via a
+%    frozen backbone plus a small head \cite{xu2025generalizable}), which
+%    is *why* shape-as-representation became deployable at all. Argued outright
+%    in ch:MIUA24; ch:TMI's discussion ends on the same trend.
+%  - Chris's idea, worth doing: statistics on a TotalSegmentator dataset (how
+%    many voxels labelled, how many structures, at what cost). Turns the
+%    availability claim from an assertion into a number, and is far cheaper
+%    than the publication-trend analysis.
+%  - Dependence as a design axis, not an assumption: ch:TMI hedges across it,
+%    using hand-crafted MIND where no annotations exist and nnU-Net semantic
+%    features where they do, rather than committing to either.
+%  - Degradation of the source: partial and non-overlapping sweeps
+%    (ch:IJCARS), corrupted and incomplete segmentations (ch:BVM25).
+%  - Correspondence as a special case: ch:BVM25 builds an SSM from
+%    segmentation maps and SDFs without any direct correspondence, removing an
+%    annotation requirement rather than automating it.
+%  - Privacy: a method consuming only label maps never touches identifiable
+%    intensity data, so it is privacy-preserving by design (ch:MIUA24). A real
+%    clinical argument, currently buried in that chapter.
+
+\section{Limitations}
+%  - ch:WBIR24 does not participate in thread 3 at all: SINA derives its
+%    representation from intensities and has no external geometry source.
+%  - Semantic features still presuppose that annotations existed to train the
+%    segmenter. Where no meaningful labels exist (CuRIOUS, NLST, LungCT in
+%    ch:TMI) the method falls back to hand-crafted descriptors.
+%    NOTE: \cite{grossbroehmer2026frozen} weakens this limitation considerably.
+%  - Evaluation circularity: methods consuming segmentations must not be judged
+%    on overlap alone (see \secref{sec:bg-registration-evaluation}).
+%  - Scope: X-ray and ultrasound-to-CT work was excluded from this thesis.
+
+\section{Trend}
+% Chris's original note: "We might want to do a crawl of publications to assess
+% the popularity growth? We have to do the crawl then." -> the crawl was done.
+% Scope was cut to the level-1 finding only: registration is a declining share
+% of the main venues, within venue as well as in aggregate. See
+% scripts/litsearch/PLAN.md for the 13 Scopus queries and the numbers so far.
+
+\section{Research Outlook}
+% - New approaches in universal medical image registration. Chris's original
+%   note: "or other approaches? image foundation models, domain adaptation, ?"
+%   plus ICON, GradICON. Ties back to "Where learning is used".
+% - Foundation segmentation models as the direction that makes geometry
+%   universally available, and what that would change for all five chapters.
+%   \cite{xu2025generalizable} shows that a frozen backbone plus a small head suffices.
+% - Population models for registration plausibility. ch:BVM25 (robust SSM)
+%   and ch:WBIR24 (sharp atlas) both BUILD population models, but no chapter
+%   uses one to assess or constrain a registration. Natural next step: use
+%   them to judge whether an estimated transformation is anatomically
+%   plausible (e.g. shape of the warped structure under the SSM, or
+%   deviation from atlas-derived deformation statistics), or as a prior
+%   during optimisation. Closes the thread opened in the Motivation
+%   ("combined with population-based information ... assess whether an
+%   estimated transformation is anatomically plausible").
+%   Also the link that places ch:WBIR24 in the shape argument.
+%   Keep it short, two citations: population statistics of deformations
+%   \cite{rueckert2003automatic} and a learned probabilistic deformation
+%   model whose latent likelihood could serve as a plausibility score
+%   \cite{krebs2019learning}. (Longer list from the lit search, not used:
+%   Pennec 2005 Riemannian elasticity, Lüthi 2018 GPMM, Ehrhardt 2011 4D
+%   lung motion model [Lübeck], Mansilla 2020 AC-RegNet, Sokooti 2019 error
+%   prediction.)
+% - TODO: related-work material to be MOVED here from background sec 2.3, where
+%   it currently reads as an unfamiliar list; here it can be comparative against
+%   the chapters:
+%     "Shape as network input"         (Su & Yang 2023; Chen et al. 2021; Hu et al. 2019)
+%     "Implicit shape representations" (Sun et al. 2022; Dalca et al. 2019)
+%   Forward \chapref references in that text need reversing, and the
+%   "% TODO primary cite" markers travel with it.
