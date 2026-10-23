@@ -128,7 +128,8 @@
 
     \begin{refsection}[bib/journals_first_author]
         \nocite{*}
-        \printbibliography[title={Journal articles as first author}, heading=subbibliography, keyword=journals_first_author]
+        \defbibnote{equal}{\textsuperscript{\textbf{*}}These authors contributed equally.}
+        \printbibliography[title={Journal articles as first author}, heading=subbibliography, keyword=journals_first_author, prenote=equal]
     \end{refsection}
 
     \begin{refsection}[bib/proceedings_first_author]

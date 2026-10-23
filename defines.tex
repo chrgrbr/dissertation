@@ -60,7 +60,7 @@
 \AtEveryCitekey{\clearfield{series}}
 \AtEveryCitekey{\clearfield{month}}
 \newif\ifPubList
-\AtEveryBibitem{\renewcommand*{\mkbibnamegiven}[1]{\ifPubList\ifitemannotation{bold}{\textbf{#1}}{#1}\else{#1}\fi\ifitemannotation{equal}{\textsuperscript{\textbf{*}}}}}
+\AtEveryBibitem{\renewcommand*{\mkbibnamegiven}[1]{\ifPubList\ifitemannotation{bold}{\textbf{#1}}{#1}\else{#1}\fi\ifitemannotation{equal}{\textsuperscript{\textbf{*}}}{}}}
 \AtEveryBibitem{\ifPubList\renewcommand*{\mkbibnamefamily}[1]{\ifitemannotation{bold}{\textbf{#1}}{#1}}\fi}
 \AtEveryCite{\renewcommand*{\mkbibnamegiven}[1]{\ifitemannotation{equal}{{#1}\textsuperscript{\textbf{*}}}{#1}}}
 \DeclareNameAlias{author}{family-given}
